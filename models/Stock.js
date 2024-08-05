@@ -1,14 +1,13 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const stockSchema = new Schema({
+const stockSchema = mongoose.Schema({
     id: { type: Schema.Types.ObjectId, required: true },
-    product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
-    shop: { type: Schema.Types.ObjectId, ref: 'Shop', required: true },
+    product: { type: Schema.Types.ObjectId, ref: 'product', required: true },
+    shop: { type: Schema.Types.ObjectId, ref: 'shop', required: true },
     stock: { type: Number, required: true },
     price: { type: Number, required: true },
-    tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }]
+    tags: [{ type: Schema.Types.ObjectId, ref: 'tag' }]
   });
   
-  const Stock = mongoose.model('stock', stockSchema);
+  const Stock = mongoose.model('stocks', stockSchema);
   module.exports = Stock;

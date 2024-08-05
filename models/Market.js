@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const marketSchema = new Schema({
+const marketSchema = mongoose.Schema({
     id: { type: Schema.Types.ObjectId, required: true },
     name: { type: String, required: true },
     description: { type: String, required: true },
@@ -24,5 +23,5 @@ const marketSchema = new Schema({
     }]
   });
   
-  const Market = mongoose.model('market', marketSchema);
+  const Market = mongoose.model('markets', marketSchema);
   module.exports = Market;

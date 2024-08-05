@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const shopSchema = new Schema({
+const shopSchema = mongoose.Schema({
     id: { type: Schema.Types.ObjectId, required: true },
     name: { type: String, required: true },
     address: {
@@ -17,10 +16,10 @@ const shopSchema = new Schema({
     description: { type: String },
     photos: [{ type: String }],
     video: [{ type: String }],
-    type: { type: Schema.Types.ObjectId, ref: 'Type', required: true },
+    type: { type: Schema.Types.ObjectId, ref: 'type', required: true },
     isOpen: { type: Boolean, default: false },
     reopenDate: { type: Date, default: null },
-    markets: [{ type: Schema.Types.ObjectId, ref: 'Market' }],
+    markets: [{ type: Schema.Types.ObjectId, ref: 'market' }],
     clickCollect: {
       instructions: { type: String },
       openingHours: [{
@@ -31,8 +30,8 @@ const shopSchema = new Schema({
         }]
       }]
     },
-    likes: [{ type: Schema.Types.ObjectId, ref: 'User' }]
+    likes: [{ type: Schema.Types.ObjectId, ref: 'user' }]
   });
   
-  const Shop = mongoose.model('shop', shopSchema);
+  const Shop = mongoose.model('shops', shopSchema);
   module.exports = Shop;

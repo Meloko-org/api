@@ -11,27 +11,27 @@ const updateStock = async (req, res) => {
       'price',
       'tags'
     ];
+
     // faire une verification 
     if (validationModule.checkBody(req.body, checkBodyFields)) {
       const { product, shop, stock, price, tags } = req.body;
 
       // faire une recherche de stock pour le magasin et le produit
-      const newstock = await Stock.findOne({ product: product, shop: shop });
-
+      const existingStock = await Stock.findOne({ product: product, shop: shop });
 
       // si pas de stock renvoyer un message d'erreur
-      if (!newstock) {
+      if (!existingStock) {
         throw new Error("Stock not found for this product and shop.");
       }
     
       // mettre à jour le stock
-      newstock.stock = stock !== undefined ? stock : newstock.stock;
-      newstock.price = price !== undefined ? price : newstock.price;
-      newstock.tags = tags !== undefined ? tags : newstock.tags;
+      existingStock.stock = stock !== undefined ? stock : existingStock.stock;
+      existingStock.price = price !== undefined ? price : existingStock.price;
+      existingStock.tags = tags !== undefined ? tags : existingStock.tags;
 
-      await newstock.save();
+      await existingStock.save();
 
-      res.json({ result: true, stock: newstock });
+      res.json({ result: true, stock: existingStock });
     } else {
       throw new Error("Missing fields.");
     }

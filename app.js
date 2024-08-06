@@ -14,9 +14,9 @@ const {
   shopsRouter,
   rolesRouter,
   typesRouter,
-  tagsRouter
+  tagsRouter,
+  stocksRouter
 } = require('./routes')
-const stocksRouter = require('./routes/stocks');
 
 var app = express();
 

@@ -3,7 +3,7 @@ const validationModule = require('../modules/validation');
 
 const updateStock = async (req, res) => {
   try {
-    // Définir les champs 
+    
     const checkBodyFields = [
       'product',
       'shop',
@@ -11,20 +11,20 @@ const updateStock = async (req, res) => {
       'price',
       'tags'
     ];
-    // Vérifier les champs 
+    // faire une verification 
     if (validationModule.checkBody(req.body, checkBodyFields)) {
       const { product, shop, stock, price, tags } = req.body;
 
-      // Rechercher le stock pour le produit et le magasin
+      // faire une recherche de stock pour le magasin et le produit
       const newstock = await Stock.findOne({ product: product, shop: shop });
 
 
-      // Si le stock n'existe pas, renvoyer une erreur
+      // si pas de stock renvoyer un message d'erreur
       if (!newstock) {
         throw new Error("Stock not found for this product and shop.");
       }
     
-      // Mettre à jour les champs du stock
+      // mettre à jour le stock
       newstock.stock = stock !== undefined ? stock : newstock.stock;
       newstock.price = price !== undefined ? price : newstock.price;
       newstock.tags = tags !== undefined ? tags : newstock.tags;

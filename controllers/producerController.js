@@ -58,7 +58,6 @@ const searchProducer = async (req, res) => {
     ];
 
     if (validationModule.checkBody(req.params, checkBodyFields)) {
-      const { producer } = req.params;
       const producerFound = await Producer.findOne({ socialReason: req.params.producer });
       if (!producerFound) {
         throw new Error("No producers found.");

@@ -47,6 +47,7 @@ const favsearchSchema = mongoose.Schema({
         ref: 'tags',
         default: null,
     }],
+    address: addressSchema,
     isMyPosition: {
         type: Boolean,
         default: false,
@@ -54,8 +55,7 @@ const favsearchSchema = mongoose.Schema({
     radius: {
         type: Number,
         default: null,
-    },
-    address: addressSchema,
+    }
 });
 
 
@@ -80,7 +80,7 @@ const userSchema = mongoose.Schema({
         type: String,
         default: null,
     },
-    favSearch: favsearchSchema,
+    favSearch: [favsearchSchema],
 },
 { timestamps: true }
 );

@@ -1,13 +1,12 @@
 const mongoose = require('mongoose');
 
 const producerSchema = mongoose.Schema({
-    id: { type: Schema.Types.ObjectId, required: true },
     socialReason: { type: String, required: true },
-    siren: { type: Number, required: true },
-    shops: [{ type: Schema.Types.ObjectId, ref: 'shop' }],
-    owner: { type: Schema.Types.ObjectId, ref: 'user', required: true },
-    iban: { type: String, required: true, length: 34 },
-    bic: { type: String, required: true, length: 11 },
+    siren: { type: Number, required: true, maxLength: 8 },
+    shops: [{ type: Schema.Types.ObjectId, ref: 'shops' }],
+    owner: { type: Schema.Types.ObjectId, ref: 'users', required: true },
+    iban: { type: String, required: true, maxLength: 34 },
+    bic: { type: String, required: true, maxLength: 11 },
     address: {
       address1: { type: String, required: true },
       address2: { type: String },

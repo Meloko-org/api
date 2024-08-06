@@ -15,5 +15,6 @@ module.exports = {
   shopsRouter,
   typesRouter,
   usersRouter,
-  tagsRouter
+  tagsRouter,
+  stocksRouter,
 }

@@ -6,6 +6,8 @@ const shopsRouter = require('./shops')
 const typesRouter = require('./types')
 const usersRouter = require('./users')
 const tagsRouter = require('./tags')
+const stocksRouter = require('./stock')
+
 
 module.exports = {
   authRouter,

@@ -42,6 +42,11 @@ const userSchema = mongoose.Schema({
         required: true,
         unique: true,
     },
+    roles: { 
+      type: [mongoose.Schema.Types.ObjectId], 
+      ref: 'role', 
+      required: true 
+    },
     firstname: {
         type: String,
         default: null,

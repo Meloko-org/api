@@ -1,9 +1,7 @@
-const { 
-  clerkAuthMiddleware,
-  clerkWebhookVerifyMiddleware
-} = require('./clerkMiddlewares')
+const clerkMiddlewares = require('./clerkMiddlewares')
+const rolesMiddleswares = require('./rolesMiddlewares')
 
 module.exports = {
-  clerkAuthMiddleware,
-  clerkWebhookVerifyMiddleware
+  clerkMiddlewares,
+  rolesMiddleswares
 }

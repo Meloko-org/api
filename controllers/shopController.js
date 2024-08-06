@@ -1,5 +1,5 @@
 const Shop = require('../models/Shop')
-const User = require('../models/Users')
+const User = require('../models/User')
 const Producer = require('../models/Producer')
 const { validationModule } = require('../modules')
 
@@ -10,7 +10,8 @@ const createNewShop = async (req, res) => {
       'name',
       'description',
       'address',
-      'siret'
+      'siret',
+      'types'
     ]
 
     // If all expected fields are present
@@ -25,14 +26,15 @@ const createNewShop = async (req, res) => {
       } 
 
       // Create and save the new shop
-      const { name, description, address, siret } = req.body
+      const { name, description, address, siret, types } = req.body
 
       const newShop = new Shop({
         producer: producer._id,
         name,
         description,
         siret,
-        address
+        address,
+        types
       })
 
       await newShop.save()
@@ -43,7 +45,7 @@ const createNewShop = async (req, res) => {
     }
   } catch (error) {
     console.error(error)
-    res.status(500).json({ message: error})
+    res.status(500).json({ error: error.message})
     return
   }
 }

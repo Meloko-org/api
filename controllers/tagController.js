@@ -1,31 +1,30 @@
-const Type = require('../models/Type')
-
+const Tag = require('../models/Tag')
 const { validationModule } = require('../modules')
 
-const createNewType = async (req, res) => {
+const createNewTag = async (req, res) => {
   try {
     // define the fields coming from req.body to check
     const checkBodyFields = [
       'name',
       'description',
-      'image'
+      'color'
     ]
 
     // If all expected fields are present
     if(validationModule.checkBody(req.body, checkBodyFields)) {
 
-      // Create and save the new shop type
-      const { name, description, image } = req.body
+      // Create and save the new tag
+      const { name, description, color } = req.body
 
-      const newType = new Type({
+      const newTag = new Tag({
         name,
         description,
-        image,
+        color
       })
 
-      await newType.save()
+      await newTag.save()
 
-      res.json({ result: true, type: newType })
+      res.json({ result: true, tag: newTag})
     } else {
       throw new Error("Missing fields."); 
     }
@@ -37,5 +36,5 @@ const createNewType = async (req, res) => {
 }
 
 module.exports = {
-  createNewType
+  createNewTag
 }

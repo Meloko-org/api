@@ -30,8 +30,8 @@ const shopSchema = mongoose.Schema({
     video: [{ 
       type: String 
     }],
-    type: { 
-      type: mongoose.Schema.Types.ObjectId, 
+    types: { 
+      type: [mongoose.Schema.Types.ObjectId], 
       ref: 'type'
     },
     isOpen: { 

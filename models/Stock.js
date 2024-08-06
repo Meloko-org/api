@@ -12,11 +12,11 @@ const stockSchema = mongoose.Schema({
       required: true 
     },
     stock: { 
-      type: Number, 
+      type: mongoose.Types.Decimal128, 
       required: true 
     },
     price: { 
-      type: Number, 
+      type: mongoose.Types.Decimal128, 
       required: true 
     },
     tags: [{ 

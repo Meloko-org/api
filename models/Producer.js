@@ -7,12 +7,10 @@ const producerSchema = mongoose.Schema({
       required: true 
     },
     siren: { 
-      type: Number, 
-      required: true 
+      type: String, 
+      required: true,
+      unique: true 
     },
-    shops: [{ 
-      type: mongoose.Schema.Types.ObjectId, ref: 'shop' 
-    }],
     owner: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: 'user', 
@@ -28,7 +26,10 @@ const producerSchema = mongoose.Schema({
       required: true, 
       length: 11 
     },
-    address: addressSchema
+    address: { 
+      type: addressSchema, 
+      required: true, 
+    }
   },
   { timestamps: true }
 );

@@ -3,16 +3,26 @@ const addressSchema = require('./Address')
 const clickCollectSchema = require('./ClickCollect')
 
 const shopSchema = mongoose.Schema({
+    producer: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'producer'
+    },
     name: { 
       type: String, 
       required: true 
+    },
+    siret: { 
+      type: String, 
+      required: true,
+      unique: true 
     },
     address: addressSchema,
     logo: { 
       type: String 
     },
     description: { 
-      type: String 
+      type: String,
+      required: true 
     },
     photos: [{ 
       type: String 
@@ -22,8 +32,7 @@ const shopSchema = mongoose.Schema({
     }],
     type: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: 'type', 
-      required: true 
+      ref: 'type'
     },
     isOpen: { 
       type: Boolean, 

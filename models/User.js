@@ -17,6 +17,7 @@ const favsearchSchema = mongoose.Schema({
         ref: 'tags',
         default: null,
     }],
+    address: addressSchema,
     isMyPosition: {
         type: Boolean,
         default: false,

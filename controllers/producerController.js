@@ -1,5 +1,5 @@
 const Producer = require('../models/Producer')
-const User = require('../models/Users')
+const User = require('../models/User')
 const { validationModule } = require('../modules')
 
 const createNewProducer = async (req, res) => {
@@ -44,7 +44,7 @@ const createNewProducer = async (req, res) => {
     }
   } catch (error) {
     console.error(error)
-    res.status(500).json({ message: error})
+    res.status(500).json({ error: error.message })
     return
   }
 }

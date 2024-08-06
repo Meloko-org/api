@@ -1,31 +1,28 @@
-const Type = require('../models/Type')
-
+const Role = require('../models/Role')
 const { validationModule } = require('../modules')
 
-const createNewType = async (req, res) => {
+const createNewRole = async (req, res) => {
   try {
     // define the fields coming from req.body to check
     const checkBodyFields = [
       'name',
-      'description',
-      'image'
+      'description'
     ]
 
     // If all expected fields are present
     if(validationModule.checkBody(req.body, checkBodyFields)) {
 
-      // Create and save the new shop type
-      const { name, description, image } = req.body
+      // Create and save the new role
+      const { name, description } = req.body
 
-      const newType = new Type({
+      const newRole = new Role({
         name,
-        description,
-        image,
+        description
       })
 
-      await newType.save()
+      await newRole.save()
 
-      res.json({ result: true, type: newType })
+      res.json({ result: true, role: newRole})
     } else {
       throw new Error("Missing fields."); 
     }
@@ -37,5 +34,5 @@ const createNewType = async (req, res) => {
 }
 
 module.exports = {
-  createNewType
+  createNewRole
 }

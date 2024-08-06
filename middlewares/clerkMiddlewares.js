@@ -3,7 +3,7 @@ const { Webhook } = require("svix");
 // const { createClerkClient } = require('@clerk/backend')
 
 // Check the Bearer Token supplied by the frontend
-const clerkAuthMiddleware = async (req, res, next) => {
+const isUserLogged = async (req, res, next) => {
   try {
     // const clerkClient = createClerkClient({
     //   secretKey: process.env.CLERK_SECRET_KEY,
@@ -34,7 +34,7 @@ const clerkAuthMiddleware = async (req, res, next) => {
 };
 
 // Check if the request is a signed one from Clerk 
-const clerkWebhookVerifyMiddleware = async (req, res, next) => {
+const isWebhookSignedByClerk = async (req, res, next) => {
   try {
     // Use Svix to verify the request
     const secret = process.env.CLERK_WEBHOOK_SECRET;
@@ -44,18 +44,16 @@ const clerkWebhookVerifyMiddleware = async (req, res, next) => {
     const wh = new Webhook(secret);
     // Throws on error, returns the verified content on success
     const verify = wh.verify(payload, req.headers);
-    // console.log("verify ------")
-    // console.log(verify)
     // If authenticated, proceed to the controller
     next();
   } catch(error) {
     console.error(error)
-    res.status(400).json({ result: false, error: { message: error }})
+    res.status(401).json({ error: error.message })
   }
 
 };
 
 module.exports = {
-  clerkAuthMiddleware,
-  clerkWebhookVerifyMiddleware
+  isUserLogged,
+  isWebhookSignedByClerk
 }

@@ -1,8 +1,8 @@
 var express = require('express');
 var router = express.Router();
 const { producerController } = require('../controllers')
-const { clerkAuthMiddleware } = require('../middlewares')
+const { clerkMiddlewares } = require('../middlewares')
 
-router.post('/', clerkAuthMiddleware, producerController.createNewProducer);
+router.post('/', clerkMiddlewares.isUserLogged, producerController.createNewProducer);
 
 module.exports = router;

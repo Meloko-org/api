@@ -49,6 +49,31 @@ const createNewProducer = async (req, res) => {
   }
 }
 
+
+const searchProducer = async (req, res) => {
+  try {
+
+    const checkBodyFields = [
+      'producer'
+    ];
+
+    if (validationModule.checkBody(req.params, checkBodyFields)) {
+      const { producer } = req.params;
+      const producerFound = await Producer.findOne({ socialReason: req.params.producer });
+      if (!producerFound) {
+        throw new Error("No producers found.");
+      }
+      res.json({ result: true, producerFound });
+    } else {
+      throw new Error("Missing fields.");
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
-  createNewProducer
+  createNewProducer,
+  searchProducer
 }

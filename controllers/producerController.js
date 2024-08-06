@@ -73,7 +73,6 @@ const searchProducer = async (req, res) => {
 };
 
 
-
 module.exports = {
   createNewProducer,
   searchProducer

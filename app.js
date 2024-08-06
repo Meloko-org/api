@@ -14,7 +14,8 @@ const {
   shopsRouter,
   rolesRouter,
   typesRouter,
-  tagsRouter
+  tagsRouter,
+  stocksRouter
 } = require('./routes')
 
 var app = express();
@@ -31,8 +32,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
 app.use('/clerk', clerkRouter);
-app.use('/producers', producersRouter)
-app.use('/shops', shopsRouter)
+app.use('/producers', producersRouter);
+app.use('/shops', shopsRouter);
+app.use('/stocks', stocksRouter);
 app.use('/roles', rolesRouter)
 app.use('/types', typesRouter)
 app.use('/tags', tagsRouter)

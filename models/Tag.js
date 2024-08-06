@@ -1,11 +1,20 @@
 const mongoose = require('mongoose');
 
 const tagSchema = mongoose.Schema({
-    id: { type: Schema.Types.ObjectId, required: true },
-    name: { type: String, required: true },
-    description: { type: String, required: true },
-    color: { type: String }
-  });
+    name: { 
+      type: String, 
+      required: true 
+    },
+    description: { 
+      type: String, 
+      required: true 
+    },
+    color: { 
+      type: String 
+    }
+  },
+  { timestamps: true }
+);
   
   const Tag = mongoose.model('tags', tagSchema);
   module.exports = Tag;

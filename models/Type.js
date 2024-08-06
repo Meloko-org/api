@@ -1,11 +1,19 @@
 const mongoose = require('mongoose');
 
 const typeSchema = mongoose.Schema({
-    id: { type: Schema.Types.ObjectId, required: true },
-    name: { type: String, required: true },
-    image: { type: String },
-    description: { type: String }
-  });
+    name: { 
+      type: String, 
+      required: true 
+    },
+    image: { 
+      type: String 
+    },
+    description: { 
+      type: String 
+    }
+  },
+  { timestamps: true }
+);
   
   const Type = mongoose.model('types', typeSchema);
   module.exports = Type;

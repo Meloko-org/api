@@ -5,6 +5,7 @@ const rolesRouter = require('./roles')
 const shopsRouter = require('./shops')
 const typesRouter = require('./types')
 const usersRouter = require('./users')
+const tagsRouter = require('./tags')
 
 module.exports = {
   authRouter,
@@ -13,5 +14,6 @@ module.exports = {
   rolesRouter,
   shopsRouter,
   typesRouter,
-  usersRouter
+  usersRouter,
+  tagsRouter
 }

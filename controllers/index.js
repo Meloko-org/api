@@ -4,6 +4,7 @@ const producerController = require('./producerController')
 const shopController = require('./shopController')
 const typeController = require('./typeController')
 const roleController = require('./roleController')
+const tagController = require('./tagController')
 
 module.exports = {
   clerkController,
@@ -11,5 +12,6 @@ module.exports = {
   producerController,
   shopController,
   typeController,
-  roleController  
+  roleController,
+  tagController 
 }

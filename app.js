@@ -13,7 +13,8 @@ const {
   producersRouter,
   shopsRouter,
   rolesRouter,
-  typesRouter
+  typesRouter,
+  tagsRouter
 } = require('./routes')
 
 var app = express();
@@ -34,5 +35,6 @@ app.use('/producers', producersRouter)
 app.use('/shops', shopsRouter)
 app.use('/roles', rolesRouter)
 app.use('/types', typesRouter)
+app.use('/tags', tagsRouter)
 
 module.exports = app;

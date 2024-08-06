@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const tagSchema = mongoose.Schema({
+const roleSchema = mongoose.Schema({
     name: { 
       type: String, 
       required: true 
@@ -8,13 +8,10 @@ const tagSchema = mongoose.Schema({
     description: { 
       type: String, 
       required: true 
-    },
-    color: { 
-      type: String 
     }
   },
   { timestamps: true }
 );
   
-  const Tag = mongoose.model('tags', tagSchema);
-  module.exports = Tag;
+  const Role = mongoose.model('roles', roleSchema);
+  module.exports = Role;

@@ -1,0 +1,54 @@
+const Producer = require('../models/Producer')
+const User = require('../models/Users')
+const { validationModule } = require('../modules')
+
+const createNewProducer = async (req, res) => {
+  try {
+    // Retreive the logged user 
+    const owner = await User.findOne({ clerkUUID: req.auth.userId})
+
+    if(await Producer.findOne({ owner: owner._id })) {
+      throw new Error("User already has a producer profile");
+    } 
+    
+    // define the fields coming from req.body to check
+    const checkBodyFields = [
+      'socialReason',
+      'siren',
+      'iban',
+      'bic',
+      'address'
+    ]
+
+    // If all expected fields are present
+    if(validationModule.checkBody(req.body, checkBodyFields)) {
+
+
+      // Create and save the new producer
+      const { socialReason, siren, iban, bic, address } = req.body
+      
+      const newProducer = new Producer({
+        socialReason,
+        siren,
+        iban,
+        bic,
+        address,
+        owner: owner._id
+      })
+
+      await newProducer.save()
+
+      res.json({ result: true, producer: newProducer })
+    } else {
+      throw new Error("Missing fields."); 
+    }
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: error})
+    return
+  }
+}
+
+module.exports = {
+  createNewProducer
+}

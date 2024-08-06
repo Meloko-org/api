@@ -1,35 +1,5 @@
 const mongoose = require('mongoose');
-
-const addressSchema = mongoose.Schema({
-    address1: {
-        type: String,
-        required: true
-    },
-    address2: {
-        type: String,
-        default: null
-    },
-    postalCode: {
-        type: String,
-        required: true
-    },
-    city: {
-        type: String,
-        required: true
-    },
-    country: {
-        type: String,
-        required: true
-    },
-    latitude: {
-        type: Number,
-        default: null
-    },
-    longitude: {
-        type: Number,
-        default: null
-    }
-});
+const addressSchema = require('./Address')
 
 const favsearchSchema = mongoose.Schema({
     products: [{
@@ -55,18 +25,22 @@ const favsearchSchema = mongoose.Schema({
     radius: {
         type: Number,
         default: null,
-    }
-});
+    },
+    address: addressSchema,
+},
+{ timestamps: true });
 
 
 const userSchema = mongoose.Schema({
     email: {
         type: String,
         required: true,
+        unique: true,
     },
     clerkUUID: {
         type: String,
         required: true,
+        unique: true,
     },
     firstname: {
         type: String,

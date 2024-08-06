@@ -1,13 +1,20 @@
+const userController = require('./userController')
 
 // Is called by Clerk when one of the subscribed events happens
-const webhookReceiver = (req, res, next) => {
+const webhookReceiver = async (req, res) => {
   let userId = null
 
   switch(true) {
     case (req.body.type === 'user.created'):
-      userId = req.body.data.id
+
+      const createdUser = await userController.createNewUser(req.body.data)
+      if(!createdUser) { 
+        res.status(409).json({ error: 'user already exist' })
+        return
+      }
+      
       console.log("user created")
-      res.json({ result: true, userId});
+      res.status(201).json({ result: true });
       break;
     case (req.body.type === 'user.deleted'):
       userId = req.body.data.id

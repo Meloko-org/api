@@ -63,10 +63,12 @@ const userSchema = mongoose.Schema({
     email: {
         type: String,
         required: true,
+        unique: true,
     },
     clerkUUID: {
         type: String,
         required: true,
+        unique: true,
     },
     firstname: {
         type: String,
@@ -80,7 +82,7 @@ const userSchema = mongoose.Schema({
         type: String,
         default: null,
     },
-    favSearch: favsearchSchema,
+    favSearch: [favsearchSchema],
 },
 { timestamps: true }
 );

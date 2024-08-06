@@ -6,7 +6,7 @@ const shopsRouter = require('./shops')
 const typesRouter = require('./types')
 const usersRouter = require('./users')
 const tagsRouter = require('./tags')
-const stocksRouter = require('./stock')
+const stocksRouter = require('./stocks')
 
 
 module.exports = {

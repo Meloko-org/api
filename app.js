@@ -12,6 +12,7 @@ const authRouter = require('./routes/auth')
 const clerkRouter = require('./routes/clerk')
 const producersRouter = require('./routes/producers')
 const shopsRouter = require('./routes/shops')
+const stocksRouter = require('./routes/stocks');
 
 var app = express();
 
@@ -28,7 +29,8 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/auth', authRouter);
 app.use('/clerk', clerkRouter);
-app.use('/producers', producersRouter)
-app.use('/shops', shopsRouter)
+app.use('/producers', producersRouter);
+app.use('/shops', shopsRouter);
+app.use('/stocks', stocksRouter);
 
 module.exports = app;

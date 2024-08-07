@@ -57,13 +57,16 @@ const searchShops = async (req, res) => {
       'radius',
       'userPosition'
     ]
+
     // If all expected fields are present
     if(validationModule.checkBody(req.body, checkBodyFields)) {
       const { query, userPosition, radius } = req.body
 
+      // Get the min and max latitude and longitude
       const searchArea = calculateMaxLatitudeLongitude(userPosition, radius)
 
-      const shops = await Shop.aggregate([
+      // Aggregate the shops that have an address (lat, lon) between the min-max
+      let searchResults = await Shop.aggregate([
         { 
             $match: { 
               'address.latitude': { 
@@ -133,16 +136,13 @@ const searchShops = async (req, res) => {
               foreignField: '_id',
               as: 'types'
             }
-          },
-          // { $addFields : {
-          //     'address.latitude': {"$toString" : "$address.latitude"},
-          //     'address.longitude': {"$toString" : "$address.longitude"},
-          //     'stocks.stock': {"$toString" : "$stocks.stock"},
-          //   }
-          // }
+          }
       ])
 
+      // If there are query terms
       if(query !== '') {
+
+        // Define the keys and weights that the fuzzy search will be applied
         const searchKeys = [
           {
             name: 'name',
@@ -163,9 +163,14 @@ const searchShops = async (req, res) => {
           {
             name: 'types.name',
             weight: 0.5
+          },
+          {
+            name: 'stocks.product.tags.name',
+            weight: 0.5
           }
         ]
         
+        // Define additional fuseSearch options
         const searchOptions = {
           minMatchCharLength: 2,
           includeScore: true,
@@ -173,17 +178,41 @@ const searchShops = async (req, res) => {
           keys: searchKeys
         }
 
-        const fuse = new Fuse(shops, searchOptions)
-  
-        const searchResults = fuse.search(query)
+        // Instantiate a Fuse class
+        const fuse = new Fuse(searchResults, searchOptions)
+        // Execute the fuse search
+        const fuseSearch = fuse.search(query)
 
-        res.json({ result: true, searchResults})
-        return
+        // Remap the searchResults array to be the same as if there are no fuse search
+        // Also add the distance between the user and the shop
+        searchResults = fuseSearch.map(sr =>  {
+          const item = sr.item
+
+          item.searchData = {
+            documentIndex: sr.refIndex,
+            matches: sr.matches,
+            score: sr.score,
+            distance: calculateDistance(item.address.latitude, item.address.longitude, userPosition.latitude, userPosition.longitude, 'K')
+          }
+
+          return item
+        })
+      } else {
+        // Add the distance between the user and the shop
+        searchResults = searchResults.map(sr => {
+          sr.searchData = {
+            distance: calculateDistance(sr.address.latitude, sr.address.longitude, userPosition.latitude, userPosition.longitude, 'K')
+          }
+          return sr
+        })
+
+        // Trie les resultats par distance
+        searchResults.sort((a, b) => a.searchData.distance - b.searchData.distance)
       }
 
+      
 
-      res.json({ result: true, shops})
-      // res.json({ result: true, shops})
+      res.json({ result: true, searchResults})
     } else {
       throw new Error("Missing fields."); 
     }
@@ -194,6 +223,7 @@ const searchShops = async (req, res) => {
   }
 }
 
+// Calcul les bornes lat, lon pour ne chercher que les shops entre celles ci
 const calculateMaxLatitudeLongitude = (initialPosition, radius) => {
 
   // Convert the radius in meters to latitude degrees
@@ -210,6 +240,29 @@ const calculateMaxLatitudeLongitude = (initialPosition, radius) => {
       min: initialPosition.longitude - radiusInLongitude,
       max: initialPosition.longitude + radiusInLongitude
     }
+  }
+}
+
+// Calcul la distance entre deux jeux de coordonnées
+const calculateDistance = (lat1, lon1, lat2, lon2, unit) => {
+  if ((lat1 == lat2) && (lon1 == lon2)) {
+      return 0;
+  }
+  else {
+      var radlat1 = Math.PI * lat1/180;
+      var radlat2 = Math.PI * lat2/180;
+      var theta = lon1-lon2;
+      var radtheta = Math.PI * theta/180;
+      var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+      if (dist > 1) {
+          dist = 1;
+      }
+      dist = Math.acos(dist);
+      dist = dist * 180/Math.PI;
+      dist = dist * 60 * 1.1515;
+      if (unit=="K") { dist = dist * 1.609344 }
+      if (unit=="N") { dist = dist * 0.8684 }
+      return dist;
   }
 }
 

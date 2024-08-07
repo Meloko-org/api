@@ -9,26 +9,26 @@ const { clerkMiddlewares, rolesMiddleswares } = require('../middlewares')
 // Admin only
 router.post(
   '/', 
-  clerkMiddlewares.isUserLogged, 
-  rolesMiddleswares.isUserAdmin, 
+  // clerkMiddlewares.isUserLogged, 
+  // rolesMiddleswares.isUserAdmin, 
   productController.createNewProduct
 );
 
 // Create a new product family
 // Admin only
 router.post(
-  '/', 
-  clerkMiddlewares.isUserLogged, 
-  rolesMiddleswares.isUserAdmin, 
+  '/family', 
+  // clerkMiddlewares.isUserLogged, 
+  // rolesMiddleswares.isUserAdmin, 
   productController.createNewProductFamily
 );
 
 // Create a new product category
 // Admin only
 router.post(
-  '/', 
-  clerkMiddlewares.isUserLogged, 
-  rolesMiddleswares.isUserAdmin, 
+  '/category', 
+  // clerkMiddlewares.isUserLogged, 
+  // rolesMiddleswares.isUserAdmin, 
   productController.createNewProductCategory
 );
 

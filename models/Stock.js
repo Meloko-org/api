@@ -3,12 +3,12 @@ const mongoose = require('mongoose');
 const stockSchema = mongoose.Schema({
     product: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: 'product', 
+      ref: 'products', 
       required: true 
     },
     shop: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: 'shop', 
+      ref: 'shops', 
       required: true 
     },
     stock: { 
@@ -21,7 +21,7 @@ const stockSchema = mongoose.Schema({
     },
     tags: [{ 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: 'tag' 
+      ref: 'tags' 
     }]
   },
   { timestamps: true }

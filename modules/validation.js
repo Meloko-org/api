@@ -1,8 +1,7 @@
 function checkBody(body, keys) {
   let isValid = true;
-
   for (const field of keys) {
-    if (!body[field] || body[field] === '') {
+    if (!(field in body)) {
       isValid = false;
     }
   }

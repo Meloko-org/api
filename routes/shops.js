@@ -5,4 +5,6 @@ const { clerkMiddlewares } = require('../middlewares')
 
 router.post('/', clerkMiddlewares.isUserLogged, shopController.createNewShop);
 
+router.get('/:id', shopController.getById);
+
 module.exports = router;

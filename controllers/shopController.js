@@ -50,6 +50,29 @@ const createNewShop = async (req, res) => {
   }
 }
 
+const getById = async (req, res) => {
+  try {
+
+    const checkBodyFields = [
+      'id'
+    ];
+
+    if (validationModule.checkBody(req.params, checkBodyFields)) {
+      const shopFound = await Shop.findOne({ _id: req.params.id });
+      if (!shopFound) {
+        throw new Error("No shop found.");
+      }
+      res.json({ result: true, shopFound});
+    } else {
+      throw new Error("Missing fields.");
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
-  createNewShop
+  createNewShop,
+  getById
 }

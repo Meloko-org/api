@@ -62,7 +62,7 @@ const searchProducer = async (req, res) => {
       if (!producerFound) {
         throw new Error("No producers found.");
       }
-      res.json({ result: true, producerFound });
+      res.json({ result: true, producerFound});
     } else {
       throw new Error("Missing fields.");
     }

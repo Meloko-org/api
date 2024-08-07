@@ -50,6 +50,17 @@ const createNewShop = async (req, res) => {
   }
 }
 
+const searchShops = async (req, res) => {
+  try {
+
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: error.message})
+    return
+  }
+}
+
 module.exports = {
-  createNewShop
+  createNewShop,
+  searchShops
 }

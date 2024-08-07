@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const addressSchema = require('./Address')
 const clickCollectSchema = require('./ClickCollect')
+const noteSchema = require('./Note')
 
 const shopSchema = mongoose.Schema({
     producer: { 
@@ -47,10 +48,7 @@ const shopSchema = mongoose.Schema({
       ref: 'markets' 
     }],
     clickCollect: clickCollectSchema,
-    likes: [{ 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'users' 
-    }]
+    notes: [noteSchema]
   },
   { timestamps: true }
 );

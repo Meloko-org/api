@@ -44,7 +44,7 @@ const userSchema = mongoose.Schema({
     },
     roles: { 
       type: [mongoose.Schema.Types.ObjectId], 
-      ref: 'role', 
+      ref: 'roles', 
       required: true 
     },
     firstname: {
@@ -58,6 +58,10 @@ const userSchema = mongoose.Schema({
     avatar: {
         type: String,
         default: null,
+    },
+    bookmarks: { 
+      type: [mongoose.Schema.Types.ObjectId], 
+      ref: 'shops'
     },
     favSearch: [favsearchSchema],
 },

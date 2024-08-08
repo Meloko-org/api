@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 const addressSchema = require('./Address')
 const clickCollectSchema = require('./ClickCollect')
+const noteSchema = require('./Note')
 
 const shopSchema = mongoose.Schema({
     producer: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: 'producer'
+      ref: 'producers'
     },
     name: { 
       type: String, 
@@ -32,7 +33,7 @@ const shopSchema = mongoose.Schema({
     }],
     types: { 
       type: [mongoose.Schema.Types.ObjectId], 
-      ref: 'type'
+      ref: 'types'
     },
     isOpen: { 
       type: Boolean, 
@@ -44,13 +45,10 @@ const shopSchema = mongoose.Schema({
     },
     markets: [{ 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: 'market' 
+      ref: 'markets' 
     }],
     clickCollect: clickCollectSchema,
-    likes: [{ 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'user' 
-    }]
+    notes: [noteSchema]
   },
   { timestamps: true }
 );

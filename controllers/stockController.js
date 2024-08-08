@@ -1,4 +1,4 @@
-const Stock = require('../models/Stock');
+const { Stock, Shop, User } = require('../models');
 const validationModule = require('../modules/validation');
 
 const updateStock = async (req, res) => {
@@ -11,26 +11,43 @@ const updateStock = async (req, res) => {
       'price',
       'tags'
     ];
-
+    console.log(req.body)
     // faire une verification 
     if (validationModule.checkBody(req.body, checkBodyFields)) {
       const { product, shop, stock, price, tags } = req.body;
 
-      // faire une recherche de stock pour le magasin et le produit
-      const existingStock = await Stock.findOne({ product: product, shop: shop });
+      const shopData = await Shop.findOne({_id: shop}).populate('producer') 
 
-      // si pas de stock renvoyer un message d'erreur
-      if (!existingStock) {
-        throw new Error("Stock not found for this product and shop.");
+      const user = await User.findOne({ clerkUUID: req.auth.userId })
+
+      // Si l'utilisateur n'est pas le proprietaire du shop concerné
+      if(!shopData.producer.owner.equals(user._id)) {
+        throw new Error("You do not have privileges to change this stock.");
       }
-    
-      // mettre à jour le stock
-      existingStock.stock = stock !== undefined ? stock : existingStock.stock;
-      existingStock.price = price !== undefined ? price : existingStock.price;
-      existingStock.tags = tags !== undefined ? tags : existingStock.tags;
+
+      // faire une recherche de stock pour le magasin et le produit
+      let existingStock = await Stock.findOne({ product: product, shop: shop });
+
+      // si le stock n'existe pas, on le crée
+      if (!existingStock) {
+        existingStock = new Stock({
+          product,
+          shop,
+          stock,
+          price,
+          tags
+        })
+
+      } else {
+        // sinon mettre à jour le stock
+        existingStock.stock = stock !== undefined ? stock : existingStock.stock;
+        existingStock.price = price !== undefined ? price : existingStock.price;
+        existingStock.tags = tags !== undefined ? tags : existingStock.tags;
+
+      }
 
       await existingStock.save();
-
+    
       res.json({ result: true, stock: existingStock });
     } else {
       throw new Error("Missing fields.");

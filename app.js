@@ -15,7 +15,8 @@ const {
   rolesRouter,
   typesRouter,
   tagsRouter,
-  stocksRouter
+  stocksRouter,
+  productsRouter
 } = require('./routes')
 
 var app = express();
@@ -38,5 +39,6 @@ app.use('/stocks', stocksRouter);
 app.use('/roles', rolesRouter)
 app.use('/types', typesRouter)
 app.use('/tags', tagsRouter)
+app.use('/products', productsRouter)
 
 module.exports = app;

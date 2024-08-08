@@ -1,4 +1,5 @@
-const { Shop, User, Producer } = require('../models')
+const { Shop, User, Producer, Product, ProductFamily } = require('../models')
+const { productController } = require('../controllers')
 const { validationModule } = require('../modules')
 const Fuse = require('fuse.js')
 
@@ -197,6 +198,26 @@ const searchShops = async (req, res) => {
 
           return item
         })
+
+        
+        for (const result of searchResults) { 
+          for (const matche of result.searchData.matches) { 
+            if(matche.key === 'stocks.product.family.name') {
+              console.log("key is stocks.product.family.name")
+              const productsFromFamily = await getProductsFromFamily(matche.value)
+                if(result.searchData.relevantProducts) {
+                  console.log("relevant product exist")
+                  result.searchData.relevantProducts.push(...productsFromFamily)
+                } else {
+                  console.log("relevant product doesnt exist")
+                  result.searchData.relevantProducts = productsFromFamily
+                }
+              
+            }
+          }
+        }
+
+
       } else {
         // Add the distance between the user and the shop
         searchResults = searchResults.map(sr => {
@@ -211,7 +232,7 @@ const searchShops = async (req, res) => {
       }
 
       
-
+      searchResults.forEach(sr => console.log(sr.searchData))
       res.json({ result: true, searchResults})
     } else {
       throw new Error("Missing fields."); 
@@ -263,6 +284,16 @@ const calculateDistance = (lat1, lon1, lat2, lon2, unit) => {
       if (unit=="K") { dist = dist * 1.609344 }
       if (unit=="N") { dist = dist * 0.8684 }
       return dist;
+  }
+}
+
+const getProductsFromFamily = async (familyName) => {
+  try {
+    const family = await ProductFamily.findOne({ name: familyName })
+    const products = await Product.find({ family: family._id })
+    return products
+  } catch (error) {
+    throw new Error(error.message); 
   }
 }
 

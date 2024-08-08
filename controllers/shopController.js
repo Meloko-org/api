@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-const { Shop, User, Producer, Stock, ProductFamily } = require('../models')
-=======
 const { Shop, User, Producer, Product, ProductFamily } = require('../models')
 const { productController } = require('../controllers')
->>>>>>> c262a5a480b477cca232eba1d2eaa2463d051fd4
 const { validationModule } = require('../modules')
 const Fuse = require('fuse.js')
 
@@ -291,14 +287,11 @@ const calculateDistance = (lat1, lon1, lat2, lon2, unit) => {
   }
 }
 
-<<<<<<< HEAD
 const getById = async (req, res) => {
   try {
-
     const checkBodyFields = [
       'id'
     ];
-
     if (validationModule.checkBody(req.params, checkBodyFields)) {
       const shopFound = await Shop.findOne({ _id: req.params.id }).populate('notes').populate('types')
       const productFound = await Stock.find({ shop: req.params.id })
@@ -319,7 +312,7 @@ const getById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-=======
+
 const getProductsFromFamily = async (familyName) => {
   try {
     const family = await ProductFamily.findOne({ name: familyName })
@@ -329,7 +322,6 @@ const getProductsFromFamily = async (familyName) => {
     throw new Error(error.message); 
   }
 }
->>>>>>> c262a5a480b477cca232eba1d2eaa2463d051fd4
 
 module.exports = {
   createNewShop,

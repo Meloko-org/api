@@ -10,6 +10,7 @@ const Stock = require('./Stock')
 const Tag = require('./Tag')
 const Type = require('./Type')
 const User = require('./User')
+const Note = require('./Note')
 
 module.exports = {
   Market,
@@ -24,5 +25,6 @@ module.exports = {
   Type,
   Tag,
   Type,
-  User
+  User,
+  Note
 }

@@ -1,4 +1,4 @@
-const { Shop, User, Producer } = require('../models')
+const { Shop, User, Producer, Stock, ProductFamily } = require('../models')
 const { validationModule } = require('../modules')
 const Fuse = require('fuse.js')
 
@@ -274,11 +274,17 @@ const getById = async (req, res) => {
     ];
 
     if (validationModule.checkBody(req.params, checkBodyFields)) {
-      const shopFound = await Shop.findOne({ _id: req.params.id });
+      const shopFound = await Shop.findOne({ _id: req.params.id }).populate('notes').populate('types')
+      const productFound = await Stock.find({ shop: req.params.id })
+                                      .populate({
+                                        path: 'product',
+                                        populate: { path: 'family', model: 'productFamily',
+                                        populate: { path: 'category', model: 'productcategory' }},
+                                      });
       if (!shopFound) {
         throw new Error("No shop found.");
       }
-      res.json({ result: true, shopFound});
+      res.json({ result: true, shopFound, productFound});
     } else {
       throw new Error("Missing fields.");
     }

@@ -108,6 +108,8 @@ const createNewProduct = async (req, res) => {
 }
 
 
+
+
 module.exports = {
   createNewProductCategory,
   createNewProductFamily,

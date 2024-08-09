@@ -22,6 +22,6 @@ const productFamilySchema = mongoose.Schema({
 { timestamps: true }
 );
 
-const ProductFamily = mongoose.model('productfamily', productFamilySchema);
+const ProductFamily = mongoose.model('productFamily', productFamilySchema);
 
 module.exports = ProductFamily;

@@ -19,4 +19,6 @@ router.post(
   shopController.searchShops
 );
 
+router.get('/:id', shopController.getById);
+
 module.exports = router;

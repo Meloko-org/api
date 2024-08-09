@@ -1,4 +1,5 @@
-const { Shop, User, Producer } = require('../models')
+const { Shop, User, Producer, Product, ProductFamily } = require('../models')
+const { productController } = require('../controllers')
 const { validationModule } = require('../modules')
 const Fuse = require('fuse.js')
 
@@ -197,6 +198,26 @@ const searchShops = async (req, res) => {
 
           return item
         })
+
+        
+        for (const result of searchResults) { 
+          for (const matche of result.searchData.matches) { 
+            if(matche.key === 'stocks.product.family.name') {
+              console.log("key is stocks.product.family.name")
+              const productsFromFamily = await getProductsFromFamily(matche.value)
+                if(result.searchData.relevantProducts) {
+                  console.log("relevant product exist")
+                  result.searchData.relevantProducts.push(...productsFromFamily)
+                } else {
+                  console.log("relevant product doesnt exist")
+                  result.searchData.relevantProducts = productsFromFamily
+                }
+              
+            }
+          }
+        }
+
+
       } else {
         // Add the distance between the user and the shop
         searchResults = searchResults.map(sr => {
@@ -211,7 +232,7 @@ const searchShops = async (req, res) => {
       }
 
       
-
+      searchResults.forEach(sr => console.log(sr.searchData))
       res.json({ result: true, searchResults})
     } else {
       throw new Error("Missing fields."); 
@@ -266,7 +287,44 @@ const calculateDistance = (lat1, lon1, lat2, lon2, unit) => {
   }
 }
 
+const getById = async (req, res) => {
+  try {
+    const checkBodyFields = [
+      'id'
+    ];
+    if (validationModule.checkBody(req.params, checkBodyFields)) {
+      const shopFound = await Shop.findOne({ _id: req.params.id }).populate('notes').populate('types')
+      const productFound = await Stock.find({ shop: req.params.id })
+                                      .populate({
+                                        path: 'product',
+                                        populate: { path: 'family', model: 'productFamily',
+                                        populate: { path: 'category', model: 'productcategory' }},
+                                      });
+      if (!shopFound) {
+        throw new Error("No shop found.");
+      }
+      res.json({ result: true, shopFound, productFound});
+    } else {
+      throw new Error("Missing fields.");
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getProductsFromFamily = async (familyName) => {
+  try {
+    const family = await ProductFamily.findOne({ name: familyName })
+    const products = await Product.find({ family: family._id })
+    return products
+  } catch (error) {
+    throw new Error(error.message); 
+  }
+}
+
 module.exports = {
   createNewShop,
-  searchShops
+  searchShops,
+  getById
 }

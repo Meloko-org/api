@@ -24,6 +24,32 @@ const createNewUser = async (clerkUserData) => {
 
 }
 
+/**
+ * Get user's info to store
+ * @param {*} req 
+ * @param {*} res 
+ * @returns {object} only email, lastname, firstname, avatar, favSearch and bookmarks
+ */
+const getUserInfos = async (req, res) => {
+  try {
+    const user = await User.findOne({ clerkUUID: req.auth.userId}, {
+      _id: 0,
+      email:1,
+      firstname: 1, 
+      lastname:1, 
+      avatar:1, 
+      bookmarks:1, 
+      favSearch:1
+    })
+    console.log(user)
+    res.json(user)
+  } catch (error) {
+    console.log(error)
+    return false
+  }
+}
+
 module.exports = {
-  createNewUser
+  createNewUser,
+  getUserInfos
 }

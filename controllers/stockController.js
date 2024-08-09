@@ -58,6 +58,40 @@ const updateStock = async (req, res) => {
   }
 };
 
+
+const getStocks = async (req, res) => {
+  try {
+    const checkParamsFields = ['shopId'];
+    const { shopId } = req.params;
+
+    if (!validationModule.checkParams({ shopId }, checkParamsFields)) {
+      throw new Error("Missing fields.");
+    }
+
+    const shopData = await Shop.findOne({ _id: shopId }).populate('producer');
+    const user = await User.findOne({ clerkUUID: req.auth.userId });
+
+    if (!shopData.producer.owner.equals(user._id)) {
+      throw new Error("You do not have privileges to view this stock.");
+    }
+
+    const stocks = await Stock.find({ shop: shopId })
+                              .populate('product')
+                              .populate('tags');
+
+    if (!stocks.length) {
+      return res.status(404).json({ message: 'No stock found' });
+    }
+
+    res.json({ result: true, stocks });
+  } catch (error) {
+    console.error('Error fetching stocks:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   updateStock,
+  getStocks
 };
+

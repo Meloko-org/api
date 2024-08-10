@@ -309,7 +309,8 @@ const getById = async (req, res) => {
                                       .populate({
                                         path: 'product',
                                         populate: { path: 'family', model: 'productFamily',
-                                        populate: { path: 'category', model: 'productcategory' }},
+                                        populate: { path: 'category', model: 'productcategory' }
+                                      },
                                       }); 
       
       const shop = mongooseShop.toObject()
@@ -320,18 +321,29 @@ const getById = async (req, res) => {
           let category = shop.categories.find(s => s.name === p.product.family.category.name)
           if(category) {
             category.products.push({
-              ...p.product.toObject(),
+              _id: p._id,
+              product: p.product.toObject(),
+              shop: {
+                _id: shop._id,
+                name: shop.name
+              },
               stock: p.stock,
               price: p.price
             })
           } else {
-            console.log(p.product.family.category)
+            // console.log(p.product.family.category)
             shop.categories.push({
               ...p.product.family.category.toObject(),
               products: [{
-                ...p.product.toObject(),
-                stock: p.stock,
-                price: p.price
+                  _id: p._id,
+                  product: p.product.toObject(),
+                  shop: {
+                    _id: shop._id,
+                    name: shop.name
+                  },
+                  stock: p.stock,
+                  price: p.price
+                
               }]
             })
   

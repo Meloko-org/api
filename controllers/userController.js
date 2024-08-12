@@ -24,6 +24,34 @@ const createNewUser = async (clerkUserData) => {
 
 }
 
+const getUserInfos = async (req,res) => {
+  try {
+    const user = await User.findOne({ clerkUUID: req.auth.userId}, {
+      _id: 0,
+      email: 1,
+      firstname: 1,
+      lastname: 1,
+      avatar: 1,
+      favSearch: 1,
+      bokmarks: 1
+    })
+
+    if(!user) {
+      throw new Error("No user found")
+    }
+
+    res.json(user)
+
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: error.message })
+    return
+  }
+
+
+}
+
 module.exports = {
-  createNewUser
+  createNewUser,
+  getUserInfos
 }

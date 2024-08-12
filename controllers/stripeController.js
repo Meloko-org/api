@@ -1,3 +1,5 @@
+const { User } = require('../models');
+
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // stripe.customers.create({
@@ -8,14 +10,29 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const createPaymentIntent = async (req, res) => {
   try {
-    // Use an existing Customer ID if this is a returning customer.
-    const customer = await stripe.customers.create();
+    const user = await User.findOne({ clerkUUID: req.auth.userId})
+    let customer
+    if(user.stripeUUID) {
+      customer = await stripe.customers.retrieve(user.stripeUUID);
+    } else {
+      // Use an existing Customer ID if this is a returning customer.
+      customer = await stripe.customers.create({
+        name: `${req.body.customer.firstname} ${req.body.customer.lastname}`,
+        email: user.email,
+      });
+
+      user.stripeUUID = customer.id
+      await user.save()
+    }
+
+
     const ephemeralKey = await stripe.ephemeralKeys.create(
       {customer: customer.id},
       {apiVersion: '2024-06-20'}
     );
 
     console.log("total", req.body.amount)
+    console.log(req.body)
     const paymentIntent = await stripe.paymentIntents.create({
       amount: req.body.amount * 100,
       currency: 'eur',

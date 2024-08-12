@@ -27,7 +27,7 @@ const createNewUser = async (clerkUserData) => {
 const getUserInfos = async (req,res) => {
   try {
     const user = await User.findOne({ clerkUUID: req.auth.userId}, {
-      _id: 0,
+      _id: 1,
       email: 1,
       firstname: 1,
       lastname: 1,

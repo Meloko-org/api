@@ -300,7 +300,7 @@ const getById = async (req, res) => {
       'id'
     ];
     if (validationModule.checkBody(req.params, checkBodyFields)) {
-      const mongooseShop = await Shop.findOne({ _id: req.params.id }).populate('notes').populate('types')
+      const mongooseShop = await Shop.findOne({ _id: req.params.id }).populate('notes').populate('types').populate('markets')
       if (!mongooseShop) {
         throw new Error("No shop found.");
       }
@@ -325,7 +325,9 @@ const getById = async (req, res) => {
               product: p.product.toObject(),
               shop: {
                 _id: shop._id,
-                name: shop.name
+                name: shop.name,
+                markets: shop.markets,
+                clickCollect: shop.clickCollect
               },
               stock: p.stock,
               price: p.price
@@ -339,7 +341,9 @@ const getById = async (req, res) => {
                   product: p.product.toObject(),
                   shop: {
                     _id: shop._id,
-                    name: shop.name
+                    name: shop.name,
+                    markets: shop.markets,
+                    clickCollect: shop.clickCollect
                   },
                   stock: p.stock,
                   price: p.price
@@ -368,7 +372,7 @@ const getStocksFromProductsFamily = async (familyName) => {
     const productsInStock = []
     for(const product of products) {
       // console.log(product)
-      const productInStock = await Stock.findOne({ product: product._id }).populate('product').populate('tags')                                      
+      const productInStock = await Stock.findOne({ product: product._id }).populate('product').populate('tags').populate('shop')                                      
       .populate({
         path: 'product',
         populate: { path: 'family', model: 'productFamily',

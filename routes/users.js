@@ -10,6 +10,11 @@ router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 
+/* Get user's infos if logged */
 router.get('/logged', clerkMiddlewares.isUserLogged, userController.getUserInfos)
+
+
+/* update user's info */
+router.put('/update', clerkMiddlewares.isUserLogged, userController.updateUser)
 
 module.exports = router;

@@ -16,7 +16,8 @@ const {
   typesRouter,
   tagsRouter,
   stocksRouter,
-  productsRouter
+  productsRouter,
+  stripeRouter
 } = require('./routes')
 
 var app = express();
@@ -40,5 +41,6 @@ app.use('/roles', rolesRouter)
 app.use('/types', typesRouter)
 app.use('/tags', tagsRouter)
 app.use('/products', productsRouter)
+app.use('/stripe', stripeRouter)
 
 module.exports = app;

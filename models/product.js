@@ -14,7 +14,7 @@ const productSchema = mongoose.Schema({
     },
     family: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: 'productFamilies' 
+      ref: 'productFamily' 
     }
   },
   { timestamps: true }

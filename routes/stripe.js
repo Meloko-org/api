@@ -9,4 +9,10 @@ router.post(
   stripeController.createPaymentIntent
 );
 
+router.post(
+  '/webhook', 
+  stripeController.webhookReceiver
+);
+
+
 module.exports = router;

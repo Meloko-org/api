@@ -1,12 +1,38 @@
-const { User } = require('../models');
+const { User, Order } = require('../models');
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-// stripe.customers.create({
-//   email: 'customer@example.com',
-// })
-//   .then(customer => console.log(customer.id))
-//   .catch(error => console.error(error));
+// Is called by Stripe when a payment intent succeed
+const webhookReceiver = async (req, res) => {
+  try {
+    switch(true) {
+      case (req.body.type === 'payment_intent.succeeded'):
+        const data = req.body.data.object
+        console.log(data)
+
+        if(data.status === 'succeeded') {
+          const paymentIntentId = data.id
+          const order = await Order.findOne({stripePIId: paymentIntentId})
+
+          order.isPaid = true
+          await order.save()
+        }
+        // console.log(req.body)
+
+        res.status(201).json({ result: true });
+        break;
+      default: 
+        console.log("unhandled case")
+        res.json({ result: true, message: 'unhandled case'});
+        break;
+    }
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: error.message})
+    return    
+  }
+
+}
 
 const createPaymentIntent = async (req, res) => {
   try {
@@ -26,13 +52,12 @@ const createPaymentIntent = async (req, res) => {
     }
 
 
+
     const ephemeralKey = await stripe.ephemeralKeys.create(
       {customer: customer.id},
       {apiVersion: '2024-06-20'}
     );
 
-    console.log("total", req.body.amount)
-    console.log(req.body)
     const paymentIntent = await stripe.paymentIntents.create({
       amount: req.body.amount * 100,
       currency: 'eur',
@@ -44,11 +69,14 @@ const createPaymentIntent = async (req, res) => {
       },
     });
 
+    const order = await createNewOrder(user, req.body.cart, paymentIntent.id)
+
     res.json({
       paymentIntent: paymentIntent.client_secret,
       ephemeralKey: ephemeralKey.secret,
       customer: customer.id,
-      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+      order
     });
   } catch (error) {
     console.error(error)
@@ -58,6 +86,44 @@ const createPaymentIntent = async (req, res) => {
 
 }
 
+const createNewOrder = async (user, cart, paymentIntentId) => {
+ try {
+
+    const details = cart.map(c => {
+
+      const products = c.products.map(p => {
+        return {
+          product: p.stockData._id,
+          quantity: p.quantity,
+          isConfirmed: false
+        }
+      })
+
+      const withdrawMode = c.withdrawMode
+
+      return {
+        withdrawMode,
+        products
+      }
+    })
+
+    const newOrder = new Order({
+      user: user._id,
+      details,
+      isWithdrawn: false,
+      isPaid: false,
+      stripePIId: paymentIntentId
+    })
+
+    await newOrder.save()
+
+    return newOrder
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 module.exports = {
-  createPaymentIntent
+  createPaymentIntent,
+  webhookReceiver
 }

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const productDetailSchema = mongoose.Schema({
     product: {
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'stock' 
+        ref: 'stocks' 
     },
     quantity: {
         type: Number,
@@ -16,14 +16,14 @@ const productDetailSchema = mongoose.Schema({
 });
 
 const orderDetailSchema = mongoose.Schema({
-    products: productDetailSchema,
-    withdreawMode: {
+    products: [productDetailSchema],
+    withdrawMode: {
         type: String,
         required: true
     },
     market: {
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'market' 
+        ref: 'markets' 
     }
 });
 
@@ -32,10 +32,19 @@ const orderSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'users' 
     },
-    details: orderDetailSchema,
+    details: [orderDetailSchema],
     isWithdrawn: {
         type: Boolean,
         required: true
+    },
+    isPaid: {
+        type: Boolean,
+        required: true
+    },
+    stripePIId: {
+        type: String,
+        unique: true,
+        required: true,
     }
 },
 { timestamps: true }

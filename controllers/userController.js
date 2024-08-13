@@ -7,11 +7,13 @@ const createNewUser = async (clerkUserData) => {
     const userRole = await Role.findOne({ name: 'user' })
     const email = clerkUserData.email_addresses.find(ea => ea.id === clerkUserData.primary_email_address_id).email_address
     const clerkUUID = clerkUserData.id
+    const clerkPasswordEnabled = clerkUserData.password_enabled
 
     const newUser = new User({
       email, 
       clerkUUID,
-      roles: [userRole._id]
+      roles: [userRole._id],
+      clerkPasswordEnabled
     })
 
     await newUser.save()

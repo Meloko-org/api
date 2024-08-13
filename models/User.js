@@ -42,6 +42,10 @@ const userSchema = mongoose.Schema({
         required: true,
         unique: true,
     },
+    ClerkPasswordEnabled: {
+        type: String,
+        required: true,   
+    },
     stripeUUID: {
         type: String,
         unique: true,

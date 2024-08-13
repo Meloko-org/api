@@ -34,7 +34,8 @@ const getUserInfos = async (req,res) => {
       lastname: 1,
       avatar: 1,
       favSearch: 1,
-      bokmarks: 1
+      bokmarks: 1,
+      ClerkPasswordEnabled: 1
     })
 
     const userOrders = await Order.find({ user: user._id, isPaid: true})
@@ -51,11 +52,38 @@ const getUserInfos = async (req,res) => {
     res.status(500).json({ error: error.message })
     return
   }
+}
 
 
+const updateUser = async (req, res) => {
+  try {
+    const user = await User.findOne({clerkUUID: req.auth.userId})
+
+    if(!user) {
+      throw new Error("No user found")
+    }
+
+    const email = (req.body.email) ? req.body.email : user.email
+
+    await User.updateOne({_id: user._id}, {
+      email: email,
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
+    })
+
+    await getUserInfos()
+
+
+    console.log("user updated")
+    
+  } catch (error) {
+    console.error(error)
+    return
+  }
 }
 
 module.exports = {
   createNewUser,
-  getUserInfos
+  getUserInfos,
+  updateUser
 }

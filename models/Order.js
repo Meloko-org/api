@@ -24,6 +24,10 @@ const orderDetailSchema = mongoose.Schema({
     market: {
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'markets' 
+    },
+    shop: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'shops' 
     }
 });
 

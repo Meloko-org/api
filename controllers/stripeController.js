@@ -102,6 +102,7 @@ const createNewOrder = async (user, cart, paymentIntentId) => {
       const withdrawMode = c.withdrawMode
 
       return {
+        shop: c.shop._id,
         withdrawMode,
         products
       }
@@ -116,7 +117,14 @@ const createNewOrder = async (user, cart, paymentIntentId) => {
     })
 
     await newOrder.save()
-
+    await newOrder.populate({
+      path: 'details',
+      populate: { 
+        path: 'shop', 
+        model: 'shops',
+        populate: { path: 'notes', model: 'notes' }
+      }
+    })
     return newOrder
   } catch (error) {
     console.error(error)

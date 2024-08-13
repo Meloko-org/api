@@ -42,7 +42,7 @@ const userSchema = mongoose.Schema({
         required: true,
         unique: true,
     },
-    ClerkPasswordEnabled: {
+    clerkPasswordEnabled: {
         type: String,
         required: true,   
     },

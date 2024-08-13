@@ -15,6 +15,6 @@ router.get('/logged', clerkMiddlewares.isUserLogged, userController.getUserInfos
 
 
 /* update user's info */
-router.put('/update', clerkMiddlewares.isUserLogged, userController.updateUser)
+router.put('/logged', clerkMiddlewares.isUserLogged, userController.updateUser)
 
 module.exports = router;

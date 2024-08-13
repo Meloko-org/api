@@ -63,18 +63,12 @@ const updateUser = async (req, res) => {
       throw new Error("No user found")
     }
 
-    const email = (req.body.email) ? req.body.email : user.email
+    // req.body.email && (user.email = req.body.email)
+    req.body.firstname && (user.firstname = req.body.firstname)
+    req.body.lastname && (user.lastname = req.body.lastname)
+    await user.save()
 
-    await User.updateOne({_id: user._id}, {
-      email: email,
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
-    })
-
-    await getUserInfos()
-
-
-    console.log("user updated")
+    res.json({ result: true, user: user.toObject()})
     
   } catch (error) {
     console.error(error)

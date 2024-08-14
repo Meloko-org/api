@@ -17,8 +17,8 @@ const updateStock = async (req, res) => {
       const { product, shop, stock, price, tags } = req.body;
 
       const shopData = await Shop.findOne({_id: shop}).populate('producer') 
-
-      const user = await User.findOne({ clerkUUID: req.auth.userId })
+      console.log(shopData);
+      const user = await User.findOne({ clerkUUID:"user_2kHhC1eGdQcKdPwk9hY2gz3kKHi" })
 
       // Si l'utilisateur n'est pas le proprietaire du shop concerné
       if(!shopData.producer.owner.equals(user._id)) {
@@ -58,40 +58,37 @@ const updateStock = async (req, res) => {
   }
 };
 
-
-const getStocks = async (req, res) => {
+const getStocksByShop = async (req, res) => {
   try {
-    const checkParamsFields = ['shopId'];
     const { shopId } = req.params;
 
-    if (!validationModule.checkParams({ shopId }, checkParamsFields)) {
-      throw new Error("Missing fields.");
-    }
-
-    const shopData = await Shop.findOne({ _id: shopId }).populate('producer');
-    const user = await User.findOne({ clerkUUID: req.auth.userId });
-
-    if (!shopData.producer.owner.equals(user._id)) {
-      throw new Error("You do not have privileges to view this stock.");
-    }
-
+    // Recherche
     const stocks = await Stock.find({ shop: shopId })
-                              .populate('product')
-                              .populate('tags');
+      .populate('product') 
+      .populate('tags') 
+      .populate({
+        path: 'shop',
+        populate: {
+          path: 'producer', 
+          model: 'Producer'
+        }
+      });
 
-    if (!stocks.length) {
-      return res.status(404).json({ message: 'No stock found' });
+   
+    if (!stocks) {
+      return res.status(404).json({ message: "Aucun stock trouvé pour ce magasin." });
     }
 
+    
     res.json({ result: true, stocks });
   } catch (error) {
-    console.error('Error fetching stocks:', error);
+    console.error("Error fetching stocks:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
 module.exports = {
-  updateStock,
-  getStocks
+  updateStock, 
+  getStocksByShop, 
 };
 

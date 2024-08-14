@@ -17,4 +17,10 @@ router.get('/logged', clerkMiddlewares.isUserLogged, userController.getUserInfos
 /* update user's info */
 router.put('/logged', clerkMiddlewares.isUserLogged, userController.updateUser)
 
+/* add a shop to the user's bookmarks */
+router.post('/bookmarks/:shopId', clerkMiddlewares.isUserLogged, userController.addShopToBookmark)
+
+/* remove a shop from the user's bookmarks */
+router.delete('/bookmarks/:shopId', clerkMiddlewares.isUserLogged, userController.removeShopFromBookmark)
+
 module.exports = router;

@@ -13,7 +13,7 @@ router.post(
 router.get(
   '/:shopId', 
   //clerkMiddlewares.isUserLogged, 
-  stockController.updateStock
+  stockController.getStocksByShop
 );
 
 

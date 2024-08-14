@@ -64,17 +64,22 @@ const getStocksByShop = async (req, res) => {
 
     // Recherche
     const stocks = await Stock.find({ shop: shopId })
-      .populate('product') 
+      .populate({
+        path: 'product',
+        populate: { path: 'family', model: 'productFamily',
+        populate: { path: 'category', model: 'productcategory' }},
+      }
+      ) 
       .populate('tags') 
       .populate({
         path: 'shop',
         populate: {
           path: 'producer', 
-          model: 'Producer'
+          model: 'producers'
         }
       });
 
-   
+      console.log(stocks[0].product.family)
     if (!stocks) {
       return res.status(404).json({ message: "Aucun stock trouvé pour ce magasin." });
     }

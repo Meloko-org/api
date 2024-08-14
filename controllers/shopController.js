@@ -210,13 +210,10 @@ const searchShops = async (req, res) => {
         for (const result of searchResults) { 
           for (const matche of result.searchData.matches) { 
             if(matche.key === 'stocks.product.family.name') {
-              console.log("key is stocks.product.family.name")
-              const productsFromFamily = await getStocksFromProductsFamily(matche.value)
+              const productsFromFamily = await getStocksFromProductsFamily(matche.value, result._id)
                 if(result.searchData.relevantProducts) {
-                  console.log("relevant product exist")
                   result.searchData.relevantProducts.push(...productsFromFamily)
                 } else {
-                  console.log("relevant product doesnt exist")
                   result.searchData.relevantProducts = productsFromFamily
                 }
               
@@ -237,9 +234,7 @@ const searchShops = async (req, res) => {
         // Trie les resultats par distance
         searchResults.sort((a, b) => a.searchData.distance - b.searchData.distance)
       }
-
       
-      searchResults.forEach(sr => console.log(sr.searchData))
       res.json({ result: true, searchResults})
     } else {
       throw new Error("Missing fields."); 
@@ -366,14 +361,14 @@ const getById = async (req, res) => {
   }
 };
 
-const getStocksFromProductsFamily = async (familyName) => {
+const getStocksFromProductsFamily = async (familyName, shopId) => {
   try {
     const family = await ProductFamily.findOne({ name: familyName })
     const products = await Product.find({ family: family._id })
     const productsInStock = []
     for(const product of products) {
       // console.log(product)
-      const productInStock = await Stock.findOne({ product: product._id }).populate('product').populate('tags').populate('shop')                                      
+      const productInStock = await Stock.findOne({ product: product._id, shop: shopId }).populate('product').populate('tags').populate('shop')                                      
       .populate({
         path: 'product',
         populate: { path: 'family', model: 'productFamily',

@@ -34,13 +34,27 @@ const getUserInfos = async (req,res) => {
       lastname: 1,
       avatar: 1,
       favSearch: 1,
-      bokmarks: 1,
+      bookmarks: 1,
       ClerkPasswordEnabled: 1
+    }).populate({
+      path: 'bookmarks',
+      model: 'shops',
+      populate: {
+        path: 'notes',
+        models: 'notes'
+      }
     })
 
-    const userOrders = await Order.find({ user: user._id, isPaid: true})
-    console.log("user orders")
-    console.log(userOrders)
+    const userOrders = await Order.find({ user: user._id, isPaid: true}).populate({
+      path: 'details', populate: 
+        { 
+          path: 'shop', model: 'shops', 
+          populate: {
+            path: 'notes', model: 'notes'
+          } 
+        }
+    }).sort('-createdAt')
+
     if(!user) {
       throw new Error("No user found")
     }
@@ -67,8 +81,100 @@ const updateUser = async (req, res) => {
     req.body.firstname && (user.firstname = req.body.firstname)
     req.body.lastname && (user.lastname = req.body.lastname)
     await user.save()
+    await user.populate({
+      path: 'bookmarks',
+      model: 'shops',
+      populate: {
+        path: 'notes',
+        models: 'notes'
+      }
+    })
+    const orders = await Order.find({ user: user._id, isPaid: true }).populate({
+      path: 'details', populate: 
+        { 
+          path: 'shop', model: 'shops', 
+          populate: {
+            path: 'notes', model: 'notes'
+          } 
+        }
+    }).sort('-createdAt')
 
-    res.json({ result: true, user: user.toObject()})
+    console.log(user.clerkPasswordEnabled)
+    res.json({ result: true, user: {...user.toObject(), orders}})
+    
+  } catch (error) {
+    console.error(error)
+    return
+  }
+}
+
+const addShopToBookmark = async (req, res) => {
+  try {
+    const user = await User.findOne({clerkUUID: req.auth.userId})
+
+    if(!user) {
+      throw new Error("No user found")
+    }
+
+    user.bookmarks.push(req.params.shopId)
+
+    await user.save()
+    await user.populate({
+      path: 'bookmarks',
+      model: 'shops',
+      populate: {
+        path: 'notes',
+        models: 'notes'
+      }
+    })
+    const orders = await Order.find({ user: user._id, isPaid: true }).populate({
+      path: 'details', populate: 
+        { 
+          path: 'shop', model: 'shops', 
+          populate: {
+            path: 'notes', model: 'notes'
+          } 
+        }
+    }).sort('-createdAt')
+
+    res.json({ result: true, user: {...user.toObject(), orders}})
+    
+  } catch (error) {
+    console.error(error)
+    return
+  }
+}
+
+const removeShopFromBookmark = async (req, res) => {
+  try {
+    const user = await User.findOne({clerkUUID: req.auth.userId})
+
+    if(!user) {
+      throw new Error("No user found")
+    }
+
+    user.bookmarks = user.bookmarks.filter(b => b.toString() !== req.params.shopId)
+
+    await user.save()
+    await user.populate({
+      path: 'bookmarks',
+      model: 'shops',
+      populate: {
+        path: 'notes',
+        models: 'notes'
+      }
+    })
+    const orders = await Order.find({ user: user._id, isPaid: true }).populate({
+      path: 'details', populate: 
+        { 
+          path: 'shop', model: 'shops', 
+          populate: {
+            path: 'notes', model: 'notes'
+          } 
+        }
+    }).sort('-createdAt')
+
+    res.json({ result: true, user: {...user.toObject(), orders}})
     
   } catch (error) {
     console.error(error)
@@ -79,5 +185,7 @@ const updateUser = async (req, res) => {
 module.exports = {
   createNewUser,
   getUserInfos,
-  updateUser
+  updateUser,
+  addShopToBookmark,
+  removeShopFromBookmark
 }

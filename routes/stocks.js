@@ -3,10 +3,19 @@ var router = express.Router();
 const { stockController } = require('../controllers');
 const { clerkMiddlewares } = require('../middlewares')
 
+
 router.post(
   '/update', 
-  clerkMiddlewares.isUserLogged, 
+ // clerkMiddlewares.isUserLogged, 
   stockController.updateStock
 );
 
+router.get(
+  '/:shopId', 
+  //clerkMiddlewares.isUserLogged, 
+  stockController.getStocksByShop
+);
+
+
+//clerkUUID "user_2kHhC1eGdQcKdPwk9hY2gz3kKHi"
 module.exports = router;

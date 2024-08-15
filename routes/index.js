@@ -8,6 +8,7 @@ const usersRouter = require('./users')
 const tagsRouter = require('./tags')
 const stocksRouter = require('./stocks')
 const productsRouter = require('./products')
+const stripeRouter = require('./stripe')
 
 
 module.exports = {
@@ -20,5 +21,6 @@ module.exports = {
   usersRouter,
   tagsRouter,
   stocksRouter,
-  productsRouter
+  productsRouter,
+  stripeRouter
 }

@@ -7,6 +7,7 @@ const roleController = require('./roleController')
 const tagController = require('./tagController')
 const productController = require('./productController')
 const stockController = require('./stockController')
+const stripeController = require('./stripeController')
 
 module.exports = {
   clerkController,
@@ -17,5 +18,6 @@ module.exports = {
   roleController,
   tagController,
   productController,
-  stockController 
+  stockController,
+  stripeController 
 }

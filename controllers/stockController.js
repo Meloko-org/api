@@ -17,8 +17,8 @@ const updateStock = async (req, res) => {
       const { product, shop, stock, price, tags } = req.body;
 
       const shopData = await Shop.findOne({_id: shop}).populate('producer') 
-
-      const user = await User.findOne({ clerkUUID: req.auth.userId })
+      console.log(shopData);
+      const user = await User.findOne({ clerkUUID:"user_2kHhC1eGdQcKdPwk9hY2gz3kKHi" })
 
       // Si l'utilisateur n'est pas le proprietaire du shop concerné
       if(!shopData.producer.owner.equals(user._id)) {
@@ -58,6 +58,42 @@ const updateStock = async (req, res) => {
   }
 };
 
-module.exports = {
-  updateStock,
+const getStocksByShop = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+
+    // Recherche
+    const stocks = await Stock.find({ shop: shopId })
+      .populate({
+        path: 'product',
+        populate: { path: 'family', model: 'productFamily',
+        populate: { path: 'category', model: 'productcategory' }},
+      }
+      ) 
+      .populate('tags') 
+      .populate({
+        path: 'shop',
+        populate: {
+          path: 'producer', 
+          model: 'producers'
+        }
+      });
+
+      console.log(stocks[0].product.family)
+    if (!stocks) {
+      return res.status(404).json({ message: "Aucun stock trouvé pour ce magasin." });
+    }
+
+    
+    res.json({ result: true, stocks });
+  } catch (error) {
+    console.error("Error fetching stocks:", error);
+    res.status(500).json({ message: error.message });
+  }
 };
+
+module.exports = {
+  updateStock, 
+  getStocksByShop, 
+};
+

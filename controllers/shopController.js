@@ -1,5 +1,4 @@
-const { Shop, User, Producer, Product, ProductFamily } = require('../models')
-const { productController } = require('../controllers')
+const { Shop, User, Producer, Product, ProductFamily, Stock } = require('../models')
 const { validationModule } = require('../modules')
 const Fuse = require('fuse.js')
 
@@ -137,6 +136,14 @@ const searchShops = async (req, res) => {
               foreignField: '_id',
               as: 'types'
             }
+          },
+          {
+            $lookup: {
+              from: 'notes',
+              localField: 'notes',
+              foreignField: '_id',
+              as: 'notes'
+            }
           }
       ])
 
@@ -203,13 +210,10 @@ const searchShops = async (req, res) => {
         for (const result of searchResults) { 
           for (const matche of result.searchData.matches) { 
             if(matche.key === 'stocks.product.family.name') {
-              console.log("key is stocks.product.family.name")
-              const productsFromFamily = await getProductsFromFamily(matche.value)
+              const productsFromFamily = await getStocksFromProductsFamily(matche.value, result._id)
                 if(result.searchData.relevantProducts) {
-                  console.log("relevant product exist")
                   result.searchData.relevantProducts.push(...productsFromFamily)
                 } else {
-                  console.log("relevant product doesnt exist")
                   result.searchData.relevantProducts = productsFromFamily
                 }
               
@@ -230,9 +234,7 @@ const searchShops = async (req, res) => {
         // Trie les resultats par distance
         searchResults.sort((a, b) => a.searchData.distance - b.searchData.distance)
       }
-
       
-      searchResults.forEach(sr => console.log(sr.searchData))
       res.json({ result: true, searchResults})
     } else {
       throw new Error("Missing fields."); 
@@ -293,31 +295,88 @@ const getById = async (req, res) => {
       'id'
     ];
     if (validationModule.checkBody(req.params, checkBodyFields)) {
-      const shopFound = await Shop.findOne({ _id: req.params.id }).populate('notes').populate('types')
-      const productFound = await Stock.find({ shop: req.params.id })
+      const mongooseShop = await Shop.findOne({ _id: req.params.id }).populate('notes').populate('types').populate('markets')
+      if (!mongooseShop) {
+        throw new Error("No shop found.");
+      }
+
+      const stocksFound = await Stock.find({ shop: mongooseShop._id })
                                       .populate({
                                         path: 'product',
                                         populate: { path: 'family', model: 'productFamily',
-                                        populate: { path: 'category', model: 'productcategory' }},
-                                      });
-      if (!shopFound) {
-        throw new Error("No shop found.");
+                                        populate: { path: 'category', model: 'productcategory' }
+                                      },
+                                      }); 
+      
+      const shop = mongooseShop.toObject()
+      shop.categories = []
+
+      if(stocksFound) {
+        stocksFound.forEach(p => {
+          let category = shop.categories.find(s => s.name === p.product.family.category.name)
+          if(category) {
+            category.products.push({
+              _id: p._id,
+              product: p.product.toObject(),
+              shop: {
+                _id: shop._id,
+                name: shop.name,
+                markets: shop.markets,
+                clickCollect: shop.clickCollect
+              },
+              stock: p.stock,
+              price: p.price
+            })
+          } else {
+            // console.log(p.product.family.category)
+            shop.categories.push({
+              ...p.product.family.category.toObject(),
+              products: [{
+                  _id: p._id,
+                  product: p.product.toObject(),
+                  shop: {
+                    _id: shop._id,
+                    name: shop.name,
+                    markets: shop.markets,
+                    clickCollect: shop.clickCollect
+                  },
+                  stock: p.stock,
+                  price: p.price
+                
+              }]
+            })
+  
+          }
+        })
       }
-      res.json({ result: true, shopFound, productFound});
+
+      res.json({ result: true, shop});
     } else {
       throw new Error("Missing fields.");
     }
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error.message });
+    return
   }
 };
 
-const getProductsFromFamily = async (familyName) => {
+const getStocksFromProductsFamily = async (familyName, shopId) => {
   try {
     const family = await ProductFamily.findOne({ name: familyName })
     const products = await Product.find({ family: family._id })
-    return products
+    const productsInStock = []
+    for(const product of products) {
+      // console.log(product)
+      const productInStock = await Stock.findOne({ product: product._id, shop: shopId }).populate('product').populate('tags').populate('shop')                                      
+      .populate({
+        path: 'product',
+        populate: { path: 'family', model: 'productFamily',
+        populate: { path: 'category', model: 'productcategory' }},
+      });
+      productInStock && productsInStock.push(productInStock)
+    }
+    return productsInStock
   } catch (error) {
     throw new Error(error.message); 
   }

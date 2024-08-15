@@ -42,6 +42,14 @@ const userSchema = mongoose.Schema({
         required: true,
         unique: true,
     },
+    clerkPasswordEnabled: {
+        type: String,
+        required: true,   
+    },
+    stripeUUID: {
+        type: String,
+        unique: true,
+    },
     roles: { 
       type: [mongoose.Schema.Types.ObjectId], 
       ref: 'roles', 

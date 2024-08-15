@@ -1,5 +1,19 @@
 const mongoose = require('mongoose');
 
+const weightSchema = mongoose.Schema({
+  unit: {
+    type: String, 
+    required: true,
+    unique: true 
+  },
+  measurement: { 
+    type: mongoose.Types.Decimal128, 
+    required: true 
+  }
+},
+{ timestamps: true }
+);
+
 const productSchema = mongoose.Schema({
     name: {
       type: String, 
@@ -14,7 +28,11 @@ const productSchema = mongoose.Schema({
     },
     family: { 
       type: mongoose.Schema.Types.ObjectId, 
-      ref: 'productFamilies' 
+      ref: 'productFamily' 
+    },
+    weight: {
+      type: weightSchema,
+      require: true
     }
   },
   { timestamps: true }

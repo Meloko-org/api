@@ -370,7 +370,14 @@ const getStocksFromProductsFamily = async (familyName, shopId) => {
     const productsInStock = []
     for(const product of products) {
       // console.log(product)
-      const productInStock = await Stock.findOne({ product: product._id, shop: shopId }).populate('product').populate('tags').populate('shop')                                      
+      const productInStock = await Stock.findOne({ product: product._id, shop: shopId }).populate('product').populate('tags').populate({
+        path: 'shop',
+        model: 'shops',
+        populate: {
+          path: 'markets',
+          model: 'markets'
+        }
+      })                                      
       .populate({
         path: 'product',
         populate: { path: 'family', model: 'productFamily',

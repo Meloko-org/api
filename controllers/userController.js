@@ -46,14 +46,32 @@ const getUserInfos = async (req,res) => {
     })
 
     const userOrders = await Order.find({ user: user._id, isPaid: true}).populate({
-      path: 'details', populate: 
-        { 
+      path: 'details', 
+      populate: 
+        [{ 
+          path: 'products', 
+          populate: {
+            path: 'product', model: 'stocks',
+            populate: {
+              path: 'product',
+              model: 'products',
+              populate: { 
+                path: 'family',
+                model: 'productFamily' 
+              }
+            }
+          }
+
+        }, {
           path: 'shop', model: 'shops', 
           populate: {
             path: 'notes', model: 'notes'
-          } 
-        }
+          }
+        }]
+      
     }).sort('-createdAt')
+
+    console.log(userOrders[0].details)
 
     if(!user) {
       throw new Error("No user found")
@@ -89,18 +107,35 @@ const updateUser = async (req, res) => {
         models: 'notes'
       }
     })
-    const orders = await Order.find({ user: user._id, isPaid: true }).populate({
-      path: 'details', populate: 
-        { 
+
+    const userOrders = await Order.find({ user: user._id, isPaid: true}).populate({
+      path: 'details', 
+      populate: 
+        [{ 
+          path: 'products', 
+          populate: {
+            path: 'product', model: 'stocks',
+            populate: {
+              path: 'product',
+              model: 'products',
+              populate: { 
+                path: 'family',
+                model: 'productFamily' 
+              }
+            }
+          }
+
+        }, {
           path: 'shop', model: 'shops', 
           populate: {
             path: 'notes', model: 'notes'
-          } 
-        }
+          }
+        }]
+      
     }).sort('-createdAt')
 
     console.log(user.clerkPasswordEnabled)
-    res.json({ result: true, user: {...user.toObject(), orders}})
+    res.json({ result: true, user: {...user.toObject(), orders: userOrders}})
     
   } catch (error) {
     console.error(error)
@@ -127,17 +162,33 @@ const addShopToBookmark = async (req, res) => {
         models: 'notes'
       }
     })
-    const orders = await Order.find({ user: user._id, isPaid: true }).populate({
-      path: 'details', populate: 
-        { 
+    const userOrders = await Order.find({ user: user._id, isPaid: true}).populate({
+      path: 'details', 
+      populate: 
+        [{ 
+          path: 'products', 
+          populate: {
+            path: 'product', model: 'stocks',
+            populate: {
+              path: 'product',
+              model: 'products',
+              populate: { 
+                path: 'family',
+                model: 'productFamily' 
+              }
+            }
+          }
+
+        }, {
           path: 'shop', model: 'shops', 
           populate: {
             path: 'notes', model: 'notes'
-          } 
-        }
+          }
+        }]
+      
     }).sort('-createdAt')
 
-    res.json({ result: true, user: {...user.toObject(), orders}})
+    res.json({ result: true, user: {...user.toObject(), orders: userOrders}})
     
   } catch (error) {
     console.error(error)
@@ -164,17 +215,33 @@ const removeShopFromBookmark = async (req, res) => {
         models: 'notes'
       }
     })
-    const orders = await Order.find({ user: user._id, isPaid: true }).populate({
-      path: 'details', populate: 
-        { 
+    const userOrders = await Order.find({ user: user._id, isPaid: true}).populate({
+      path: 'details', 
+      populate: 
+        [{ 
+          path: 'products', 
+          populate: {
+            path: 'product', model: 'stocks',
+            populate: {
+              path: 'product',
+              model: 'products',
+              populate: { 
+                path: 'family',
+                model: 'productFamily' 
+              }
+            }
+          }
+
+        }, {
           path: 'shop', model: 'shops', 
           populate: {
             path: 'notes', model: 'notes'
-          } 
-        }
+          }
+        }]
+      
     }).sort('-createdAt')
 
-    res.json({ result: true, user: {...user.toObject(), orders}})
+    res.json({ result: true, user: {...user.toObject(), orders: userOrders}})
     
   } catch (error) {
     console.error(error)

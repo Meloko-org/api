@@ -180,10 +180,12 @@ const searchShops = async (req, res) => {
         
         // Define additional fuseSearch options
         const searchOptions = {
-          minMatchCharLength: 2,
+          minMatchCharLength: 3,
           includeScore: true,
           includeMatches: true,
-          keys: searchKeys
+          keys: searchKeys,
+          shouldSort: true
+          // threshold: 0.6
         }
 
         // Instantiate a Fuse class

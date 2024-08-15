@@ -180,10 +180,12 @@ const searchShops = async (req, res) => {
         
         // Define additional fuseSearch options
         const searchOptions = {
-          minMatchCharLength: 2,
+          minMatchCharLength: 3,
           includeScore: true,
           includeMatches: true,
-          keys: searchKeys
+          keys: searchKeys,
+          shouldSort: true
+          // threshold: 0.6
         }
 
         // Instantiate a Fuse class
@@ -301,12 +303,16 @@ const getById = async (req, res) => {
       }
 
       const stocksFound = await Stock.find({ shop: mongooseShop._id })
-                                      .populate({
-                                        path: 'product',
-                                        populate: { path: 'family', model: 'productFamily',
-                                        populate: { path: 'category', model: 'productcategory' }
-                                      },
-                                      }); 
+                                      .populate([{
+                                          path: 'product',
+                                          populate: { path: 'family', model: 'productFamily',
+                                          populate: { path: 'category', model: 'productcategory' }
+                                        }},
+                                        {
+                                          path: 'tags',
+                                          model: 'tags'
+                                        }
+                                      ]); 
       
       const shop = mongooseShop.toObject()
       shop.categories = []
@@ -325,7 +331,8 @@ const getById = async (req, res) => {
                 clickCollect: shop.clickCollect
               },
               stock: p.stock,
-              price: p.price
+              price: p.price,
+              tags: p.tags
             })
           } else {
             // console.log(p.product.family.category)
@@ -341,7 +348,8 @@ const getById = async (req, res) => {
                     clickCollect: shop.clickCollect
                   },
                   stock: p.stock,
-                  price: p.price
+                  price: p.price,
+                  tags: p.tags
                 
               }]
             })
@@ -368,12 +376,23 @@ const getStocksFromProductsFamily = async (familyName, shopId) => {
     const productsInStock = []
     for(const product of products) {
       // console.log(product)
-      const productInStock = await Stock.findOne({ product: product._id, shop: shopId }).populate('product').populate('tags').populate('shop')                                      
+      const productInStock = await Stock.findOne({ product: product._id, shop: shopId }).populate('product').populate('tags').populate({
+        path: 'shop',
+        model: 'shops',
+        populate: {
+          path: 'markets',
+          model: 'markets'
+        }
+      })                                      
       .populate({
         path: 'product',
         populate: { path: 'family', model: 'productFamily',
         populate: { path: 'category', model: 'productcategory' }},
-      });
+      })
+      .populate({
+          path: 'tags',
+          model: 'tags'
+        });
       productInStock && productsInStock.push(productInStock)
     }
     return productsInStock

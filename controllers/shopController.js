@@ -210,9 +210,12 @@ const searchShops = async (req, res) => {
 
         
         for (const result of searchResults) { 
+          const matchedKeys = []
           for (const matche of result.searchData.matches) { 
-            if(matche.key === 'stocks.product.family.name') {
+            if(matche.key === 'stocks.product.family.name' && !matchedKeys.includes(matche.value)) {
+              matchedKeys.push(matche.value)
               const productsFromFamily = await getStocksFromProductsFamily(matche.value, result._id)
+              
                 if(result.searchData.relevantProducts) {
                   result.searchData.relevantProducts.push(...productsFromFamily)
                 } else {
@@ -316,8 +319,8 @@ const getById = async (req, res) => {
       
       const shop = mongooseShop.toObject()
       shop.categories = []
-
-      if(stocksFound) {
+                                      console.log(stocksFound)
+      if(stocksFound.length > 0) {
         stocksFound.forEach(p => {
           let category = shop.categories.find(s => s.name === p.product.family.category.name)
           if(category) {

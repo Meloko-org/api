@@ -1,7 +1,5 @@
 var express = require('express');
 var router = express.Router();
-const { userController } = require('../controllers')
-const { clerkMiddlewares } = require('../middlewares')
 
 const { userController } = require('../controllers')
 const { clerkMiddlewares } = require('../middlewares')

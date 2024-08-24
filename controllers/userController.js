@@ -45,9 +45,7 @@ const getUserInfos = async (req, res) => {
       }
     })
 
-    let userOrders = await Order.find({ user: user._id, isPaid: true})
-    console.log(userOrders)
-    userOrders.length > 0 && userOrders.populate({
+    const userOrders = await Order.find({ user: user._id, isPaid: true}).populate({
       path: 'details', 
       populate: 
         [{ 
@@ -72,8 +70,6 @@ const getUserInfos = async (req, res) => {
         }]
       
     }).sort('-createdAt')
-
-    // console.log(userOrders[0].details)
 
     const producer = await Producer.findOne({owner: user._id})
 

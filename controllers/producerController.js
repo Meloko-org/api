@@ -82,7 +82,7 @@ const searchProducer = async (req, res) => {
 const updateProducer = async (req,res) => {
 
   try {
-    
+    console.log(req.auth.userId)
     const user = await User.findOne({clerkUUID: req.auth.userId})
 
     if(!user) {
@@ -112,16 +112,16 @@ const updateProducer = async (req,res) => {
       req.body.siren && (producer.siren = req.body.siren)
       req.body.iban && (producer.iban = req.body.iban)
       req.body.bic && (producer.bic = req.body.bic)
-      // req.body.address && (producer.address = req.body.address)
+      req.body.address && (producer.address = req.body.address)
 
       console.log("producer: ", producer)
 
       await producer.save()
 
-      res.json({result: true})
+      // res.json({result: true})
 
       /* récupérer les nouvelles infos pour mettre à jour le store */
-      // const usertoStore = await userController.getUserInfos()
+      await userController.getUserInfos(req, res)
       // res.json(usertoStore)
       
     } else {

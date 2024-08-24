@@ -1,20 +1,58 @@
 const { ClerkExpressWithAuth } = require("@clerk/clerk-sdk-node");
 const { Webhook } = require("svix");
-// const { createClerkClient, verifyToken } = require('@clerk/backend')
+const { createClerkClient, verifyToken } = require('@clerk/backend')
 
 // Check the Bearer Token supplied by the frontend
 const isUserLogged = async (req, res, next) => {
   try {
-    // Use Clerk's built-in middleware
-    ClerkExpressWithAuth()(req, res, (err) => {
-      // if req.auth.userId is null
-      if (!req.auth.userId) {
-        return res.status(401).json({ message: 'Unauthorized.' });
-      }
+
+    // const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+
+    // const request = new Request(fullUrl, {
+    //   method: req.method,
+    //   headers: req.headers,
+    //   body: req.method !== 'GET' && req.method !== 'HEAD' ? req.body : undefined
+    // });
+
+    // const clerkClient = await createClerkClient({
+    //   secretKey: process.env.CLERK_SECRET_KEY,
+    //   publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+    // });
   
-      // If authenticated, proceed to the controller
+  
+    // const { isSignedIn } = await clerkClient.authenticateRequest(request, {
+    //   jwtKey: process.env.CLERK_JWT_KEY
+    // });
+    
+    // console.log(isSignedIn)
+    const bearerToken = req.headers.authorization
+    const JwtToken = bearerToken.replace('Bearer ', '')
+    const payload = await verifyToken(JwtToken, {
+      jwtKey: process.env.CLERK_JWT_KEY,
+      debug: true 
+    })
+    // console.log(payload)
+    // console.log(JwtToken)
+
+    if(payload.sub) {
+      req.auth = { userId: payload.sub }
       next();
-    });
+    } else {
+      console.error('Unauthorized.')
+      return res.status(401).json({ message: 'Unauthorized.' });
+    }
+
+    // // Use Clerk's built-in middleware
+    // ClerkExpressWithAuth()(req, res, (err) => {
+    //   // if req.auth.userId is null
+    //   if (!req.auth.userId) {
+    //     console.error('Unauthorized.')
+    //     return res.status(401).json({ message: 'Unauthorized.' });
+    //   }
+  
+    //   // If authenticated, proceed to the controller
+    //   next();
+    // });
   } catch (error) {
     console.error(error)
   }

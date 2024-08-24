@@ -134,7 +134,7 @@ const updateUser = async (req, res) => {
       
     }).sort('-createdAt')
 
-    res.json({ result: true, user: {...user.toObject(), orders: userOrders}})
+    res.json({...user.toObject(), orders: userOrders})
     
   } catch (error) {
     console.error(error)

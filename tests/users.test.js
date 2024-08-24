@@ -5,9 +5,10 @@ const mongoose = require('mongoose');
 const { toBeOneOf } = require('jest-extended');
 expect.extend({ toBeOneOf });
 
-it('GET /logged', async () => {
+const testUUID = 'user_2kHhC1eGdQcKdPwk9hY2gz3kKHi'
+
+it('GET /logged - Retreive user data', async () => {
     const testKey = await getTestingKey()
-    const testUUID = 'user_2kYqqKeWxa4XxjAR4NkoFbM4DPv'
     const res = await request(app).get(`/users/logged?__clerk_testing_token=${testKey}&__clerk_testing_user_uuid=${testUUID}`)
     expect(res.statusCode).toBe(200)
 
@@ -42,6 +43,30 @@ it('GET /logged', async () => {
         __v: expect.any(Number)
       }
     })
+})
+
+it('PUT /logged - Update firstname and lastname of user', async () => {
+  const testKey = await getTestingKey()
+
+  const resBefore = await request(app).get(`/users/logged?__clerk_testing_token=${testKey}&__clerk_testing_user_uuid=${testUUID}`)
+
+  const res = await request(app).put(`/users/logged?__clerk_testing_token=${testKey}&__clerk_testing_user_uuid=${testUUID}`).send({
+    firstname: 'test',
+    lastname: 'test'
+  })
+
+  expect(res.statusCode).toBe(200)
+  expect(res.body.firstname).toEqual('test')
+  expect(res.body.lastname).toEqual('test')
+
+  const resAfter = await request(app).put(`/users/logged?__clerk_testing_token=${testKey}&__clerk_testing_user_uuid=${testUUID}`).send({
+    firstname: resBefore.body.firstname,
+    lastname: resBefore.body.lastname
+  })
+
+  expect(resAfter.statusCode).toBe(200)
+  expect(resAfter.body.firstname).toEqual(resBefore.body.firstname)
+  expect(resAfter.body.lastname).toEqual(resBefore.body.lastname)
 })
 
 afterAll(() => {

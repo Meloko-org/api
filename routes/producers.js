@@ -7,4 +7,6 @@ router.post('/', clerkMiddlewares.isUserLogged, producerController.createNewProd
 
 router.get('/:producer', producerController.searchProducer);
 
+router.put('/update', clerkMiddlewares.isUserLogged, producerController.updateProducer)
+
 module.exports = router;

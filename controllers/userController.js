@@ -1,4 +1,4 @@
-const { User, Role, Order } = require('../models')
+const { User, Role, Order, Producer } = require('../models')
 
 // Create a new user in the database using data provided by a Clerk webhook
 const createNewUser = async (clerkUserData) => {
@@ -73,11 +73,15 @@ const getUserInfos = async (req,res) => {
       
     }).sort('-createdAt')
 
+    // console.log(userOrders[0].details)
+
+    const producer = await Producer.findOne({owner: user._id})
+
     if(!user) {
       throw new Error("No user found")
     }
 
-    res.json({ ...user.toObject(), orders: userOrders })
+    res.json({ ...user.toObject(), orders: userOrders, producer: producer })
 
   } catch (error) {
     console.error(error)

@@ -1,6 +1,9 @@
 const Producer = require('../models/Producer')
 const User = require('../models/User')
 const { validationModule } = require('../modules')
+const  userController  = require('./userController')
+
+
 
 const createNewProducer = async (req, res) => {
   try {
@@ -39,6 +42,9 @@ const createNewProducer = async (req, res) => {
       await newProducer.save()
 
       res.json({ result: true, producer: newProducer })
+
+      /* récupérer les nouvelles infos pour mettre à jourle store */
+      
     } else {
       throw new Error("Missing fields."); 
     }
@@ -73,7 +79,63 @@ const searchProducer = async (req, res) => {
 };
 
 
+const updateProducer = async (req,res) => {
+
+  try {
+    
+    const user = await User.findOne({clerkUUID: req.auth.userId})
+
+    if(!user) {
+      throw new Error("No user found")
+    }
+
+    const producer = await Producer.findOne({owner: user._id})
+
+    if(!producer) {
+      throw new Error("No producer found")
+    }
+
+    console.log(producer)
+    console.log("socialReason: ", req.body.socialReason)
+
+    // define the fields coming from req.body to check
+    const checkBodyFields = [
+      'socialReason',
+      'siren',
+      'iban',
+      'bic',
+      'address'
+    ]
+
+    if (validationModule.checkBody(req.body, checkBodyFields)) {
+      req.body.socialReason && (producer.socialReason = req.body.socialReason)
+      req.body.siren && (producer.siren = req.body.siren)
+      req.body.iban && (producer.iban = req.body.iban)
+      req.body.bic && (producer.bic = req.body.bic)
+      // req.body.address && (producer.address = req.body.address)
+
+      console.log("producer: ", producer)
+
+      await producer.save()
+
+      res.json({result: true})
+
+      /* récupérer les nouvelles infos pour mettre à jour le store */
+      // const usertoStore = await userController.getUserInfos()
+      // res.json(usertoStore)
+      
+    } else {
+      throw new Error("Missing fields.");
+    }
+
+  } catch (error) {
+    
+  }
+}
+
+
 module.exports = {
   createNewProducer,
-  searchProducer
+  searchProducer,
+  updateProducer,
 }

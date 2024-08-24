@@ -45,7 +45,9 @@ const getUserInfos = async (req,res) => {
       }
     })
 
-    const userOrders = await Order.find({ user: user._id, isPaid: true}).populate({
+    let userOrders = await Order.find({ user: user._id, isPaid: true})
+    console.log(userOrders)
+    userOrders.length > 0 && userOrders.populate({
       path: 'details', 
       populate: 
         [{ 
@@ -70,8 +72,6 @@ const getUserInfos = async (req,res) => {
         }]
       
     }).sort('-createdAt')
-
-    console.log(userOrders[0].details)
 
     if(!user) {
       throw new Error("No user found")
@@ -134,7 +134,6 @@ const updateUser = async (req, res) => {
       
     }).sort('-createdAt')
 
-    console.log(user.clerkPasswordEnabled)
     res.json({ result: true, user: {...user.toObject(), orders: userOrders}})
     
   } catch (error) {

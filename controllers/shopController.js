@@ -319,7 +319,7 @@ const getById = async (req, res) => {
       
       const shop = mongooseShop.toObject()
       shop.categories = []
-                                      console.log(stocksFound)
+
       if(stocksFound.length > 0) {
         stocksFound.forEach(p => {
           let category = shop.categories.find(s => s.name === p.product.family.category.name)
@@ -338,7 +338,6 @@ const getById = async (req, res) => {
               tags: p.tags
             })
           } else {
-            // console.log(p.product.family.category)
             shop.categories.push({
               ...p.product.family.category.toObject(),
               products: [{
@@ -378,7 +377,7 @@ const getStocksFromProductsFamily = async (familyName, shopId) => {
     const products = await Product.find({ family: family._id })
     const productsInStock = []
     for(const product of products) {
-      // console.log(product)
+
       const productInStock = await Stock.findOne({ product: product._id, shop: shopId }).populate('product').populate('tags').populate({
         path: 'shop',
         model: 'shops',

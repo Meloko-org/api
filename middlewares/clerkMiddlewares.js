@@ -7,7 +7,6 @@ const isUserLogged = async (req, res, next) => {
   try {
     // Use Clerk's built-in middleware
     ClerkExpressWithAuth()(req, res, (err) => {
-      console.log(req.auth)
       // if req.auth.userId is null
       if (!req.auth.userId) {
         return res.status(401).json({ message: 'Unauthorized.' });

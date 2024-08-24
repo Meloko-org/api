@@ -13,26 +13,22 @@ const webhookReceiver = async (req, res) => {
         return
       }
       
-      console.log("user created")
       res.status(201).json({ result: true });
       break;
     case (req.body.type === 'user.deleted'):
       userId = req.body.data.id
-      console.log("user deleted")
       res.json({ result: true, userId});
       break;
     case (req.body.type === 'user.updated'):
       userId = req.body.data.id
-      console.log("user updated")
       res.json({ result: true, userId});
       break;
     case (req.body.type === 'user.createdAtEdge'):
       userId = req.body.data.id
-      console.log("user createdAtEdge")
       res.json({ result: true, userId});
       break;
     default: 
-      console.log("unhandled case")
+      console.error("unhandled case")
       res.json({ result: true, message: 'unhandled case'});
       break;
   }

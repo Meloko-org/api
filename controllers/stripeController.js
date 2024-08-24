@@ -8,7 +8,6 @@ const webhookReceiver = async (req, res) => {
     switch(true) {
       case (req.body.type === 'payment_intent.succeeded'):
         const data = req.body.data.object
-        console.log(data)
 
         if(data.status === 'succeeded') {
           const paymentIntentId = data.id
@@ -17,12 +16,11 @@ const webhookReceiver = async (req, res) => {
           order.isPaid = true
           await order.save()
         }
-        // console.log(req.body)
 
         res.status(201).json({ result: true });
         break;
       default: 
-        console.log("unhandled case")
+        console.error("unhandled case")
         res.json({ result: true, message: 'unhandled case'});
         break;
     }

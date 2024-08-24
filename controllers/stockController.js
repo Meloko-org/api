@@ -11,13 +11,12 @@ const updateStock = async (req, res) => {
       'price',
       'tags'
     ];
-    console.log(req.body)
     // faire une verification 
     if (validationModule.checkBody(req.body, checkBodyFields)) {
       const { product, shop, stock, price, tags } = req.body;
 
       const shopData = await Shop.findOne({_id: shop}).populate('producer') 
-      console.log(shopData);
+
       const user = await User.findOne({ clerkUUID:"user_2kHhC1eGdQcKdPwk9hY2gz3kKHi" })
 
       // Si l'utilisateur n'est pas le proprietaire du shop concerné
@@ -79,7 +78,6 @@ const getStocksByShop = async (req, res) => {
         }
       });
 
-      console.log(stocks[0].product.family)
     if (!stocks) {
       return res.status(404).json({ message: "Aucun stock trouvé pour ce magasin." });
     }

@@ -5,7 +5,7 @@ on:
     branches:
       - dev
 jobs:
-  build:
+  ci-testing:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2

@@ -10,12 +10,15 @@ const isUserLogged = async (req, res, next) => {
 
     if(req.query.__clerk_testing_token && req.query.__clerk_testing_user_uuid) {
       
-      // const testKey = await getTestingKey()
-      // if(req.query.__clerk_testing_token === testKey) {
-      //   req.auth = { userId: req.query.__clerk_testing_user_uuid }
-      //   next()
+      const testKey = await getTestingKey()
+      if(req.query.__clerk_testing_token === testKey) {
+        req.auth = { userId: req.query.__clerk_testing_user_uuid }
+        next()
       
-      // }
+      } else {
+        console.error('Unauthorized.')
+        return res.status(401).json({ message: 'Unauthorized.' });
+      }
     } else {
     // const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
 

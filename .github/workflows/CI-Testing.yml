@@ -8,4 +8,6 @@ jobs:
     - name: Install modules
       run: yarn
     - name: Run tests
+      env:
+        CONNECTION_STRING: ${{ secrets.CONNECTION_STRING }}
       run: yarn jest

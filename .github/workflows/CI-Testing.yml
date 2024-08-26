@@ -12,4 +12,3 @@ jobs:
       env:
         CONNECTION_STRING: ${{ secrets.CONNECTION_STRING }}
         CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-      

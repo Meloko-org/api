@@ -1,4 +1,4 @@
-const { Shop, User, Producer, Product, ProductFamily, Stock } = require('../models')
+const { Shop, User, Producer, Product, ProductFamily, Stock, Type } = require('../models')
 const { validationModule } = require('../modules')
 const Fuse = require('fuse.js')
 
@@ -25,7 +25,7 @@ const createNewShop = async (req, res) => {
       } 
 
       // Create and save the new shop
-      const { name, description, address, siret, types } = req.body
+      const { name, description, address, siret, types, logo } = req.body
 
       const newShop = new Shop({
         producer: producer._id,
@@ -33,7 +33,15 @@ const createNewShop = async (req, res) => {
         description,
         siret,
         address,
-        types
+        types,
+        photos: [],
+        video: [],
+        isOpen: false,
+        reopenDate: null,
+        markets: [],
+        notes: [],
+        clickCollect: null,
+        logo
       })
 
       await newShop.save()
@@ -299,6 +307,7 @@ const getById = async (req, res) => {
     const checkBodyFields = [
       'id'
     ];
+    
     if (validationModule.checkBody(req.params, checkBodyFields)) {
       const mongooseShop = await Shop.findOne({ _id: req.params.id }).populate('notes').populate('types').populate('markets')
       if (!mongooseShop) {
@@ -403,8 +412,10 @@ const getStocksFromProductsFamily = async (familyName, shopId) => {
   }
 }
 
+
+
 module.exports = {
   createNewShop,
   searchShops,
-  getById
+  getById,
 }

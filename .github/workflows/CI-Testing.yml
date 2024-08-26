@@ -7,7 +7,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install modules
       run: yarn
+    - run: echo ${{ secrets.CONNECTION_STRING }}
     - name: Run tests
+      run: yarn jest
       env:
         CONNECTION_STRING: ${{ secrets.CONNECTION_STRING }}
-      run: yarn jest
+      

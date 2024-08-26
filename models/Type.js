@@ -1,19 +1,20 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const typeSchema = mongoose.Schema({
-    name: { 
-      type: String, 
-      required: true 
+const typeSchema = mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
     },
-    image: { 
-      type: String 
+    image: {
+      type: String,
     },
-    description: { 
-      type: String 
-    }
+    description: {
+      type: String,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
-  
-  const Type = mongoose.model('types', typeSchema);
-  module.exports = Type;
+
+const Type = mongoose.model("types", typeSchema);
+module.exports = Type;

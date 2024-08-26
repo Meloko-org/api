@@ -1,18 +1,14 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
-const { clerkMiddlewares } = require('../middlewares')
-const { stripeController } = require('../controllers')
+const { clerkMiddlewares } = require("../middlewares");
+const { stripeController } = require("../controllers");
 
 router.post(
-  '/paymentIntent',   
-  clerkMiddlewares.isUserLogged, 
-  stripeController.createPaymentIntent
+  "/paymentIntent",
+  clerkMiddlewares.isUserLogged,
+  stripeController.createPaymentIntent,
 );
 
-router.post(
-  '/webhook', 
-  stripeController.webhookReceiver
-);
-
+router.post("/webhook", stripeController.webhookReceiver);
 
 module.exports = router;

@@ -1,40 +1,39 @@
-const mongoose = require('mongoose');
-const addressSchema = require('./Address')
+const mongoose = require("mongoose");
+const addressSchema = require("./Address");
 
-const producerSchema = mongoose.Schema({
-    socialReason: { 
-      type: String, 
-      required: true 
-    },
-    siren: { 
-      type: String, 
+const producerSchema = mongoose.Schema(
+  {
+    socialReason: {
+      type: String,
       required: true,
-      unique: true 
     },
-    owner: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'user', 
-      required: true 
+    siren: {
+      type: String,
+      required: true,
+      unique: true,
     },
-    iban: { 
-      type: String, 
-      required: true, 
-      length: 34 
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
     },
-    bic: { 
-      type: String, 
-      required: true, 
-      length: 11 
+    iban: {
+      type: String,
+      required: true,
+      length: 34,
     },
-    address: { 
-      type: addressSchema, 
-      required: true, 
-    }
+    bic: {
+      type: String,
+      required: true,
+      length: 11,
+    },
+    address: {
+      type: addressSchema,
+      required: true,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
-  
-  const Producer = mongoose.model('producers', producerSchema);
-  module.exports = Producer;
-  
-  
+
+const Producer = mongoose.model("producers", producerSchema);
+module.exports = Producer;

@@ -1,7 +1,7 @@
-const clerkMiddlewares = require('./clerkMiddlewares')
-const rolesMiddleswares = require('./rolesMiddlewares')
+const clerkMiddlewares = require("./clerkMiddlewares");
+const rolesMiddleswares = require("./rolesMiddlewares");
 
 module.exports = {
   clerkMiddlewares,
-  rolesMiddleswares
-}
+  rolesMiddleswares,
+};

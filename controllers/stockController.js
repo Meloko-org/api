@@ -1,26 +1,21 @@
-const { Stock, Shop, User } = require('../models');
-const validationModule = require('../modules/validation');
+const { Stock, Shop, User } = require("../models");
+const validationModule = require("../modules/validation");
 
 const updateStock = async (req, res) => {
   try {
-    
-    const checkBodyFields = [
-      'product',
-      'shop',
-      'stock',
-      'price',
-      'tags'
-    ];
-    // faire une verification 
+    const checkBodyFields = ["product", "shop", "stock", "price", "tags"];
+    // faire une verification
     if (validationModule.checkBody(req.body, checkBodyFields)) {
       const { product, shop, stock, price, tags } = req.body;
 
-      const shopData = await Shop.findOne({_id: shop}).populate('producer') 
+      const shopData = await Shop.findOne({ _id: shop }).populate("producer");
 
-      const user = await User.findOne({ clerkUUID:"user_2kHhC1eGdQcKdPwk9hY2gz3kKHi" })
+      const user = await User.findOne({
+        clerkUUID: "user_2kHhC1eGdQcKdPwk9hY2gz3kKHi",
+      });
 
       // Si l'utilisateur n'est pas le proprietaire du shop concerné
-      if(!shopData.producer.owner.equals(user._id)) {
+      if (!shopData.producer.owner.equals(user._id)) {
         throw new Error("You do not have privileges to change this stock.");
       }
 
@@ -34,19 +29,17 @@ const updateStock = async (req, res) => {
           shop,
           stock,
           price,
-          tags
-        })
-
+          tags,
+        });
       } else {
         // sinon mettre à jour le stock
         existingStock.stock = stock !== undefined ? stock : existingStock.stock;
         existingStock.price = price !== undefined ? price : existingStock.price;
         existingStock.tags = tags !== undefined ? tags : existingStock.tags;
-
       }
 
       await existingStock.save();
-    
+
       res.json({ result: true, stock: existingStock });
     } else {
       throw new Error("Missing fields.");
@@ -64,25 +57,28 @@ const getStocksByShop = async (req, res) => {
     // Recherche
     const stocks = await Stock.find({ shop: shopId })
       .populate({
-        path: 'product',
-        populate: { path: 'family', model: 'productFamily',
-        populate: { path: 'category', model: 'productcategory' }},
-      }
-      ) 
-      .populate('tags') 
-      .populate({
-        path: 'shop',
+        path: "product",
         populate: {
-          path: 'producer', 
-          model: 'producers'
-        }
+          path: "family",
+          model: "productFamily",
+          populate: { path: "category", model: "productcategory" },
+        },
+      })
+      .populate("tags")
+      .populate({
+        path: "shop",
+        populate: {
+          path: "producer",
+          model: "producers",
+        },
       });
 
     if (!stocks) {
-      return res.status(404).json({ message: "Aucun stock trouvé pour ce magasin." });
+      return res
+        .status(404)
+        .json({ message: "Aucun stock trouvé pour ce magasin." });
     }
 
-    
     res.json({ result: true, stocks });
   } catch (error) {
     console.error("Error fetching stocks:", error);
@@ -91,7 +87,6 @@ const getStocksByShop = async (req, res) => {
 };
 
 module.exports = {
-  updateStock, 
-  getStocksByShop, 
+  updateStock,
+  getStocksByShop,
 };
-

@@ -8,11 +8,11 @@ jobs:
   ci-testing:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Install modules
-      run: yarn
-    - name: Run tests
-      run: yarn jest
-      env:
-        CONNECTION_STRING: ${{ secrets.CONNECTION_STRING }}
-        CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      - uses: actions/checkout@v2
+      - name: Install modules
+        run: yarn
+      - name: Run tests
+        run: yarn jest
+        env:
+          CONNECTION_STRING: ${{ secrets.CONNECTION_STRING }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}

@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "prepare": "husky"
   },
   "dependencies": {
     "@clerk/backend": "^1.5.2",
@@ -21,5 +22,9 @@
     "stripe": "^16.7.0",
     "supertest": "^7.0.0",
     "svix": "^1.28.0"
+  },
+  "devDependencies": {
+    "husky": "^9.1.5",
+    "pinst": "^3.0.0"
   }
 }

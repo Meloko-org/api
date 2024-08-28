@@ -1,13 +1,6 @@
-const {
-  Shop,
-  User,
-  Producer,
-  Product,
-  ProductFamily,
-  Stock,
-} = require("../models");
-const { validationModule } = require("../modules");
-const Fuse = require("fuse.js");
+const { Shop, User, Producer, Product, ProductFamily, Stock, Type } = require('../models')
+const { validationModule } = require('../modules')
+const Fuse = require('fuse.js')
 
 const createNewShop = async (req, res) => {
   try {
@@ -32,7 +25,7 @@ const createNewShop = async (req, res) => {
       }
 
       // Create and save the new shop
-      const { name, description, address, siret, types } = req.body;
+      const { name, description, address, siret, types, logo } = req.body
 
       const newShop = new Shop({
         producer: producer._id,
@@ -41,7 +34,15 @@ const createNewShop = async (req, res) => {
         siret,
         address,
         types,
-      });
+        photos: [],
+        video: [],
+        isOpen: false,
+        reopenDate: null,
+        markets: [],
+        notes: [],
+        clickCollect: null,
+        logo
+      })
 
       await newShop.save();
 
@@ -320,7 +321,10 @@ const calculateDistance = (lat1, lon1, lat2, lon2, unit) => {
 
 const getById = async (req, res) => {
   try {
-    const checkBodyFields = ["id"];
+    const checkBodyFields = [
+      'id'
+    ];
+    
     if (validationModule.checkBody(req.params, checkBodyFields)) {
       const mongooseShop = await Shop.findOne({ _id: req.params.id })
         .populate("notes")
@@ -443,8 +447,10 @@ const getStocksFromProductsFamily = async (familyName, shopId) => {
   }
 };
 
+
+
 module.exports = {
   createNewShop,
   searchShops,
   getById,
-};
+}

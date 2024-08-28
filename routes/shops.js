@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 const { shopController } = require("../controllers");
-const { clerkMiddlewares } = require("../middlewares");
+const { clerkMiddlewares, rolesMiddleswares } = require("../middlewares");
 
 // POST ROUTES
 
@@ -14,6 +14,11 @@ router.post("/search", shopController.searchShops);
 
 router.get("/:id", shopController.getById);
 
-
+router.delete(
+  "/:shopId",
+  clerkMiddlewares.isUserLogged,
+  rolesMiddleswares.isUserAdmin,
+  shopController.deleteShop,
+);
 
 module.exports = router;

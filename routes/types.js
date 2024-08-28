@@ -10,6 +10,6 @@ router.post(
   typeController.createNewType,
 );
 
-router.get('/', typeController.getShopTypes)
+router.get("/", typeController.getShopTypes);
 
 module.exports = router;

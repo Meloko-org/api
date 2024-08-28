@@ -32,12 +32,12 @@ const createNewType = async (req, res) => {
 };
 
 const getShopTypes = async (req, res) => {
-  const types = await Type.find({},'name')
+  const types = await Type.find({}, "name");
 
-  res.json(types)
-}
+  res.json(types);
+};
 
 module.exports = {
   createNewType,
-  getShopTypes
-}
+  getShopTypes,
+};

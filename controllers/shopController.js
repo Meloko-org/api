@@ -1,6 +1,14 @@
-const { Shop, User, Producer, Product, ProductFamily, Stock, Type } = require('../models')
-const { validationModule } = require('../modules')
-const Fuse = require('fuse.js')
+const {
+  Shop,
+  User,
+  Producer,
+  Product,
+  ProductFamily,
+  Stock,
+  Type,
+} = require("../models");
+const { validationModule } = require("../modules");
+const Fuse = require("fuse.js");
 
 const createNewShop = async (req, res) => {
   try {
@@ -25,7 +33,7 @@ const createNewShop = async (req, res) => {
       }
 
       // Create and save the new shop
-      const { name, description, address, siret, types, logo } = req.body
+      const { name, description, address, siret, types, logo } = req.body;
 
       const newShop = new Shop({
         producer: producer._id,
@@ -41,12 +49,12 @@ const createNewShop = async (req, res) => {
         markets: [],
         notes: [],
         clickCollect: null,
-        logo
-      })
+        logo,
+      });
 
       await newShop.save();
 
-      res.json({ result: true, producer: producer });
+      res.json({ result: true, shop: newShop });
     } else {
       throw new Error("Missing fields.");
     }
@@ -321,10 +329,8 @@ const calculateDistance = (lat1, lon1, lat2, lon2, unit) => {
 
 const getById = async (req, res) => {
   try {
-    const checkBodyFields = [
-      'id'
-    ];
-    
+    const checkBodyFields = ["id"];
+
     if (validationModule.checkBody(req.params, checkBodyFields)) {
       const mongooseShop = await Shop.findOne({ _id: req.params.id })
         .populate("notes")
@@ -447,10 +453,19 @@ const getStocksFromProductsFamily = async (familyName, shopId) => {
   }
 };
 
+const deleteShop = async (req, res) => {
+  try {
+    const shopId = req.params.shopId;
+    console.log(shopId);
+    await Shop.deleteOne({ _id: shopId });
 
+    res.json({ result: true });
+  } catch (error) {}
+};
 
 module.exports = {
   createNewShop,
   searchShops,
   getById,
-}
+  deleteShop,
+};

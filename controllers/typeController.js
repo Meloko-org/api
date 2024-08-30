@@ -32,7 +32,13 @@ const createNewType = async (req, res) => {
 };
 
 const getShopTypes = async (req, res) => {
-  const types = await Type.find({}, "name");
+  const types = await Type.find(
+    {},
+    {
+      _id: 0,
+      name: 1,
+    },
+  );
 
   res.json(types);
 };

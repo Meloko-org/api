@@ -14,6 +14,12 @@ router.post("/search", shopController.searchShops);
 
 router.get("/:id", shopController.getById);
 
+router.get(
+  "/myshop/:producer",
+  clerkMiddlewares.isUserLogged,
+  shopController.getByProducer,
+);
+
 router.delete(
   "/:shopId",
   clerkMiddlewares.isUserLogged,

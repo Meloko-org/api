@@ -18,7 +18,7 @@ const createNewShop = async (req, res) => {
       "description",
       "address",
       "siret",
-      "types",
+      // "types",
     ];
 
     // If all expected fields are present
@@ -34,6 +34,11 @@ const createNewShop = async (req, res) => {
 
       // Create and save the new shop
       const { name, description, address, siret, types, logo } = req.body;
+
+      /* Add coordinates to address */
+      const coordinates = await getCoordinates(address);
+      address.latitude = coordinates.lat;
+      address.longitude = coordinates.lon;
 
       const newShop = new Shop({
         producer: producer._id,
@@ -54,7 +59,7 @@ const createNewShop = async (req, res) => {
 
       await newShop.save();
 
-      res.json({ result: true, shop: newShop });
+      res.json({ shop: newShop });
     } else {
       throw new Error("Missing fields.");
     }
@@ -327,6 +332,26 @@ const calculateDistance = (lat1, lon1, lat2, lon2, unit) => {
   }
 };
 
+const getByProducer = async (req, res) => {
+  try {
+    const checkBodyFields = ["producer"];
+
+    if (validationModule.checkBody(req.params, checkBodyFields)) {
+      const shop = await Shop.findOne({ producer: req.params.producer })
+        .populate("notes")
+        .populate("types")
+        .populate("markets");
+
+      if (!shop) {
+        throw new Error("No shop found.");
+      }
+      res.json(shop);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 const getById = async (req, res) => {
   try {
     const checkBodyFields = ["id"];
@@ -463,9 +488,30 @@ const deleteShop = async (req, res) => {
   } catch (error) {}
 };
 
+const getCoordinates = async (address) => {
+  const query = (
+    address.address1 +
+    "%20" +
+    address.postalCode +
+    "%20" +
+    address.city
+  ).replaceAll(" ", "%20");
+  const response = await fetch(
+    `https://api-adresse.data.gouv.fr/search/?q=${query}`,
+  );
+  const data = await response.json();
+  const coordinates = {
+    lat: data.features[0].geometry.coordinates[0],
+    lon: data.features[0].geometry.coordinates[1],
+  };
+  return coordinates;
+};
+
 module.exports = {
   createNewShop,
   searchShops,
   getById,
   deleteShop,
+  getCoordinates,
+  getByProducer,
 };

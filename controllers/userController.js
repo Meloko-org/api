@@ -80,13 +80,13 @@ const getUserInfos = async (req, res) => {
       })
       .sort("-createdAt");
 
-    const producer = await Producer.findOne({ owner: user._id });
+    //const producer = await Producer.findOne({ owner: user._id });
 
     if (!user) {
       throw new Error("No user found");
     }
 
-    res.json({ ...user.toObject(), orders: userOrders, producer: producer });
+    res.json({ ...user.toObject(), orders: userOrders });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });

@@ -23,7 +23,7 @@ it("GET /logged - Retreive user data", async () => {
     favSearch: expect.any(Array),
     bookmarks: expect.any(Array),
     orders: expect.any(Array),
-    producer: {
+    /*producer: {
       _id: expect.any(String),
       socialReason: expect.any(String),
       siren: expect.any(String),
@@ -43,7 +43,7 @@ it("GET /logged - Retreive user data", async () => {
       createdAt: expect.any(String),
       updatedAt: expect.any(String),
       __v: expect.any(Number),
-    },
+    },*/
   });
 });
 

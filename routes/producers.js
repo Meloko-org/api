@@ -9,6 +9,12 @@ router.post(
   producerController.createNewProducer,
 );
 
+router.get(
+  "/logged",
+  clerkMiddlewares.isUserLogged,
+  producerController.getProducerInfos,
+);
+
 router.get("/:producer", producerController.searchProducer);
 
 router.put(

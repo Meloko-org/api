@@ -44,6 +44,25 @@ const createNewProducer = async (req, res) => {
   }
 };
 
+const getProducerInfos = async (req, res) => {
+  try {
+    const userId = await User.findOne(
+      { clerkUUID: req.auth.userId },
+      { _id: 1 },
+    );
+
+    const producer = await Producer.findOne({ owner: userId });
+
+    if (!producer) {
+      throw new Error("No producer found");
+    }
+
+    res.json({ producer });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const searchProducer = async (req, res) => {
   try {
     const checkBodyFields = ["producer"];
@@ -112,4 +131,5 @@ module.exports = {
   createNewProducer,
   searchProducer,
   updateProducer,
+  getProducerInfos,
 };

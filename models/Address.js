@@ -23,10 +23,12 @@ const addressSchema = mongoose.Schema(
       required: true,
     },
     latitude: {
-      type: mongoose.Types.Decimal128,
+      type: mongoose.Decimal128,
+      required: false,
     },
     longitude: {
-      type: mongoose.Types.Decimal128,
+      type: mongoose.Decimal128,
+      require: false,
     },
   },
   { timestamps: true },

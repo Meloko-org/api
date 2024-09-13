@@ -51,6 +51,8 @@ const getProducerInfos = async (req, res) => {
       { _id: 1 },
     );
 
+    console.log("userId found: ", userId);
+
     const producer = await Producer.findOne({ owner: userId });
 
     if (!producer) {

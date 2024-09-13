@@ -31,14 +31,14 @@ const getUserInfos = async (req, res) => {
     const user = await User.findOne(
       { clerkUUID: req.auth.userId },
       {
-        _id: 1,
         email: 1,
         firstname: 1,
         lastname: 1,
         avatar: 1,
         favSearch: 1,
         bookmarks: 1,
-        ClerkPasswordEnabled: 1,
+        clerkPasswordEnabled: 1,
+        stripeUUID: 1,
       },
     ).populate({
       path: "bookmarks",
@@ -48,6 +48,11 @@ const getUserInfos = async (req, res) => {
         models: "notes",
       },
     });
+
+    if (!user) {
+      console.log("Utilisateur non trouvé avec l'id Clerk: ", req.auth.userId);
+      return res.status(404).json({ message: "User not found" });
+    }
 
     const userOrders = await Order.find({ user: user._id, isPaid: true })
       .populate({
@@ -80,16 +85,13 @@ const getUserInfos = async (req, res) => {
       })
       .sort("-createdAt");
 
-    //const producer = await Producer.findOne({ owner: user._id });
-
-    if (!user) {
-      throw new Error("No user found");
-    }
-
-    res.json({ ...user.toObject(), orders: userOrders });
+    res.status(200).json({ ...user.toObject(), orders: userOrders });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
+    console.error(
+      "Erreur lors de la récupération des informations de l'utilisateur: ",
+      error,
+    );
+    res.status(500).json({ message: "Internal server error" });
     return;
   }
 };

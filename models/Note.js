@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const noteSchema = mongoose.Schema(
   {
     note: {
-      type: mongoose.Types.Decimal128,
+      type: mongoose.Decimal128,
       required: true,
     },
     user: {

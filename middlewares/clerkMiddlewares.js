@@ -1,74 +1,32 @@
 const { ClerkExpressWithAuth } = require("@clerk/clerk-sdk-node");
 const { Webhook } = require("svix");
 const { createClerkClient, verifyToken } = require("@clerk/backend");
-const { getTestingKey } = require("../tests/utils");
-const { User } = require("../models");
 
 // Check the Bearer Token supplied by the frontend
 const isUserLogged = async (req, res, next) => {
   try {
-    if (
-      req.query.__clerk_testing_token &&
-      req.query.__clerk_testing_user_uuid
-    ) {
-      const testKey = await getTestingKey();
-      if (req.query.__clerk_testing_token === testKey) {
-        req.auth = { userId: req.query.__clerk_testing_user_uuid };
-        next();
-      } else {
-        console.error("Unauthorized.");
+    ClerkExpressWithAuth()(req, res, (err) => {
+      if (err) {
+        console.error("Erreur dans ClerkExpressWithAuth :", err);
+        return res.status(500).json({ message: "Internal server error." });
+      }
+
+      // if req.auth.userId is null
+      if (!req.auth || !req.auth.userId) {
+        console.error("Non autorisé : req.auth.userId est null ou non défini.");
         return res.status(401).json({ message: "Unauthorized." });
       }
-    } else {
-      // const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
 
-      // const request = new Request(fullUrl, {
-      //   method: req.method,
-      //   headers: req.headers,
-      //   body: req.method !== 'GET' && req.method !== 'HEAD' ? req.body : undefined
-      // });
-
-      // const clerkClient = await createClerkClient({
-      //   secretKey: process.env.CLERK_SECRET_KEY,
-      //   publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
-      // });
-
-      // const { isSignedIn } = await clerkClient.authenticateRequest(request, {
-      //   jwtKey: process.env.CLERK_JWT_KEY
-      // });
-
-      // console.log(isSignedIn)
-      // const bearerToken = req.headers.authorization
-      // const JwtToken = bearerToken.replace('Bearer ', '')
-      // const payload = await verifyToken(JwtToken, {
-      //   jwtKey: process.env.CLERK_JWT_KEY,
-      //   debug: true
-      // })
-      // console.log(payload)
-      // console.log(JwtToken)
-
-      // if(payload.sub) {
-      //   req.auth = { userId: payload.sub }
-      //   next();
-      // } else {
-      //   console.error('Unauthorized.')
-      //   return res.status(401).json({ message: 'Unauthorized.' });
-      // }
-
-      // // Use Clerk's built-in middleware
-      ClerkExpressWithAuth()(req, res, (err) => {
-        // if req.auth.userId is null
-        if (!req.auth.userId) {
-          console.error("Unauthorized.");
-          return res.status(401).json({ message: "Unauthorized." });
-        }
-
-        // If authenticated, proceed to the controller
-        next();
-      });
-    }
+      // If authenticated, proceed to the controller
+      console.log(
+        "Authentification réussie pour l'utilisateur :",
+        req.auth.userId,
+      );
+      next();
+    });
   } catch (error) {
-    console.error(error);
+    // console.error("Erreur interne dans isUserLogged :", error)
+    return res.status(500).json({ message: "Internal server error." });
   }
 };
 

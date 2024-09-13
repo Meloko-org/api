@@ -33,7 +33,6 @@ const favsearchSchema = mongoose.Schema(
       type: Number,
       default: null,
     },
-    address: addressSchema,
   },
   { timestamps: true },
 );

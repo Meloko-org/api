@@ -16,6 +16,7 @@ router.get(
 );
 
 router.get("/:producer", producerController.searchProducer);
+router.get("/", producerController.searchProducer);
 
 router.put(
   "/update",

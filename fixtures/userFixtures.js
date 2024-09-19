@@ -1,17 +1,17 @@
 const User = require("../models/User");
 
-const createMockUser = async () => {
+const createMockUser = async (email, mockClerkUUID, stripeUUID) => {
   // crée un utilisateur dans la memory bdd
   const mockUser = new User({
-    email: "test@example.com",
-    clerkUUID: "mockClerkUUID",
+    email: email,
+    clerkUUID: mockClerkUUID,
     clerkPasswordEnabled: "true",
     roles: [],
     firstname: "john",
     lastname: "Doe",
     bookmarks: [],
     favSearch: [],
-    stripeUUID: "cus_QeJJqJlIIRcrBh",
+    stripeUUID: stripeUUID,
   });
   await mockUser.save();
 

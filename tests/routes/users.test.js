@@ -7,14 +7,28 @@ import "../mockClerk";
 const request = require("supertest");
 const app = require("../../app");
 
-const User = require("../../models/User");
-const { createMockUser } = require("../../fixtures/userFixtures");
+// importation des getters de mock
+const {
+  getMockRole,
+  getMockUser1,
+  getMockOrder,
+  getMockProducer,
+  getMockShop,
+} = require("../mms.setup");
+// initialisation des mocks avant chaque test
+let mockRole, mockUser1, mockOrder, mockProducer, mockShop;
+beforeEach(() => {
+  mockRole = getMockRole();
+  mockUser1 = getMockUser1();
+  mockOrder = getMockOrder();
+  mockProducer = getMockProducer();
+  mockShop = getMockShop();
+});
 
 describe("GET /users/logged", () => {
-  beforeEach(async () => {
-    const mockUser = await createMockUser();
-  });
-
+  // beforeEach(async () => {
+  //   const mockUser = await createMockUser();
+  // });
   it("should return user's info and orders", async () => {
     // simule une requête GET à /users/logged avec tocken valide
     const response = await request(app)

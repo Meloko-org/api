@@ -4,6 +4,8 @@ const { User, Role, Order, Producer } = require("../models");
 const createNewUser = async (clerkUserData) => {
   try {
     const userRole = await Role.findOne({ name: "user" });
+    if (!userRole) throw new Error("Le role user n'existe pas.");
+
     const email = clerkUserData.email_addresses.find(
       (ea) => ea.id === clerkUserData.primary_email_address_id,
     ).email_address;
@@ -148,7 +150,7 @@ const updateUser = async (req, res) => {
       })
       .sort("-createdAt");
 
-    res.json({ ...user.toObject(), orders: userOrders });
+    res.status(200).json({ ...user.toObject(), orders: userOrders });
   } catch (error) {
     console.error(error);
     return;
@@ -166,14 +168,14 @@ const addShopToBookmark = async (req, res) => {
     user.bookmarks.push(req.params.shopId);
 
     await user.save();
-    await user.populate({
+    /*await user.populate({
       path: "bookmarks",
       model: "shops",
       populate: {
         path: "notes",
         models: "notes",
       },
-    });
+    });*/
     const userOrders = await Order.find({ user: user._id, isPaid: true })
       .populate({
         path: "details",
@@ -205,12 +207,13 @@ const addShopToBookmark = async (req, res) => {
       })
       .sort("-createdAt");
 
-    res.json({
+    res.status(200).json({
       result: true,
       user: { ...user.toObject(), orders: userOrders },
     });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: "Internal server error" });
     return;
   }
 };

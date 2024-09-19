@@ -8,8 +8,13 @@ const createNewProducer = async (req, res) => {
     // Retreive the logged user
     const owner = await User.findOne({ clerkUUID: req.auth.userId });
 
+    console.log("owner:", owner);
+
     if (await Producer.findOne({ owner: owner._id })) {
-      throw new Error("User already has a producer profile");
+      console.log(
+        `Un producteur existe déjà pour cet utilisateur ${owner._id}`,
+      );
+      return res.status(404).json({ message: "Producer already exists" });
     }
 
     // define the fields coming from req.body to check
@@ -31,7 +36,7 @@ const createNewProducer = async (req, res) => {
 
       await newProducer.save();
 
-      res.json({ result: true, producer: newProducer });
+      res.status(201).json({ result: true, producer: newProducer });
 
       /* récupérer les nouvelles infos pour mettre à jourle store */
     } else {
@@ -56,16 +61,21 @@ const getProducerInfos = async (req, res) => {
     const producer = await Producer.findOne({ owner: userId });
 
     if (!producer) {
-      throw new Error("No producer found");
+      console.log(
+        `Aucun producteur trouvé à partir du clerkUUID ${req.auth.userId}`,
+      );
+      return res.status(404).json({ message: "No producer found" });
     }
 
     res.json({ producer });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.log(error);
+    return res.status(500).json({ error: error.message });
   }
 };
 
 const searchProducer = async (req, res) => {
+  console.log("searchProducer");
   try {
     const checkBodyFields = ["producer"];
 
@@ -74,11 +84,15 @@ const searchProducer = async (req, res) => {
         socialReason: req.params.producer,
       });
       if (!producerFound) {
-        throw new Error("No producers found.");
+        console.log(
+          `Aucun producteur trouvé avec ce paramètre: ${req.params.producer}`,
+        );
+        return res.status(404).json({ message: "No producer found." });
       }
       res.json({ result: true, producerFound });
     } else {
-      throw new Error("Missing fields.");
+      console.log("Paramètre de recherche manquant.");
+      return res.status(404).json({ message: "Missing field." });
     }
   } catch (error) {
     console.error(error);

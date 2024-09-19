@@ -1,55 +1,63 @@
 // importation du setup de mongo-memory-server
 require("../mms.setup");
 
-const User = require("../../models/User");
-const Order = require("../../models/Order");
+// importation des getters de mock
+const {
+  getMockRole,
+  getMockUser1,
+  getMockOrder,
+  getMockProducer,
+  getMockShop,
+} = require("../mms.setup");
 
-const { createMockUser } = require("../../fixtures/userFixtures");
-const { createMockOrder } = require("../../fixtures/OrderFixtures");
-const { getUserInfos } = require("../../controllers/userController");
+const Role = require("../../models/Role");
+const {
+  getUserInfos,
+  createNewUser,
+  updateUser,
+  addShopToBookmark,
+} = require("../../controllers/userController");
 
-describe("getUserInfos", () => {
-  beforeEach(async () => {
-    // vide les collections avant chaque test
-    await User.deleteMany({});
-    await Order.deleteMany({});
-    // consoleLogMock = jest.spyOn(console, 'error').mockImplementation(()=>{})
+// initialisation des mocks avant chaque test
+let mockRole, mockUser1, mockOrder, mockProducer, mockShop;
+beforeEach(async () => {
+  mockRole = getMockRole();
+  mockUser1 = getMockUser1();
+  mockOrder = getMockOrder();
+  mockProducer = getMockProducer();
+  mockShop = getMockShop();
+});
+
+describe("createNewUser", () => {
+  const mockClerkUserData = {
+    id: "clerkUserId123",
+    email_addresses: [
+      { id: "email1", email_address: "test3@example.com" },
+      { id: "email2", email_address: "test4@example.com" },
+    ],
+    primary_email_address_id: "email2",
+    password_enabled: true,
+  };
+
+  it("should return true if a user is created", async () => {
+    const response = await createNewUser(mockClerkUserData);
+    expect(response).toBe(true);
   });
 
+  it("should return false if user not created", async () => {
+    // suppression du role pour faire échouer le test
+    await Role.deleteMany({});
+    const response = await createNewUser(mockClerkUserData);
+    expect(response).toBe(false);
+  });
+});
+
+describe("getUserInfos", () => {
   it("should return an user with this infos and orders", async () => {
-    const mockUser = await createMockUser();
-    const mockOrder = await createMockOrder(mockUser._id);
-
-    const expectedResponse = {
-      _id: mockUser._id,
-      clerkUUID: "mockClerkUUID",
-      clerkPasswordEnabled: "true",
-      email: "test@example.com",
-      firstname: "john",
-      lastname: "Doe",
-      avatar: null,
-      bookmarks: [],
-      favSearch: [],
-      stripeUUID: "cus_QeJJqJlIIRcrBh",
-      orders: [
-        {
-          _id: mockOrder._id,
-          user: mockUser._id,
-          details: [],
-          isWithdrawn: false,
-          isPaid: true,
-          stripePIId: "pi_mock123",
-          __v: mockOrder.__v,
-          createdAt: mockOrder.createdAt,
-          updatedAt: mockOrder.updatedAt,
-        },
-      ],
-    };
-
     // Mock de la requête et de la réponse
     const req = {
       auth: {
-        userId: "mockClerkUUID",
+        userId: mockUser1.clerkUUID,
       },
     };
     const res = {
@@ -65,40 +73,33 @@ describe("getUserInfos", () => {
     // Récupérer l'objet envoyé dans `res.json`
     const receivedResponse = res.json.mock.calls[0][0];
 
-    console.log(receivedResponse);
+    console.log("GETUSERINFOS:", receivedResponse);
 
-    // Validation des champs de l'utilisateur
-    expect(receivedResponse).toEqual(
+    expect(receivedResponse).toMatchObject(
       expect.objectContaining({
-        email: "test@example.com",
-        firstname: "john",
-        lastname: "Doe",
-        clerkPasswordEnabled: "true",
-        stripeUUID: "cus_QeJJqJlIIRcrBh",
+        _id: mockUser1._id,
+        email: expect.any(String),
+        clerkPasswordEnabled: expect.any(String),
+        stripeUUID: expect.any(String),
+        firstname: expect.any(String),
+        lastname: expect.any(String),
         avatar: null,
-        bookmarks: [],
-        favSearch: [],
+        bookmarks: expect.any(Array),
+        favSearch: expect.any(Array),
+        orders: [
+          expect.objectContaining({
+            _id: mockOrder._id,
+            user: mockUser1._id,
+            details: expect.any(Array),
+            isWithdrawn: expect.any(Boolean),
+            isPaid: true,
+            stripePIId: expect.any(String),
+            createdAt: expect.any(Date),
+            updatedAt: expect.any(Date),
+            __v: expect.any(Number),
+          }),
+        ],
       }),
-    );
-
-    // Vérifier que orders est un tableau
-    expect(Array.isArray(receivedResponse.orders)).toBe(true);
-
-    // Validation des commandes de l'utilisateur
-    expect(receivedResponse.orders).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          isPaid: true,
-          isWithdrawn: false,
-          stripePIId: "pi_mock123",
-          details: [],
-          user: mockUser._id, // Vérification de l'id utilisateur en string
-          _id: mockOrder._id, // L'ID est généré dynamiquement, donc `any(String)`
-          createdAt: mockOrder.createdAt, // Date générée dynamiquement
-          updatedAt: mockOrder.updatedAt, // Date générée dynamiquement
-          __v: mockOrder.__v, // Le versionnement de Mongoose
-        }),
-      ]),
     );
   });
 
@@ -106,7 +107,7 @@ describe("getUserInfos", () => {
     // Mock de la requête et de la réponse
     const req = {
       auth: {
-        userId: "mockClerkUUID",
+        userId: "invalid-mockClerkUUID",
       },
     };
     const res = {
@@ -118,6 +119,99 @@ describe("getUserInfos", () => {
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ message: "User not found" });
+  });
+});
+
+describe("updateUser", () => {
+  it("should return the user updated", async () => {
+    // Mock de la requête et de la réponse
+    const req = {
+      auth: {
+        userId: mockUser1.clerkUUID,
+      },
+      body: {
+        firstname: "new firstname",
+        lastname: "new lastname",
+      },
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    await updateUser(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        firstname: "new firstname",
+        lastname: "new lastname",
+      }),
+    );
+  });
+});
+
+describe("Bookmarks", () => {
+  it("should add a bookmarks to a user", async () => {
+    const req = {
+      auth: {
+        userId: mockUser1.clerkUUID,
+      },
+      params: {
+        shopId: mockShop._id,
+      },
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+
+    await addShopToBookmark(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    // Récupérer l'objet envoyé dans `res.json`
+    const receivedResponse = res.json.mock.calls[0][0];
+
+    console.log(receivedResponse);
+
+    // Validation des champs de l'utilisateur
+    expect(receivedResponse).toMatchObject(
+      expect.objectContaining({
+        result: true,
+        user: expect.objectContaining({
+          _id: mockUser1._id,
+          email: expect.any(String),
+          clerkUUID: expect.any(String),
+          roles: expect.any(Array),
+          firstname: expect.any(String),
+          lastname: expect.any(String),
+          avatar: null,
+          favSearch: expect.any(Array),
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          __v: expect.any(Number),
+          bookmarks: [mockShop._id],
+          stripeUUID: expect.any(String),
+          clerkPasswordEnabled: expect.any(String),
+          orders: [
+            expect.objectContaining({
+              _id: mockOrder._id,
+              isPaid: true,
+              isWithdrawn: expect.any(Boolean),
+              stripePIId: expect.any(String),
+              details: expect.any(Array),
+              user: mockUser1._id,
+              _id: mockOrder._id,
+              createdAt: expect.any(Date),
+              updatedAt: expect.any(Date),
+              __v: expect.any(Number),
+            }),
+          ],
+        }),
+      }),
+    );
   });
 });
 

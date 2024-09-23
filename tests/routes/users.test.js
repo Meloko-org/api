@@ -15,20 +15,20 @@ const {
   getMockProducer,
   getMockShop,
 } = require("../mms.setup");
+
 // initialisation des mocks avant chaque test
 let mockRole, mockUser1, mockOrder, mockProducer, mockShop;
-beforeEach(() => {
+
+beforeEach(async () => {
   mockRole = getMockRole();
   mockUser1 = getMockUser1();
   mockOrder = getMockOrder();
   mockProducer = getMockProducer();
   mockShop = getMockShop();
+  console.log("MOCKSHOP:", mockShop);
 });
 
 describe("GET /users/logged", () => {
-  // beforeEach(async () => {
-  //   const mockUser = await createMockUser();
-  // });
   it("should return user's info and orders", async () => {
     // simule une requête GET à /users/logged avec tocken valide
     const response = await request(app)
@@ -52,6 +52,100 @@ describe("GET /users/logged", () => {
   // simule une requête GET à /users/logged sans tocken
   it("should return 401 when no tocken is provided", async () => {
     const response = await request(app).get("/users/logged").expect(401);
+
+    expect(response.body.message).toBe("Unauthorized.");
+  });
+});
+
+describe("PUT /logged", () => {
+  const userData = {
+    firstname: "firstname updated",
+    lastname: "lastnameupdated",
+  };
+
+  it("should update a user", async () => {
+    const response = await request(app)
+      .put("/users/logged")
+      .set("Authorization", "Bearer mock-valid-token")
+      .send(userData)
+      .expect(200);
+
+    expect(response.status).toBe(200);
+  });
+
+  it("should return 401 when an invalid tocken is provided", async () => {
+    const response = await request(app)
+      .put("/users/logged")
+      .set("authorization", "Bearer invalid-token")
+      .expect(401);
+
+    expect(response.body.message).toBe("Unauthorized.");
+  });
+
+  it("should return 401 if no token is provided", async () => {
+    const response = await request(app).put("/users/logged").expect(401);
+
+    expect(response.body.message).toBe("Unauthorized.");
+  });
+});
+
+describe("POST Bookmarks", () => {
+  it("should add a bookmarks to a user", async () => {
+    const shopId = mockShop._id;
+    const response = await request(app)
+      .post(`/users/bookmarks/${shopId}`)
+      .set("Authorization", "Bearer mock-valid-token")
+      .expect(200);
+
+    expect(response.status).toBe(200);
+  });
+
+  it("should return 401 if an invalid token is provided", async () => {
+    const shopId = mockShop._id;
+    const response = await request(app)
+      .post(`/users/bookmarks/${shopId}`)
+      .set("authorization", "Bearer invalid-token")
+      .expect(401);
+
+    expect(response.body.message).toBe("Unauthorized.");
+  });
+
+  it("should return 401 if no token is provided", async () => {
+    const shopId = mockShop._id;
+    const response = await request(app)
+      .post(`/users/bookmarks/${shopId}`)
+      .expect(401);
+
+    expect(response.body.message).toBe("Unauthorized.");
+  });
+});
+
+describe("DELETE bookmarks", () => {
+  it("should delete a bookmark", async () => {
+    const shopId = mockShop._id;
+    const response = await request(app)
+      .delete(`/users/bookmarks/${shopId}`)
+      .set("Authorization", "Bearer mock-valid-token")
+      .expect(200);
+
+    expect(response.status).toBe(200);
+  });
+
+  it("should return 401 if an invalid token is provided", async () => {
+    const shopId = mockShop._id;
+    const response = await request(app)
+      .delete(`/users/bookmarks/${shopId}`)
+      .set("authorization", "Bearer invalid-token")
+      .expect(401);
+
+    expect(response.body.message).toBe("Unauthorized.");
+  });
+
+  it("should return 401 if no token is provided", async () => {
+    const shopId = mockShop._id;
+    const response = await request(app)
+      .delete(`/users/bookmarks/${shopId}`)
+      .expect(401);
 
     expect(response.body.message).toBe("Unauthorized.");
   });

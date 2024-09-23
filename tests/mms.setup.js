@@ -38,6 +38,12 @@ beforeAll(async () => {
   mockOrder = await createMockOrder(mockUser1._id);
   mockProducer = await createMockProducer(mockUser1._id);
   mockShop = await createMockShop(mockProducer._id);
+  // user without producer
+  mockUser2 = await createMockUser(
+    "test2@example.com",
+    "mockClerkUUID2",
+    "cus_QeJJqJlIIRcrBp",
+  );
 });
 
 afterAll(async () => {
@@ -62,6 +68,7 @@ module.exports = {
   getMockOrder: () => mockOrder,
   getMockProducer: () => mockProducer,
   getMockShop: () => mockShop,
+  getMockUser2: () => mockUser2,
 };
 
 // mock des types ObjectId et Decimal128 de mongoose

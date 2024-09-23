@@ -13,7 +13,6 @@ const Producer = require("../../models/Producer");
 const {
   getMockRole,
   getMockUser1,
-  getMockUser2,
   getMockOrder,
   getMockProducer,
   getMockShop,
@@ -119,5 +118,46 @@ describe("POST / : create a producer", () => {
       .expect(404);
 
     expect(response.body.message).toBe("Producer already exists");
+  });
+});
+
+describe("PUT /update", () => {
+  const producerData = {
+    socialReason: "social reason updated",
+    siren: "12345678901",
+    iban: "FR76 1234 5678 5421",
+    bic: "JF1FDjKD43GD",
+    address: {
+      address1: "test adresse 1 producteur updated",
+      address2: "test adresse 2 producteur updated",
+      postalCode: "01235",
+      city: "ville Test 1",
+      country: "France",
+    },
+  };
+
+  it("should update a producer", async () => {
+    const response = await request(app)
+      .put("/producers/update")
+      .set("authorization", "Bearer mock-valid-token")
+      .send(producerData)
+      .expect(200);
+
+    expect(response.status).toBe(200);
+  });
+
+  it("souhld return 401 if no valid token is provided", async () => {
+    const response = await request(app)
+      .put("/producers/update")
+      .set("Authorization", "Bearer invalid-token")
+      .expect(401);
+
+    expect(response.body.message).toBe("Unauthorized.");
+  });
+
+  it("souhld return 401 if no token is provided", async () => {
+    const response = await request(app).put("/producers/update").expect(401);
+
+    expect(response.body.message).toBe("Unauthorized.");
   });
 });

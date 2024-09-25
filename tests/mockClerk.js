@@ -10,14 +10,14 @@ jest.mock("@clerk/clerk-sdk-node", () => {
 
           // Simuler l'authentification avec le token
           if (token === "mock-valid-token") {
-            console.log("Token validé avec succès");
+            // console.log("Token validé avec succès");
             req.auth = { userId: "mockClerkUUID" }; // Utilisateur authentifié
           } else {
-            console.log("Token invalide");
+            // console.log("Token invalide");
             req.auth = { userId: null }; // Token invalide
           }
         } else {
-          console.log("Aucun token fourni");
+          // console.log("Aucun token fourni");
           req.auth = { userId: null }; // Aucun token fourni
         }
 
@@ -26,7 +26,7 @@ jest.mock("@clerk/clerk-sdk-node", () => {
           next();
         } else {
           // Si req.auth.userId est null ou non défini, retournez une erreur
-          console.log("Unauthorized.");
+          // console.log("Unauthorized.");
           res.status(401).json({ message: "Unauthorized." });
         }
       };

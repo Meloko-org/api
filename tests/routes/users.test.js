@@ -25,7 +25,7 @@ beforeEach(async () => {
   mockOrder = getMockOrder();
   mockProducer = getMockProducer();
   mockShop = getMockShop();
-  console.log("MOCKSHOP:", mockShop);
+  // console.log("MOCKSHOP:", mockShop);
 });
 
 describe("GET /users/logged", () => {

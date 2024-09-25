@@ -29,7 +29,7 @@ beforeEach(async () => {
   mockShop = getMockShop();
 });
 
-describe("get /producers/logged", () => {
+describe("GET /producers/logged", () => {
   it("should return producer's infos", async () => {
     const response = await request(app)
       .get("/producers/logged")
@@ -55,7 +55,7 @@ describe("get /producers/logged", () => {
   });
 });
 
-describe("Get /producers/:producer", () => {
+describe("GET /producers/:producer", () => {
   it("should return a producer from his social reason", async () => {
     const producer = "Producteur test";
     const response = await request(app)
@@ -139,7 +139,7 @@ describe("PUT /update", () => {
   it("should update a producer", async () => {
     const response = await request(app)
       .put("/producers/update")
-      .set("authorization", "Bearer mock-valid-token")
+      .set("Authorization", "Bearer mock-valid-token")
       .send(producerData)
       .expect(200);
 

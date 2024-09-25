@@ -72,7 +72,7 @@ module.exports = {
 };
 
 // mock des types ObjectId et Decimal128 de mongoose
-jest.mock("mongoose", () => {
+/*jest.mock("mongoose", () => {
   const originalModule = jest.requireActual("mongoose");
 
   return {
@@ -86,4 +86,4 @@ jest.mock("mongoose", () => {
       })),
     },
   };
-});
+});*/

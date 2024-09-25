@@ -23,7 +23,7 @@ const createNewUser = async (clerkUserData) => {
 
     return true;
   } catch (error) {
-    console.error(error);
+    // console.error(error);
     return false;
   }
 };
@@ -52,7 +52,7 @@ const getUserInfos = async (req, res) => {
     });
 
     if (!user) {
-      console.log("Utilisateur non trouvé avec l'id Clerk: ", req.auth.userId);
+      // console.log("Utilisateur non trouvé avec l'id Clerk: ", req.auth.userId);
       return res.status(404).json({ message: "User not found" });
     }
 

@@ -7,21 +7,21 @@ const isUserLogged = async (req, res, next) => {
   try {
     ClerkExpressWithAuth()(req, res, (err) => {
       if (err) {
-        console.error("Erreur dans ClerkExpressWithAuth :", err);
+        // console.error("Erreur dans ClerkExpressWithAuth :", err);
         return res.status(500).json({ message: "Internal server error." });
       }
 
       // if req.auth.userId is null
       if (!req.auth || !req.auth.userId) {
-        console.error("Non autorisé : req.auth.userId est null ou non défini.");
+        // console.error("Non autorisé : req.auth.userId est null ou non défini.");
         return res.status(401).json({ message: "Unauthorized." });
       }
 
       // If authenticated, proceed to the controller
-      console.log(
-        "Authentification réussie pour l'utilisateur :",
-        req.auth.userId,
-      );
+      // console.log(
+      //   "Authentification réussie pour l'utilisateur :",
+      //   req.auth.userId,
+      // );
       next();
     });
   } catch (error) {

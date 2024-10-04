@@ -35,7 +35,7 @@ const getShopTypes = async (req, res) => {
   const types = await Type.find(
     {},
     {
-      _id: 0,
+      _id: 1,
       name: 1,
     },
   );

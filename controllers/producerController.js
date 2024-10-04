@@ -66,7 +66,7 @@ const getProducerInfos = async (req, res) => {
       return res.status(404).json({ message: "No producer found" });
     }
 
-    res.json({ producer });
+    res.json(producer);
   } catch (error) {
     // console.log(error);
     return res.status(500).json({ error: "Internal Server Error" });

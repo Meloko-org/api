@@ -7,7 +7,17 @@ const { clerkMiddlewares, rolesMiddleswares } = require("../middlewares");
 
 // Create a new shop
 // Only logged users
-router.post("/", clerkMiddlewares.isUserLogged, shopController.createNewShop);
+router.post(
+  "/",
+  clerkMiddlewares.isUserLogged,
+  shopController.createOrUpdateShop,
+);
+
+router.put(
+  "/clickCollect",
+  clerkMiddlewares.isUserLogged,
+  shopController.updateClickCollect,
+);
 
 // Search for shops based on various parameters
 router.post("/search", shopController.searchShops);

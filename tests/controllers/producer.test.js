@@ -178,27 +178,25 @@ describe("getProducerInfos", () => {
 
     expect(receivedResponse).toMatchObject(
       expect.objectContaining({
-        producer: expect.objectContaining({
-          socialReason: expect.any(String),
-          siren: expect.any(String),
-          owner: mockUser1._id,
-          iban: expect.any(String),
-          bic: expect.any(String),
+        socialReason: expect.any(String),
+        siren: expect.any(String),
+        owner: mockUser1._id,
+        iban: expect.any(String),
+        bic: expect.any(String),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        __v: expect.any(Number),
+        address: expect.objectContaining({
+          address1: expect.any(String),
+          address2: expect.any(String),
+          postalCode: expect.any(String),
+          city: expect.any(String),
+          country: expect.any(String),
+          _id: expect.any(mongoose.Types.ObjectId),
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),
-          __v: expect.any(Number),
-          address: expect.objectContaining({
-            address1: expect.any(String),
-            address2: expect.any(String),
-            postalCode: expect.any(String),
-            city: expect.any(String),
-            country: expect.any(String),
-            _id: expect.any(mongoose.Types.ObjectId),
-            createdAt: expect.any(Date),
-            updatedAt: expect.any(Date),
-          }),
-          _id: expect.any(mongoose.Types.ObjectId),
         }),
+        _id: expect.any(mongoose.Types.ObjectId),
       }),
     );
   });

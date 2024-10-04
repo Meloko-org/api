@@ -10,6 +10,7 @@ const {
 const { validationModule } = require("../modules");
 const Fuse = require("fuse.js");
 
+/*
 const createNewShop = async (req, res) => {
   try {
     // define the fields coming from req.body to check
@@ -18,53 +19,205 @@ const createNewShop = async (req, res) => {
       "description",
       "address",
       "siret",
-      // "types",
+      "types",
     ];
 
     // If all expected fields are present
-    if (validationModule.checkBody(req.body, checkBodyFields)) {
-      // Retreive the logged user and its producer profile
-      const user = await User.findOne({ clerkUUID: req.auth.userId });
-      const producer = await Producer.findOne({ owner: user._id });
-
-      // If the user has no producer profile, trow an error
-      if (!producer) {
-        throw new Error("User has no existing producer profile.");
-      }
-
-      // Create and save the new shop
-      const { name, description, address, siret, types, logo } = req.body;
-
-      /* Add coordinates to address */
-      const coordinates = await getCoordinates(address);
-      address.latitude = coordinates.lat;
-      address.longitude = coordinates.lon;
-
-      const newShop = new Shop({
-        producer: producer._id,
-        name,
-        description,
-        siret,
-        address,
-        types,
-        photos: [],
-        video: [],
-        isOpen: false,
-        reopenDate: null,
-        markets: [],
-        notes: [],
-        clickCollect: null,
-        logo,
-      });
-
-      await newShop.save();
-
-      res.json({ shop: newShop });
-    } else {
+    if (!validationModule.checkBody(req.body, checkBodyFields)) {
       throw new Error("Missing fields.");
     }
+    // Retreive the logged user and its producer profile
+    const user = await User.findOne({ clerkUUID: req.auth.userId });
+    const producer = await Producer.findOne({ owner: user._id });
+
+    // If the user has no producer profile, trow an error
+    if (!producer) {
+      throw new Error("User has no existing producer profile.");
+    }
+
+    // Create and save the new shop
+    const { name, description, address, siret, types, logo } = req.body;
+
+    // verify objectId of type before save
+    const validTypes = await Type.find({ _id: { $in: types}})
+    if(validTypes.lentgh !== types.lentgh) {
+      throw new Error("Some selected types do not exist.")
+    }
+
+    // Add coordinates to address 
+    const coordinates = await getCoordinates(address);
+    address.latitude = coordinates.lat;
+    address.longitude = coordinates.lon;
+
+    const newShop = new Shop({
+      producer: producer._id,
+      name,
+      description,
+      siret,
+      address,
+      types: validTypes.map(type => type._id),
+      photos: [],
+      video: [],
+      isOpen: false,
+      reopenDate: null,
+      markets: [],
+      notes: [],
+      clickCollect: null,
+      logo,
+    });
+
+    await newShop.save();
+
+    res.json({ shop: newShop });
+  
   } catch (error) {
     console.error(error);
+    res.status(500).json({ error: error.message });
+    return;
+  }
+};
+*/
+
+/**
+ * Permet de savoir s'il existe un user avec ce clerkUUID et si ce user a un profil Producer
+ * @param {string} clerkUUID
+ * @returns producer
+ */
+const isProducerUser = async (clerkUUID) => {
+  const user = await User.findOne({ clerkUUID });
+  if (!user) {
+    throw new Error("No user found.");
+  }
+  const producer = await Producer.findOne({ owner: user._id });
+  if (!producer) {
+    throw new Error("User has no producer profile.");
+  }
+  return producer;
+};
+
+const createOrUpdateShop = async (req, res) => {
+  try {
+    const requiredFields = ["name", "description", "address", "siret", "types"];
+
+    if (!validationModule.checkBody(req.body, requiredFields)) {
+      throw new Error("Missing fields.");
+    }
+
+    const producer = await isProducerUser(req.auth.userId);
+
+    /* préparation de la création ou de la mise à jour d'un shop */
+
+    const {
+      name,
+      description,
+      address,
+      siret,
+      types,
+      logo,
+      isOpen,
+      reopenDate,
+    } = req.body;
+
+    // verify objectId of type before save
+    const validTypes = await Type.find({ _id: { $in: types } });
+    if (validTypes.lentgh !== types.lentgh) {
+      throw new Error("Some selected types do not exist.");
+    }
+
+    /* Add coordinates to address */
+    const coordinates = await getCoordinates(address);
+    address.latitude = coordinates.lat;
+    address.longitude = coordinates.lon;
+
+    const shopUpdate = {
+      producer: producer._id,
+      name,
+      description,
+      siret,
+      address,
+      types: validTypes.map((type) => type._id),
+      photos: [],
+      video: [],
+      isOpen,
+      reopenDate,
+      markets: [],
+      notes: [],
+      clickCollect: null,
+      logo,
+    };
+
+    // on crée un filter qui permettra à la fonction findOneAndUpdate de vérifier
+    // s'il existe déjà un shop avec ce producer._id et siret
+    const filter = { producer: producer._id, siret };
+
+    const shop = await Shop.findOneAndUpdate(filter, shopUpdate, {
+      new: true, // retourne le document mis à jour
+      upsert: true, // crée le document s'il n'existe pas
+      runValidators: true, // applique les validations du modèle
+    });
+
+    res.status(200).json(shop);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const updateClickCollect = async (req, res) => {
+  console.log("auth :", req.auth.userId);
+  try {
+    const checkBodyFields = ["openingHours"];
+
+    console.log("body :", JSON.stringify(req.body, null, 2));
+
+    if (!validationModule.checkBody(req.body, checkBodyFields)) {
+      throw new Error("Missing fields.");
+    }
+
+    const producer = await isProducerUser(req.auth.userId);
+
+    console.log("producer Id : ", producer._id);
+
+    const shop = await Shop.findOne({ producer: producer._id });
+    if (!shop) {
+      throw new Error("No shop found.");
+    }
+
+    console.log("shopId :", shop._id);
+
+    // avant d'apporter des modification à clickCollect, il faut s'assurer que clickCollect ne soit pas null
+    if (!shop.clickCollect) {
+      await Shop.updateOne({ _id: shop._id }, { $set: { clickCollect: {} } });
+    }
+
+    // ensuite on définit les champs à modifier
+    const updateFields = {};
+    if (req.body.instructions) {
+      updateFields["clickCollect.instructions"] = req.body.instructions;
+    }
+    updateFields["clickCollect.openingHours"] = req.body.openingHours;
+
+    // puis on met à jour le shop
+    const updatedShop = await Shop.updateOne(
+      { _id: shop._id },
+      { $set: updateFields },
+      { new: true, runValidators: true },
+    );
+
+    if (updatedShop.mofifiedCount === 0) {
+      res.status(400).json({ message: "No changes made." });
+    }
+
+    const updatedShopDetails = await Shop.findById(shop._id);
+
+    console.log("updatedShop: ", updatedShop);
+
+    res.status(200).json({
+      message: "Click & Collect updated successfully",
+      shop: updatedShopDetails,
+    });
+  } catch (error) {
+    console.log(error);
     res.status(500).json({ error: error.message });
     return;
   }
@@ -336,19 +489,26 @@ const getByProducer = async (req, res) => {
   try {
     const checkBodyFields = ["producer"];
 
-    if (validationModule.checkBody(req.params, checkBodyFields)) {
-      const shop = await Shop.findOne({ producer: req.params.producer })
-        .populate("notes")
-        .populate("types")
-        .populate("markets");
-
-      if (!shop) {
-        throw new Error("No shop found.");
-      }
-      res.json(shop);
+    if (!validationModule.checkBody(req.params, checkBodyFields)) {
+      throw new Error("Missing fields.");
     }
+
+    const shop = await Shop.findOne({ producer: req.params.producer })
+      .populate("notes")
+      .populate({
+        path: "types",
+        model: "types",
+      })
+      .populate("markets");
+
+    if (!shop) {
+      throw new Error("This producer has no shop.");
+    }
+
+    res.json(shop);
   } catch (error) {
     console.log(error);
+    //res.status(500).json({error: error.message})
   }
 };
 
@@ -508,7 +668,9 @@ const getCoordinates = async (address) => {
 };
 
 module.exports = {
-  createNewShop,
+  // createNewShop,
+  createOrUpdateShop,
+  updateClickCollect,
   searchShops,
   getById,
   deleteShop,

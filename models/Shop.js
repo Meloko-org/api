@@ -1,6 +1,20 @@
 const mongoose = require("mongoose");
 const addressSchema = require("./Address");
 const clickCollectSchema = require("./ClickCollect");
+const openingHours = require("../models/OpeningHour");
+
+const shopMarketsSchema = mongoose.Schema({
+  market: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "markets",
+    required: true,
+  },
+  isActive: {
+    type: Boolean,
+    default: false,
+  },
+  openingHours: [openingHours],
+});
 
 const shopSchema = mongoose.Schema(
   {
@@ -47,12 +61,7 @@ const shopSchema = mongoose.Schema(
       type: Date,
       default: null,
     },
-    markets: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "markets",
-      },
-    ],
+    markets: [shopMarketsSchema],
     clickCollect: clickCollectSchema,
     notes: {
       type: [mongoose.Schema.Types.ObjectId],

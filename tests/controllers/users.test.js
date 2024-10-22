@@ -192,7 +192,7 @@ describe("Bookmarks", () => {
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),
           __v: expect.any(Number),
-          bookmarks: [mockShop._id],
+          bookmarks: [expect.any(Object)],
           stripeUUID: expect.any(String),
           clerkPasswordEnabled: expect.any(String),
           orders: [

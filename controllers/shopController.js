@@ -6,77 +6,10 @@ const {
   ProductFamily,
   Stock,
   Type,
+  Market,
 } = require("../models");
 const { validationModule } = require("../modules");
 const Fuse = require("fuse.js");
-
-/*
-const createNewShop = async (req, res) => {
-  try {
-    // define the fields coming from req.body to check
-    const checkBodyFields = [
-      "name",
-      "description",
-      "address",
-      "siret",
-      "types",
-    ];
-
-    // If all expected fields are present
-    if (!validationModule.checkBody(req.body, checkBodyFields)) {
-      throw new Error("Missing fields.");
-    }
-    // Retreive the logged user and its producer profile
-    const user = await User.findOne({ clerkUUID: req.auth.userId });
-    const producer = await Producer.findOne({ owner: user._id });
-
-    // If the user has no producer profile, trow an error
-    if (!producer) {
-      throw new Error("User has no existing producer profile.");
-    }
-
-    // Create and save the new shop
-    const { name, description, address, siret, types, logo } = req.body;
-
-    // verify objectId of type before save
-    const validTypes = await Type.find({ _id: { $in: types}})
-    if(validTypes.lentgh !== types.lentgh) {
-      throw new Error("Some selected types do not exist.")
-    }
-
-    // Add coordinates to address 
-    const coordinates = await getCoordinates(address);
-    address.latitude = coordinates.lat;
-    address.longitude = coordinates.lon;
-
-    const newShop = new Shop({
-      producer: producer._id,
-      name,
-      description,
-      siret,
-      address,
-      types: validTypes.map(type => type._id),
-      photos: [],
-      video: [],
-      isOpen: false,
-      reopenDate: null,
-      markets: [],
-      notes: [],
-      clickCollect: null,
-      logo,
-    });
-
-    await newShop.save();
-
-    res.json({ shop: newShop });
-  
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
-    return;
-  }
-};
-*/
 
 /**
  * Permet de savoir s'il existe un user avec ce clerkUUID et si ce user a un profil Producer
@@ -383,6 +316,8 @@ const searchShops = async (req, res) => {
           return item;
         });
 
+        // console.log(JSON.stringify(searchResults, null, 2))
+
         for (const result of searchResults) {
           const matchedKeys = [];
           for (const matche of result.searchData.matches) {
@@ -425,10 +360,155 @@ const searchShops = async (req, res) => {
         );
       }
 
+      console.log("searchData :", JSON.stringify(searchResults, null, 2));
+
       res.json({ result: true, searchResults });
     } else {
       throw new Error("Missing fields.");
     }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+    return;
+  }
+};
+
+const searchMarkets = async (req, res) => {
+  try {
+    const { city, radius } = req.body;
+
+    if (!city) {
+      throw new Error("Missing fields.");
+    }
+    console.log("radius: ", radius);
+
+    const cityCoordinates = await getCityCoordinates(city);
+
+    const searchArea = calculateMaxLatitudeLongitude(cityCoordinates, radius);
+
+    console.log(searchArea);
+
+    let markets = await Market.aggregate([
+      {
+        $match: {
+          "address.latitude": {
+            $lte: searchArea.latitude.max,
+            $gte: searchArea.latitude.min,
+          },
+          "address.longitude": {
+            $lte: searchArea.longitude.max,
+            $gte: searchArea.longitude.min,
+          },
+        },
+      },
+    ]);
+
+    if (!markets.length > 0) {
+      throw new Error("Auncune place de marché trouvée.");
+    }
+
+    return res.status(200).json(markets);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+    return;
+  }
+};
+
+const addMarkets = async (req, res) => {
+  try {
+    const { shopId, marketIds } = req.body;
+
+    const updatedShop = await Shop.findByIdAndUpdate(
+      shopId,
+      {
+        $push: {
+          markets: {
+            $each: marketIds.map((marketId) => ({
+              market: marketId,
+              isActive: false,
+              openingHours: [],
+            })),
+          },
+        },
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    if (!updatedShop) {
+      throw new Error("No shop found.");
+    } else {
+      const markets = await Shop.findById(shopId, {
+        _id: 0,
+        markets: 1,
+      }).populate({
+        path: "markets",
+        populate: [
+          {
+            path: "market",
+            model: "markets",
+          },
+        ],
+      });
+
+      res
+        .status(200)
+        .json({ message: "Place(s) de marché ajoutée(s)", markets });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+    return;
+  }
+};
+
+const updateShopMarkets = async (req, res) => {
+  console.log("passées :", JSON.stringify(req.body.markets, null, 2));
+  try {
+    const { shopId, markets } = req.body;
+    const shop = await Shop.findById(shopId);
+    if (!shop) {
+      throw new Error("No shop found.");
+    }
+
+    markets.forEach((marketUpdate) => {
+      const existingMarket = shop.markets.find(
+        (m) => m.market.toString() === marketUpdate.market._id,
+      );
+
+      if (existingMarket) {
+        existingMarket.isActive = marketUpdate.isActive;
+        existingMarket.openingHours = marketUpdate.openingHours;
+      } else {
+        shop.markets.push({
+          market: marketUpdate.market,
+          openingHours: marketUpdate.openingHours,
+          isActive: marketUpdate.isActive,
+        });
+      }
+    });
+
+    const updatedShop = await shop.save();
+
+    const updatedMarkets = await Shop.findById(shopId, {
+      _id: 0,
+      markets: 1,
+    }).populate({
+      path: "markets",
+      populate: [
+        {
+          path: "market",
+          model: "markets",
+        },
+      ],
+    });
+
+    console.log("retournées :", JSON.stringify(updatedMarkets, null, 2));
+
+    res.status(200).json(updatedMarkets);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
@@ -499,7 +579,17 @@ const getByProducer = async (req, res) => {
         path: "types",
         model: "types",
       })
-      .populate("markets");
+      .populate({
+        path: "markets",
+        populate: [
+          {
+            path: "market",
+            model: "markets",
+          },
+        ],
+      });
+
+    console.log("shop getByProducer:", JSON.stringify(shop, null, 2));
 
     if (!shop) {
       throw new Error("This producer has no shop.");
@@ -648,6 +738,11 @@ const deleteShop = async (req, res) => {
   } catch (error) {}
 };
 
+/**
+ * Permet d'obtenir la latitude et la longitude d'une adresse
+ * @param {string} address
+ * @returns
+ */
 const getCoordinates = async (address) => {
   const query = (
     address.address1 +
@@ -667,6 +762,23 @@ const getCoordinates = async (address) => {
   return coordinates;
 };
 
+/**
+ * Permet d'obtenir la latitude et la longitude d'une ville
+ * @param {string} city
+ * @returns
+ */
+const getCityCoordinates = async (city) => {
+  const response = await fetch(
+    `https://api-adresse.data.gouv.fr/search/?q=${city}&type=municipality`,
+  );
+  const data = await response.json();
+  const coordinates = {
+    latitude: data.features[0].geometry.coordinates[0],
+    longitude: data.features[0].geometry.coordinates[1],
+  };
+  return coordinates;
+};
+
 module.exports = {
   // createNewShop,
   createOrUpdateShop,
@@ -676,4 +788,7 @@ module.exports = {
   deleteShop,
   getCoordinates,
   getByProducer,
+  searchMarkets,
+  addMarkets,
+  updateShopMarkets,
 };

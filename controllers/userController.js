@@ -168,14 +168,14 @@ const addShopToBookmark = async (req, res) => {
     user.bookmarks.push(req.params.shopId);
 
     await user.save();
-    /*await user.populate({
+    await user.populate({
       path: "bookmarks",
       model: "shops",
       populate: {
         path: "notes",
         models: "notes",
       },
-    });*/
+    });
     const userOrders = await Order.find({ user: user._id, isPaid: true })
       .populate({
         path: "details",
@@ -206,6 +206,11 @@ const addShopToBookmark = async (req, res) => {
         ],
       })
       .sort("-createdAt");
+
+    console.log({
+      result: true,
+      user: { ...user.toObject(), orders: userOrders },
+    });
 
     res.status(200).json({
       result: true,

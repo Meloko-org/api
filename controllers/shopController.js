@@ -506,7 +506,7 @@ const updateShopMarkets = async (req, res) => {
       ],
     });
 
-    console.log("retournées :", JSON.stringify(updatedMarkets, null, 2));
+    // console.log("retournées :", JSON.stringify(updatedMarkets, null, 2));
 
     res.status(200).json(updatedMarkets);
   } catch (error) {
@@ -589,7 +589,7 @@ const getByProducer = async (req, res) => {
         ],
       });
 
-    console.log("shop getByProducer:", JSON.stringify(shop, null, 2));
+    // console.log("shop getByProducer:", JSON.stringify(shop, null, 2));
 
     if (!shop) {
       throw new Error("This producer has no shop.");

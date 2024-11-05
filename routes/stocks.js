@@ -5,8 +5,8 @@ const { clerkMiddlewares } = require("../middlewares");
 
 router.post(
   "/update",
-  // clerkMiddlewares.isUserLogged,
-  stockController.updateStock,
+  clerkMiddlewares.isUserLogged,
+  stockController.updateStocks,
 );
 
 router.get(

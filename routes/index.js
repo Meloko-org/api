@@ -1,5 +1,6 @@
 const authRouter = require("./auth");
 const clerkRouter = require("./clerk");
+const categoriesRouter = require("./categories");
 const producersRouter = require("./producers");
 const rolesRouter = require("./roles");
 const shopsRouter = require("./shops");
@@ -13,6 +14,7 @@ const stripeRouter = require("./stripe");
 module.exports = {
   authRouter,
   clerkRouter,
+  categoriesRouter,
   producersRouter,
   rolesRouter,
   shopsRouter,

@@ -10,6 +10,7 @@ const {
   usersRouter,
   authRouter,
   clerkRouter,
+  categoriesRouter,
   producersRouter,
   shopsRouter,
   rolesRouter,
@@ -34,6 +35,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/users", usersRouter);
 app.use("/auth", authRouter);
 app.use("/clerk", clerkRouter);
+app.use("/categories", categoriesRouter);
 app.use("/producers", producersRouter);
 app.use("/shops", shopsRouter);
 app.use("/stocks", stocksRouter);

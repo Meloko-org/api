@@ -519,19 +519,8 @@ const updateShopMarkets = async (req, res) => {
 };
 
 const getAvailableProductsForAShop = async (req, res) => {
-  // identifier le(s) type(s) de shop
-  // lister tous les produits concernés par le type de shop
-  // supprimer de la liste, les produits qui sont déjà dans stock
   try {
-    const user = await User.findOne({ clerkUUID: req.auth.userId });
-    if (!user) {
-      throw new Error("User not found.");
-    }
-
-    const producer = await Producer.findOne({ owner: user._id });
-    if (!producer) {
-      throw new Error("No producer found.");
-    }
+    const producer = await isProducerUser(req.auth.userId);
 
     const shop = await Shop.findOne({ producer: producer._id }).select("types");
     if (!shop) {
@@ -599,9 +588,56 @@ const getAvailableProductsForAShop = async (req, res) => {
       stocks.map((stock) => stock.product.toString()),
     );
 
-    const availableProducts = products.filter(
+    let availableProducts = products.filter(
       (product) => !stockedProductIds.has(product._id.toString()),
     );
+
+    console.log("terms:", req.body.searchTerm);
+
+    // réduction des résultats en fonction des terme de recherche
+    if (req.body.searchTerm) {
+      const searchKeys = [
+        {
+          name: "name",
+          weight: 1,
+        },
+        {
+          name: "description",
+          weight: 1,
+        },
+        {
+          name: "family",
+          weight: 1,
+        },
+      ];
+
+      // Define additional fuseSearch options
+      const searchOptions = {
+        minMatchCharLength: 3,
+        includeScore: true,
+        includeMatches: true,
+        keys: searchKeys,
+        shouldSort: true,
+        threshold: 0.4,
+      };
+
+      // Instantiate a Fuse class
+      const fuse = new Fuse(availableProducts, searchOptions);
+      // Execute the fuse search
+      const fuseSearch = fuse.search(req.body.searchTerm);
+
+      availableProducts = fuseSearch.map((product) => {
+        const item = product.item;
+
+        item.searchData = {
+          documentIndex: product.refIndex,
+          matches: product.matches,
+          score: product.score,
+        };
+
+        return item;
+      });
+    }
 
     console.log(availableProducts.length);
 

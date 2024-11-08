@@ -34,7 +34,7 @@ router.post(
   shopController.addProductsToAShop,
 );
 
-router.get(
+router.post(
   "/available-products",
   clerkMiddlewares.isUserLogged,
   shopController.getAvailableProductsForAShop,

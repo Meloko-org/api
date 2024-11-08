@@ -21,13 +21,24 @@ router.put(
 
 // Search for shops based on various parameters
 router.post("/search", shopController.searchShops);
-
 // search for markets based on city or department
 router.post("/markets", shopController.searchMarkets);
 // add a market to a shop
 router.put("/markets/add", shopController.addMarkets);
 // update existing markets
 router.put("/markets/update", shopController.updateShopMarkets);
+// add products to a shop
+router.post(
+  "/add-products",
+  clerkMiddlewares.isUserLogged,
+  shopController.addProductsToAShop,
+);
+
+router.get(
+  "/available-products",
+  clerkMiddlewares.isUserLogged,
+  shopController.getAvailableProductsForAShop,
+);
 
 router.get("/:id", shopController.getById);
 

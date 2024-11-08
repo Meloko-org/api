@@ -1,5 +1,12 @@
-const Producer = require("../models/Producer");
-const User = require("../models/User");
+const {
+  Producer,
+  User,
+  Shop,
+  ProductCategory,
+  ProductFamily,
+  Product,
+  Stock,
+} = require("../models");
 const { validationModule } = require("../modules");
 const userController = require("./userController");
 
@@ -139,6 +146,81 @@ const updateProducer = async (req, res) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+/*
+const getAvailableProductsForAShop = async (req, res) => {
+  // identifier le(s) type(s) de shop
+  // lister tous les produits concernés par le type de shop
+  // supprimer de la liste, les produits qui sont déjà dans stock
+  try {
+    const user = await User.findOne({ clerkUUID: req.auth.userId})
+    if(!user) {
+      throw new Error("User not found.")
+    }
+
+    const producer = await Producer.findOne({ owner: user._id})
+    if(!producer) {
+      throw new Error("No producer found.")
+    }
+    
+    const shop = await Shop.findOne({ producer: producer._id}).select("types")
+    if(!shop) {
+      throw new Error("No shop found.")
+    }
+
+    const typesToCategoriesMapping = {
+      "66b210b5bd946e81e70977dd" : ["Fruits", "Légumes"],
+      "66cc473ec844239d24552630" : ["fromages"],
+      "66cc477fc844239d24552631" : ["vins"]
+    }
+
+    const authorizedCategories = new Set()
+
+    console.log("shop:", shop.types)
+
+    shop.types.forEach(typeId => {
+      const categoriesFortype = typesToCategoriesMapping[typeId]
+      if (categoriesFortype) {
+        categoriesFortype.forEach(category => {
+          authorizedCategories.add(category)
+        })
+      }
+    })
+
+    const categoryNames = Array.from(authorizedCategories)
+    // on récupère les id des catégories authorisées
+    const categories = await ProductCategory.find({ name: { $in: categoryNames}})
+    const categoryIds = categories.map(cat => cat._id)
+    // on récupère les familles de produits en fonction des catégories authorisées
+    const families = await ProductFamily.find({ category: { $in: categoryIds}})
+    const familyIds = families.map(fam => fam._id)
+    // on récupère tous les produits qui appartiennent aux familles
+    const products = await Product.find({ family: { $in: familyIds}})
+      .populate({
+        path: "family",
+        model: "productFamily",
+        populate: {
+          path: "category",
+          model: "productcategory"
+        }
+      })
+
+    // on déduit de la liste des produits, tous les produits qui ont déjà un stock
+    const stocks = await Stock.find({ shop: shop._id})
+    const stockedProductIds = new Set(stocks.map((stock) => stock.product.toString()))
+
+
+    const availableProducts = products.filter((product) => !stockedProductIds.has(product._id.toString()))
+
+    console.log(availableProducts.length)
+
+    res.json(availableProducts)
+    
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({message: error.message})
+  }
+}*/
 
 module.exports = {
   createNewProducer,

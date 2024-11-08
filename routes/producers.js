@@ -15,6 +15,12 @@ router.get(
   producerController.getProducerInfos,
 );
 
+/*router.get(
+  "/availableproducts", 
+  clerkMiddlewares.isUserLogged, 
+  producerController.getAvailableProductsForAShop
+)*/
+
 router.get("/:producer", producerController.searchProducer);
 router.get("/", producerController.searchProducer);
 

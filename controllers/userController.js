@@ -87,7 +87,12 @@ const getUserInfos = async (req, res) => {
       })
       .sort("-createdAt");
 
-    res.status(200).json({ ...user.toObject(), orders: userOrders });
+    const isProducer = await Producer.findOne({ owner: user._id });
+
+    let producer;
+    producer = isProducer ? isProducer._id : null;
+
+    res.status(200).json({ ...user.toObject(), orders: userOrders, producer });
   } catch (error) {
     console.error(
       "Erreur lors de la récupération des informations de l'utilisateur: ",

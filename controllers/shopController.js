@@ -252,6 +252,11 @@ const searchShops = async (req, res) => {
         },
       ]);
 
+      console.log(
+        "results:",
+        searchResults.map((result) => result._id),
+      );
+
       // If there are query terms
       if (query !== "") {
         // Define the keys and weights that the fuzzy search will be applied
@@ -362,7 +367,7 @@ const searchShops = async (req, res) => {
         );
       }
 
-      console.log("searchData :", JSON.stringify(searchResults, null, 2));
+      // console.log("searchData :", JSON.stringify(searchResults, null, 2));
 
       res.json({ result: true, searchResults });
     } else {
@@ -919,8 +924,8 @@ const getCoordinates = async (address) => {
   );
   const data = await response.json();
   const coordinates = {
-    lat: data.features[0].geometry.coordinates[0],
-    lon: data.features[0].geometry.coordinates[1],
+    lat: data.features[0].geometry.coordinates[1],
+    lon: data.features[0].geometry.coordinates[0],
   };
   return coordinates;
 };

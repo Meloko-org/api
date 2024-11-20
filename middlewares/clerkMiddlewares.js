@@ -38,6 +38,9 @@ const isWebhookSignedByClerk = async (req, res, next) => {
 
     const payload = JSON.stringify(req.body);
 
+    // console.log("secret ENV :", secret)
+    // console.log("secret clerk :", req.headers)
+
     const wh = new Webhook(secret);
     // Throws on error, returns the verified content on success
     const verify = wh.verify(payload, req.headers);

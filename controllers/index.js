@@ -9,6 +9,7 @@ const tagController = require("./tagController");
 const productController = require("./productController");
 const stockController = require("./stockController");
 const stripeController = require("./stripeController");
+const businessController = require("./businessController");
 
 module.exports = {
   clerkController,
@@ -22,4 +23,5 @@ module.exports = {
   productController,
   stockController,
   stripeController,
+  businessController,
 };

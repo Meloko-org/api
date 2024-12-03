@@ -108,6 +108,7 @@ const createNewOrder = async (user, cart, paymentIntentId) => {
         withdrawMarket,
         withdrawDay,
         products,
+        status: "pending",
       };
     });
 

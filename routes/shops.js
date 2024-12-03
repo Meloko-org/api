@@ -27,6 +27,8 @@ router.post("/markets", shopController.searchMarkets);
 router.put("/markets/add", shopController.addMarkets);
 // update existing markets
 router.put("/markets/update", shopController.updateShopMarkets);
+// get market by id
+router.get("/markets/:marketId", shopController.getMarketById);
 // add products to a shop
 router.post(
   "/add-products",

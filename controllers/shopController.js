@@ -770,6 +770,27 @@ const getByProducer = async (req, res) => {
   }
 };
 
+const getMarketById = async (req, res) => {
+  try {
+    const checkBodyFields = ["marketId"];
+
+    if (!validationModule.checkBody(req.params, checkBodyFields)) {
+      throw new Error("Missing fields.");
+    }
+
+    const market = await Market.findById(req.params.marketId);
+
+    if (!market) {
+      throw new Error("No market found for this id");
+    }
+
+    res.status(200).json(market);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const getById = async (req, res) => {
   try {
     const checkBodyFields = ["id"];
@@ -961,4 +982,5 @@ module.exports = {
   updateShopMarkets,
   getAvailableProductsForAShop,
   addProductsToAShop,
+  getMarketById,
 };

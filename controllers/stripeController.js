@@ -4,6 +4,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // Is called by Stripe when a payment intent succeed
 const webhookReceiver = async (req, res) => {
+  console.log("webhookreceiver");
   try {
     switch (true) {
       case req.body.type === "payment_intent.succeeded":
@@ -32,6 +33,7 @@ const webhookReceiver = async (req, res) => {
 };
 
 const createPaymentIntent = async (req, res) => {
+  console.log("createPaymentIntent");
   try {
     const user = await User.findOne({ clerkUUID: req.auth.userId });
     let customer;
@@ -53,8 +55,11 @@ const createPaymentIntent = async (req, res) => {
       { apiVersion: "2024-06-20" },
     );
 
+    console.log("montant passé :", req.body.amount);
+    console.log("montant ajusté :", Math.floor(req.body.amount * 100));
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: req.body.amount * 100,
+      amount: Math.floor(req.body.amount * 100),
       currency: "eur",
       customer: customer.id,
       // In the latest version of the API, specifying the `automatic_payment_methods` parameter
@@ -81,6 +86,8 @@ const createPaymentIntent = async (req, res) => {
 };
 
 const createNewOrder = async (user, cart, paymentIntentId) => {
+  console.log("ceateNewOrder");
+  console.log("cart :", cart);
   try {
     const details = cart.map((c) => {
       const products = c.products.map((p) => {
@@ -92,10 +99,14 @@ const createNewOrder = async (user, cart, paymentIntentId) => {
       });
 
       const withdrawMode = c.withdrawMode;
+      const withdrawMarket = c.withdrawMarket;
+      const withdrawDay = c.withdrawDay;
 
       return {
         shop: c.shop._id,
         withdrawMode,
+        withdrawMarket,
+        withdrawDay,
         products,
       };
     });
@@ -117,6 +128,7 @@ const createNewOrder = async (user, cart, paymentIntentId) => {
         populate: { path: "notes", model: "notes" },
       },
     });
+    console.log("new Order :", newOrder);
     return newOrder;
   } catch (error) {
     console.error(error);
@@ -126,4 +138,5 @@ const createNewOrder = async (user, cart, paymentIntentId) => {
 module.exports = {
   createPaymentIntent,
   webhookReceiver,
+  createNewOrder,
 };

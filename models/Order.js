@@ -21,6 +21,12 @@ const orderDetailSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  withdrawMarket: {
+    type: String,
+  },
+  withdrawDay: {
+    type: String,
+  },
   market: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "markets",

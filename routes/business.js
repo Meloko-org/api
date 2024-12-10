@@ -9,4 +9,10 @@ router.get(
   businessController.getAllOrders,
 );
 
+router.get(
+  "/lastthree",
+  clerkMiddlewares.isUserLogged,
+  businessController.getLastThreeOrders,
+);
+
 module.exports = router;

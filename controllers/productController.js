@@ -90,8 +90,34 @@ const createNewProduct = async (req, res) => {
   }
 };
 
+const getProductById = async (req, res) => {
+  console.log("product id :", req.params.id);
+  try {
+    const checkBodyFields = ["id"];
+
+    if (!validationModule.checkBody(req.params, checkBodyFields)) {
+      throw new Error("Missing fields.");
+    }
+
+    const product = await Product.findById(req.params.id).populate(
+      "family",
+      "name",
+    );
+
+    if (!product) {
+      throw new Error("No product found.");
+    }
+
+    res.status(200).json(product);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createNewProductCategory,
   createNewProductFamily,
   createNewProduct,
+  getProductById,
 };

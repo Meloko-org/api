@@ -32,4 +32,10 @@ router.post(
   productController.createNewProductCategory,
 );
 
+router.get(
+  "/:id",
+  clerkMiddlewares.isUserLogged,
+  productController.getProductById,
+);
+
 module.exports = router;

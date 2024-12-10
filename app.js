@@ -20,6 +20,7 @@ const {
   productsRouter,
   stripeRouter,
   businessRouter,
+  orderRouter,
 } = require("./routes");
 
 var app = express();
@@ -46,5 +47,6 @@ app.use("/tags", tagsRouter);
 app.use("/products", productsRouter);
 app.use("/stripe", stripeRouter);
 app.use("/business", businessRouter);
+app.use("/orders", orderRouter);
 
 module.exports = app;

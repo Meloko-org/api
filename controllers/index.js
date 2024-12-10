@@ -10,6 +10,7 @@ const productController = require("./productController");
 const stockController = require("./stockController");
 const stripeController = require("./stripeController");
 const businessController = require("./businessController");
+const orderController = require("./orderController");
 
 module.exports = {
   clerkController,
@@ -24,4 +25,5 @@ module.exports = {
   stockController,
   stripeController,
   businessController,
+  orderController,
 };

@@ -8,6 +8,7 @@ const createMockOrder = async (mockUserId) => {
     isWithdrawn: false,
     isPaid: true,
     stripePIId: "pi_mock123",
+    totalPrice: "12",
   });
   await mockOrder.save();
 

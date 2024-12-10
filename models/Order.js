@@ -35,6 +35,14 @@ const orderDetailSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "shops",
   },
+  shopTotalPrice: {
+    type: mongoose.Decimal128,
+    required: true,
+  },
+  status: {
+    type: String,
+    required: true,
+  },
 });
 
 const orderSchema = mongoose.Schema(
@@ -55,6 +63,10 @@ const orderSchema = mongoose.Schema(
     stripePIId: {
       type: String,
       unique: true,
+      required: true,
+    },
+    totalPrice: {
+      type: mongoose.Decimal128,
       required: true,
     },
   },

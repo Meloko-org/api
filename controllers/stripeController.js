@@ -86,10 +86,34 @@ const createPaymentIntent = async (req, res) => {
 };
 
 const createNewOrder = async (user, cart, paymentIntentId) => {
-  console.log("ceateNewOrder");
-  console.log("cart :", cart);
   try {
-    const details = cart.map((c) => {
+    const details = cart.map((shopCart) => ({
+      products: shopCart.products.map((product) => ({
+        product: product.stockData._id,
+        quantity: product.quantity,
+        price: product.stockData.price.$numberDecimal,
+        isConfirmed: false,
+      })),
+      withdrawMode: shopCart.withdrawMode,
+      withdrawMarket: shopCart.withdrawMarket,
+      withdrawDay: shopCart.withdrawDay,
+      shop: shopCart.shop._id,
+      status: "pending",
+      shopTotalPrice: 0, // se met à jour automatiquement quand calculateOrderPrice()
+    }));
+
+    const totalPrice = calculateOrderPrice(details);
+
+    const newOrder = new Order({
+      user: user._id,
+      details,
+      isWithdrawn: false,
+      isPaid: false,
+      stripePIId: paymentIntentId,
+      totalPrice,
+    });
+
+    /*const details = cart.map((c) => {
       const products = c.products.map((p) => {
         return {
           product: p.stockData._id,
@@ -118,7 +142,7 @@ const createNewOrder = async (user, cart, paymentIntentId) => {
       isWithdrawn: false,
       isPaid: false,
       stripePIId: paymentIntentId,
-    });
+    });*/
 
     await newOrder.save();
     await newOrder.populate({
@@ -134,6 +158,25 @@ const createNewOrder = async (user, cart, paymentIntentId) => {
   } catch (error) {
     console.error(error);
   }
+};
+
+const calculateOrderPrice = (details) => {
+  let totalPrice = 0;
+
+  details.forEach((detail) => {
+    let shopTotalPrice = 0;
+
+    detail.products.forEach((product) => {
+      const price = parseFloat(product.price);
+      const quantity = product.quantity / 1000;
+      shopTotalPrice += price * quantity;
+    });
+
+    detail.shopTotalPrice = shopTotalPrice.toFixed(2);
+    totalPrice += shopTotalPrice;
+  });
+
+  return totalPrice.toFixed(2);
 };
 
 module.exports = {

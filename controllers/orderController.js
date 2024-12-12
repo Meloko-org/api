@@ -48,6 +48,64 @@ const getOrderDetailsById = async (req, res) => {
   }
 };
 
+const updateOrder = async (req, res) => {
+  try {
+    if (!req.params.id) {
+      throw new Error("Order id missing.");
+    }
+
+    // vérification du shop
+    const shop = await isShop(req.auth.userId);
+    if (!shop) {
+      throw new Error("Shop not found.");
+    }
+
+    const orderId = req.params.id;
+    const { order, status } = req.body;
+
+    console.log("orderId :", orderId);
+    console.log("order: ", order);
+
+    const updatedOrder = await Order.findByIdAndUpdate(orderId, order, {
+      new: true,
+    });
+
+    if (!updatedOrder) {
+      throw new Error("Impossible de mettre à jour la commande.");
+    }
+
+    const message = getMessage(status);
+
+    res.status(200).json({ result: true, message });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ result: false, message: error.message });
+  }
+};
+
+const getMessage = (expr) => {
+  let message = "";
+  switch (expr) {
+    case "validated":
+      message = "Commande Validée";
+      break;
+    case "canceled":
+      message = "Commande Annulée";
+      break;
+    case "pending":
+      message = "Commande en attente";
+      break;
+    case "withdrawn":
+      message = "Commande retirée";
+      break;
+
+    default:
+      break;
+  }
+  return message;
+};
+
 module.exports = {
   getOrderDetailsById,
+  updateOrder,
 };

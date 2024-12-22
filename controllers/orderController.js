@@ -1,7 +1,56 @@
 const mongoose = require("mongoose");
 const { Order } = require("../models");
 const { validationModule } = require("../modules");
-const { isShop } = require("../modules/verification");
+const { isShop, isUser } = require("../modules/verification");
+
+const getOrdersByUser = async (req, res) => {
+  try {
+    if (!req.params.id) {
+      throw new Error("User id missing.");
+    }
+
+    const user = await isUser(req.auth.userId);
+
+    if (!user) {
+      throw new Error("No user found.");
+    }
+
+    const orders = await Order.find({ user: user._id })
+      .populate("user", "firstname lastname email")
+      .populate({
+        path: "details",
+        populate: [
+          {
+            path: "products.product",
+            model: "stocks",
+            select: "-createdAt -updatedAt",
+            populate: {
+              path: "product",
+              model: "products",
+              select: "name image weight family",
+              populate: {
+                path: "family",
+                model: "productFamily",
+                select: "name",
+              },
+            },
+          },
+          {
+            path: "shop",
+            model: "shops",
+            select: "name notes",
+          },
+        ],
+      });
+
+    console.log(orders);
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+};
 
 const getOrderDetailsById = async (req, res) => {
   try {
@@ -12,7 +61,10 @@ const getOrderDetailsById = async (req, res) => {
     // récupération du shopId
     const shop = await isShop(req.auth.userId);
 
-    const order = await Order.findById(req.params.id)
+    const order = await Order.findOne({
+      _id: req.params.id,
+      "details.shop": shop._id,
+    })
       .populate("user", "firstname lastname email")
       .populate({
         path: "details",
@@ -20,7 +72,6 @@ const getOrderDetailsById = async (req, res) => {
           {
             path: "products.product",
             model: "stocks",
-            match: { shop: { $eq: shop._id } },
             select: "-createdAt -updatedAt",
             populate: {
               path: "product",
@@ -108,4 +159,5 @@ const getMessage = (expr) => {
 module.exports = {
   getOrderDetailsById,
   updateOrder,
+  getOrdersByUser,
 };

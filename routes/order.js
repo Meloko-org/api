@@ -11,4 +11,10 @@ router.get(
   orderController.getOrderDetailsById,
 );
 
+router.get(
+  "/user/:id",
+  clerkMiddlewares.isUserLogged,
+  orderController.getOrdersByUser,
+);
+
 module.exports = router;

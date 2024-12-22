@@ -66,10 +66,10 @@ const updateStocks = async (req, res) => {
         const { _id, price, stock, shop, product, tags } = stockdata;
 
         const updatedPrice = mongoose.Types.Decimal128.fromString(
-          stock.toString(),
+          price.toString(),
         );
         const updatedStock = mongoose.Types.Decimal128.fromString(
-          price.toString(),
+          stock.toString(),
         );
 
         return Stock.findOneAndUpdate(

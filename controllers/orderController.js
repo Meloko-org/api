@@ -39,11 +39,15 @@ const getOrdersByUser = async (req, res) => {
             path: "shop",
             model: "shops",
             select: "name notes",
+            populate: {
+              path: "notes",
+              model: "notes",
+            },
           },
         ],
       });
 
-    console.log(orders);
+    console.log(JSON.stringify(orders, null, 2));
 
     res.status(200).json(orders);
   } catch (error) {

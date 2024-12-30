@@ -168,7 +168,10 @@ const calculateOrderPrice = (details) => {
 
     detail.products.forEach((product) => {
       const price = parseFloat(product.price);
-      const quantity = product.quantity / 1000;
+      const quantity =
+        product.product.weight.unit === "gr"
+          ? product.quantity / 1000
+          : product.quantity;
       shopTotalPrice += price * quantity;
     });
 

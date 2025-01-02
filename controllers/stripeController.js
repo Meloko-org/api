@@ -92,6 +92,7 @@ const createNewOrder = async (user, cart, paymentIntentId) => {
         product: product.stockData._id,
         quantity: product.quantity,
         price: product.stockData.price.$numberDecimal,
+        unit: product.stockData.product.weight.unit,
         isConfirmed: false,
       })),
       withdrawMode: shopCart.withdrawMode,
@@ -101,6 +102,9 @@ const createNewOrder = async (user, cart, paymentIntentId) => {
       status: "pending",
       shopTotalPrice: 0, // se met à jour automatiquement quand calculateOrderPrice()
     }));
+
+    // console.log("cart :", JSON.stringify(cart, null, 2))
+    // console.log("details :", JSON.stringify(details, null, 2))
 
     const totalPrice = calculateOrderPrice(details);
 
@@ -153,7 +157,7 @@ const createNewOrder = async (user, cart, paymentIntentId) => {
         populate: { path: "notes", model: "notes" },
       },
     });
-    console.log("new Order :", newOrder);
+    // console.log("new Order :", newOrder);
     return newOrder;
   } catch (error) {
     console.error(error);
@@ -169,9 +173,7 @@ const calculateOrderPrice = (details) => {
     detail.products.forEach((product) => {
       const price = parseFloat(product.price);
       const quantity =
-        product.product.weight.unit === "gr"
-          ? product.quantity / 1000
-          : product.quantity;
+        product.unit === "gr" ? product.quantity / 1000 : product.quantity;
       shopTotalPrice += price * quantity;
     });
 

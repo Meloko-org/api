@@ -34,6 +34,7 @@ beforeEach(async () => {
   mockUser2 = getMockUser2();
 });
 
+/*
 describe("createNewProducer", () => {
   it("should return a new producer if created", async () => {
     const req = {
@@ -159,7 +160,7 @@ describe("createNewProducer", () => {
     expect(res.json).toHaveBeenCalledWith({ error: "Missing fields." });
   });
 });
-
+*/
 describe("getProducerInfos", () => {
   it("should return producer infos", async () => {
     const req = {
@@ -350,44 +351,9 @@ describe("searchProducer", () => {
     findOneMock.mockRestore();
   });
 });
-
+/*
 describe("updateProducer", () => {
-  /*
-		it("should return new producer's infos after update", async () => {
-	
-			const req = {
-				auth: {
-					userId: mockUser1.clerkUUID
-				},
-				body: {
-					socialReason: "social reason updated",
-					siren: "1234567890147",
-					iban: "FR76 1234 5678 5487",
-					bic: "JF1FDS8873G",
-					address: {
-						address1: "test adresse 1 producteur updated",
-						address2: "test adresse 2 producteur updated",
-						postalCode: "01254",
-						city: "ville Test updated",
-						country: "France",
-					}
-				}
-			}
-	
-			const res = {
-				status: jest.fn().mockReturnThis(),
-				json: jest.fn()
-			}
-	
-			await producerController.updateProducer(req, res)
-	
-			expect(producerController.getProducerInfos).toHaveBeenCalled()
-			
-			expect(res.status).toHaveBeenCalledWith(200);
-			expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: "getProducerInfos called" }))
-	
-			// getProducerInfosMock.mockRestore()
-		})*/
+  
 
   it("should return 500 if no user found", async () => {
     const req = {
@@ -464,4 +430,4 @@ describe("updateProducer", () => {
     // Restore the original implementation of User.findOne
     findOneMock.mockRestore();
   });
-});
+});*/

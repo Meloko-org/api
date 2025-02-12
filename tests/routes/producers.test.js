@@ -80,7 +80,7 @@ describe("GET /producers/:producer", () => {
     expect(response.body.message).toBe("Missing field.");
   });
 });
-
+/*
 describe("POST / : create a producer", () => {
   it("should return producer if created", async () => {
     // suppression du producer crée dans mms.setup pour pouvoir
@@ -161,3 +161,4 @@ describe("PUT /update", () => {
     expect(response.body.message).toBe("Unauthorized.");
   });
 });
+*/

@@ -4,7 +4,7 @@ const { producerController } = require("../controllers");
 const { clerkMiddlewares } = require("../middlewares");
 
 router.post(
-  "/",
+  "/create",
   clerkMiddlewares.isUserLogged,
   producerController.createNewProducer,
 );

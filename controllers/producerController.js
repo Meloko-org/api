@@ -10,6 +10,25 @@ const {
 const { validationModule } = require("../modules");
 const userController = require("./userController");
 
+const initialiseProducer = async (req, res) => {
+  try {
+    const owner = await User.findOne({ clerkUUID: req.auth.userId });
+
+    if (await Producer.findOne({ owner: owner._id })) {
+      return res.status(404).json({ message: "Producer already exists." });
+    }
+
+    const newProducer = new Producer({ owner: owner._id });
+
+    await newProducer.save();
+
+    res.status(201).json({ result: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+    return;
+  }
+};
+
 const createNewProducer = async (req, res) => {
   try {
     // Retreive the logged user
@@ -227,4 +246,5 @@ module.exports = {
   searchProducer,
   updateProducer,
   getProducerInfos,
+  initialiseProducer,
 };

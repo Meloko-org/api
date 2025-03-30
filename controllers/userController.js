@@ -4,7 +4,9 @@ const { User, Role, Order, Producer } = require("../models");
 const createNewUser = async (clerkUserData) => {
   try {
     const userRole = await Role.findOne({ name: "user" });
-    if (!userRole) throw new Error("Le role user n'existe pas.");
+    if (!userRole) {
+      return { success: false, message: "Le role user n'existe pas." };
+    }
 
     const email = clerkUserData.email_addresses.find(
       (ea) => ea.id === clerkUserData.primary_email_address_id,
@@ -53,7 +55,9 @@ const getUserInfos = async (req, res) => {
 
     if (!user) {
       // console.log("Utilisateur non trouvé avec l'id Clerk: ", req.auth.userId);
-      return res.status(404).json({ message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     const userOrders = await Order.find({ user: user._id, isPaid: true })
@@ -92,13 +96,18 @@ const getUserInfos = async (req, res) => {
     let producer;
     producer = isProducer ? isProducer._id : null;
 
-    res.status(200).json({ ...user.toObject(), orders: userOrders, producer });
+    res.status(200).json({
+      success: true,
+      ...user.toObject(),
+      orders: userOrders,
+      producer,
+    });
   } catch (error) {
     console.error(
       "Erreur lors de la récupération des informations de l'utilisateur: ",
       error,
     );
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ success: false, message: "Internal server error" });
     return;
   }
 };

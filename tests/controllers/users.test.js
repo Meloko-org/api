@@ -118,7 +118,10 @@ describe("getUserInfos", () => {
     await getUserInfos(req, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ message: "User not found" });
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "User not found",
+    });
   });
 });
 

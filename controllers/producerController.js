@@ -10,25 +10,35 @@ const {
 const { validationModule } = require("../modules");
 const userController = require("./userController");
 
+// permet de créer un producteur lors de l'inscription
 const initialiseProducer = async (req, res) => {
   try {
+    console.log("id user: ", req.auth.userId);
     const owner = await User.findOne({ clerkUUID: req.auth.userId });
+    console.log("owner :", owner);
 
     if (await Producer.findOne({ owner: owner._id })) {
-      return res.status(404).json({ message: "Producer already exists." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Ce producteur existe déjà." });
     }
 
     const newProducer = new Producer({ owner: owner._id });
 
     await newProducer.save();
 
-    res.status(201).json({ result: true });
+    res.status(201).json({ success: true, message: "Compte producteur créé." });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur: veuillez réessayer plus tard.",
+    });
     return;
   }
 };
 
+// permet de créer un producteur à partir d'un user
 const createNewProducer = async (req, res) => {
   try {
     // Retreive the logged user
@@ -37,9 +47,6 @@ const createNewProducer = async (req, res) => {
     // console.log("owner:", owner);
 
     if (await Producer.findOne({ owner: owner._id })) {
-      // console.log(
-      //   `Un producteur existe déjà pour cet utilisateur ${owner._id}`,
-      // );
       return res.status(404).json({ message: "Producer already exists" });
     }
 
@@ -76,26 +83,32 @@ const createNewProducer = async (req, res) => {
 };
 
 const getProducerInfos = async (req, res) => {
-  // console.log("getProducerInfos called")
   try {
     const userId = await User.findOne(
       { clerkUUID: req.auth.userId },
       { _id: 1 },
     );
 
+    if (!userId) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Utilisateur non trouvé." });
+    }
+
     const producer = await Producer.findOne({ owner: userId });
 
     if (!producer) {
-      // console.log(
-      //   `Aucun producteur trouvé à partir du clerkUUID ${req.auth.userId}`,
-      // );
-      return res.status(404).json({ message: "No producer found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "No producer found" });
     }
 
-    res.json(producer);
+    res.status(200).json({ success: true, producer });
   } catch (error) {
     // console.log(error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal Server Error" });
   }
 };
 

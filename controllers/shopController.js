@@ -738,7 +738,9 @@ const getByProducer = async (req, res) => {
     const checkBodyFields = ["producer"];
 
     if (!validationModule.checkBody(req.params, checkBodyFields)) {
-      throw new Error("Missing fields.");
+      return res
+        .status(404)
+        .json({ success: false, message: "Des champs sont manquants." });
     }
 
     const shop = await Shop.findOne({ producer: req.params.producer })
@@ -757,16 +759,18 @@ const getByProducer = async (req, res) => {
         ],
       });
 
-    // console.log("shop getByProducer:", JSON.stringify(shop, null, 2));
-
     if (!shop) {
-      throw new Error("This producer has no shop.");
+      return res
+        .status(404)
+        .json({ success: false, message: "Ce producteur n'a pas de shop." });
     }
 
-    res.json(shop);
+    res.status(200).json({ success: true, shop });
   } catch (error) {
     console.log(error);
-    //res.status(500).json({error: error.message})
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal Server Error" });
   }
 };
 

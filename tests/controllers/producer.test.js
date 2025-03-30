@@ -179,25 +179,28 @@ describe("getProducerInfos", () => {
 
     expect(receivedResponse).toMatchObject(
       expect.objectContaining({
-        socialReason: expect.any(String),
-        siren: expect.any(String),
-        owner: mockUser1._id,
-        iban: expect.any(String),
-        bic: expect.any(String),
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date),
-        __v: expect.any(Number),
-        address: expect.objectContaining({
-          address1: expect.any(String),
-          address2: expect.any(String),
-          postalCode: expect.any(String),
-          city: expect.any(String),
-          country: expect.any(String),
-          _id: expect.any(mongoose.Types.ObjectId),
+        success: expect.any(Boolean),
+        producer: expect.objectContaining({
+          socialReason: expect.any(String),
+          siren: expect.any(String),
+          owner: mockUser1._id,
+          iban: expect.any(String),
+          bic: expect.any(String),
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),
+          __v: expect.any(Number),
+          address: expect.objectContaining({
+            address1: expect.any(String),
+            address2: expect.any(String),
+            postalCode: expect.any(String),
+            city: expect.any(String),
+            country: expect.any(String),
+            _id: expect.any(mongoose.Types.ObjectId),
+            createdAt: expect.any(Date),
+            updatedAt: expect.any(Date),
+          }),
+          _id: expect.any(mongoose.Types.ObjectId),
         }),
-        _id: expect.any(mongoose.Types.ObjectId),
       }),
     );
   });
@@ -217,7 +220,10 @@ describe("getProducerInfos", () => {
 
     expect(res.status).toHaveBeenCalledWith(404);
 
-    expect(res.json).toHaveBeenCalledWith({ message: "No producer found" });
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: "No producer found",
+    });
   });
 
   it("should return 500 if error", async () => {
@@ -242,7 +248,10 @@ describe("getProducerInfos", () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
 
-    expect(res.json).toHaveBeenCalledWith({ error: "Internal Server Error" });
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      error: "Internal Server Error",
+    });
 
     // Restore the original implementation of User.findOne
     findOneMock.mockRestore();

@@ -98,9 +98,11 @@ const getUserInfos = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      ...user.toObject(),
-      orders: userOrders,
-      producer,
+      user: {
+        ...user.toObject(),
+        orders: userOrders,
+        producer,
+      },
     });
   } catch (error) {
     console.error(

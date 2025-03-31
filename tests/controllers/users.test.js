@@ -77,28 +77,31 @@ describe("getUserInfos", () => {
 
     expect(receivedResponse).toMatchObject(
       expect.objectContaining({
-        _id: mockUser1._id,
-        email: expect.any(String),
-        clerkPasswordEnabled: expect.any(String),
-        stripeUUID: expect.any(String),
-        firstname: expect.any(String),
-        lastname: expect.any(String),
-        avatar: null,
-        bookmarks: expect.any(Array),
-        favSearch: expect.any(Array),
-        orders: [
-          expect.objectContaining({
-            _id: mockOrder._id,
-            user: mockUser1._id,
-            details: expect.any(Array),
-            isWithdrawn: expect.any(Boolean),
-            isPaid: true,
-            stripePIId: expect.any(String),
-            createdAt: expect.any(Date),
-            updatedAt: expect.any(Date),
-            __v: expect.any(Number),
-          }),
-        ],
+        success: expect.any(Boolean),
+        user: expect.objectContaining({
+          _id: mockUser1._id,
+          email: expect.any(String),
+          clerkPasswordEnabled: expect.any(String),
+          stripeUUID: expect.any(String),
+          firstname: expect.any(String),
+          lastname: expect.any(String),
+          avatar: null,
+          bookmarks: expect.any(Array),
+          favSearch: expect.any(Array),
+          orders: [
+            expect.objectContaining({
+              _id: mockOrder._id,
+              user: mockUser1._id,
+              details: expect.any(Array),
+              isWithdrawn: expect.any(Boolean),
+              isPaid: true,
+              stripePIId: expect.any(String),
+              createdAt: expect.any(Date),
+              updatedAt: expect.any(Date),
+              __v: expect.any(Number),
+            }),
+          ],
+        }),
       }),
     );
   });

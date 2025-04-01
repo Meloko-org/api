@@ -139,40 +139,47 @@ const searchProducer = async (req, res) => {
 
 const updateProducer = async (req, res) => {
   try {
-    const user = await User.findOne({ clerkUUID: req.auth.userId });
+    const userId = await User.findOne(
+      { clerkUUID: req.auth.userId },
+      { _id: 1 },
+    );
 
-    if (!user) {
-      console.log("no user found with this clerkUUID: ", req.auth.userId);
-      throw new Error("No user found");
+    if (!userId) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Utilisateur non trouvé." });
     }
 
-    const producer = await Producer.findOne({ owner: user._id });
+    const producer = await Producer.findOne({ owner: userId });
 
     if (!producer) {
-      console.log("no producer found with this owner: ", user._id);
-      throw new Error("No producer found");
+      return res
+        .status(404)
+        .json({ success: false, message: "No producer found" });
     }
 
     // define the fields coming from req.body to check
     const checkBodyFields = ["socialReason", "siren", "iban", "bic", "address"];
 
-    if (validationModule.checkBody(req.body, checkBodyFields)) {
-      req.body.socialReason && (producer.socialReason = req.body.socialReason);
-      req.body.siren && (producer.siren = req.body.siren);
-      req.body.iban && (producer.iban = req.body.iban);
-      req.body.bic && (producer.bic = req.body.bic);
-      req.body.address && (producer.address = req.body.address);
-
-      await producer.save();
-
-      console.log("before getProducerInfos");
-
-      /* récupérer les nouvelles infos pour mettre à jour le store */
-      await getProducerInfos(req, res);
-      console.log("after getProducerInfos");
-    } else {
-      throw new Error("Missing fields.");
+    if (!validationModule.checkBody(req.body, checkBodyFields)) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Des informations sont manquantes." });
     }
+
+    req.body.socialReason && (producer.socialReason = req.body.socialReason);
+    req.body.siren && (producer.siren = req.body.siren);
+    req.body.iban && (producer.iban = req.body.iban);
+    req.body.bic && (producer.bic = req.body.bic);
+    req.body.address && (producer.address = req.body.address);
+
+    await producer.save();
+
+    console.log("before getProducerInfos");
+
+    /* récupérer les nouvelles infos pour mettre à jour le store */
+    await getProducerInfos(req, res);
+    console.log("after getProducerInfos");
   } catch (error) {
     // console.error("Error in updateProducer: ", error)
     return res.status(500).json({ error: error.message });

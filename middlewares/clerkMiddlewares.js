@@ -1,11 +1,13 @@
-const { ClerkExpressWithAuth } = require("@clerk/clerk-sdk-node");
+// const { ClerkExpressWithAuth } = require("@clerk/clerk-sdk-node");
+const { clerkMiddleware } = require("@clerk/express");
+
 const { Webhook } = require("svix");
 const { createClerkClient, verifyToken } = require("@clerk/backend");
 
 // Check the Bearer Token supplied by the frontend
 const isUserLogged = async (req, res, next) => {
   try {
-    ClerkExpressWithAuth()(req, res, (err) => {
+    clerkMiddleware()(req, res, (err) => {
       if (err) {
         // console.error("Erreur dans ClerkExpressWithAuth :", err);
         return res.status(500).json({ message: "Internal server error." });

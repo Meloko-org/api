@@ -1,6 +1,6 @@
-jest.mock("@clerk/clerk-sdk-node", () => {
+jest.mock("@clerk/express", () => {
   return {
-    ClerkExpressWithAuth: jest.fn(() => {
+    clerkMiddleware: jest.fn(() => {
       return (req, res, next) => {
         // Simuler l'existence d'un Bearer Token dans les headers
         const authHeader = req.headers.authorization;

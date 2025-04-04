@@ -10,6 +10,35 @@ const {
 const { validationModule } = require("../modules");
 const userController = require("./userController");
 
+// permet de créer un producteur lors de l'inscription
+const initialiseProducer = async (req, res) => {
+  try {
+    console.log("id user: ", req.auth.userId);
+    const owner = await User.findOne({ clerkUUID: req.auth.userId });
+    console.log("owner :", owner);
+
+    if (await Producer.findOne({ owner: owner._id })) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Ce producteur existe déjà." });
+    }
+
+    const newProducer = new Producer({ owner: owner._id });
+
+    await newProducer.save();
+
+    res.status(201).json({ success: true, message: "Compte producteur créé." });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur: veuillez réessayer plus tard.",
+    });
+    return;
+  }
+};
+
+// permet de créer un producteur à partir d'un user
 const createNewProducer = async (req, res) => {
   try {
     // Retreive the logged user
@@ -18,9 +47,6 @@ const createNewProducer = async (req, res) => {
     // console.log("owner:", owner);
 
     if (await Producer.findOne({ owner: owner._id })) {
-      // console.log(
-      //   `Un producteur existe déjà pour cet utilisateur ${owner._id}`,
-      // );
       return res.status(404).json({ message: "Producer already exists" });
     }
 
@@ -57,26 +83,32 @@ const createNewProducer = async (req, res) => {
 };
 
 const getProducerInfos = async (req, res) => {
-  // console.log("getProducerInfos called")
   try {
     const userId = await User.findOne(
       { clerkUUID: req.auth.userId },
       { _id: 1 },
     );
 
+    if (!userId) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Utilisateur non trouvé." });
+    }
+
     const producer = await Producer.findOne({ owner: userId });
 
     if (!producer) {
-      // console.log(
-      //   `Aucun producteur trouvé à partir du clerkUUID ${req.auth.userId}`,
-      // );
-      return res.status(404).json({ message: "No producer found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "No producer found" });
     }
 
-    res.json(producer);
+    res.status(200).json({ success: true, producer });
   } catch (error) {
     // console.log(error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal Server Error" });
   }
 };
 
@@ -107,40 +139,47 @@ const searchProducer = async (req, res) => {
 
 const updateProducer = async (req, res) => {
   try {
-    const user = await User.findOne({ clerkUUID: req.auth.userId });
+    const userId = await User.findOne(
+      { clerkUUID: req.auth.userId },
+      { _id: 1 },
+    );
 
-    if (!user) {
-      console.log("no user found with this clerkUUID: ", req.auth.userId);
-      throw new Error("No user found");
+    if (!userId) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Utilisateur non trouvé." });
     }
 
-    const producer = await Producer.findOne({ owner: user._id });
+    const producer = await Producer.findOne({ owner: userId });
 
     if (!producer) {
-      console.log("no producer found with this owner: ", user._id);
-      throw new Error("No producer found");
+      return res
+        .status(404)
+        .json({ success: false, message: "No producer found" });
     }
 
     // define the fields coming from req.body to check
     const checkBodyFields = ["socialReason", "siren", "iban", "bic", "address"];
 
-    if (validationModule.checkBody(req.body, checkBodyFields)) {
-      req.body.socialReason && (producer.socialReason = req.body.socialReason);
-      req.body.siren && (producer.siren = req.body.siren);
-      req.body.iban && (producer.iban = req.body.iban);
-      req.body.bic && (producer.bic = req.body.bic);
-      req.body.address && (producer.address = req.body.address);
-
-      await producer.save();
-
-      console.log("before getProducerInfos");
-
-      /* récupérer les nouvelles infos pour mettre à jour le store */
-      await getProducerInfos(req, res);
-      console.log("after getProducerInfos");
-    } else {
-      throw new Error("Missing fields.");
+    if (!validationModule.checkBody(req.body, checkBodyFields)) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Des informations sont manquantes." });
     }
+
+    req.body.socialReason && (producer.socialReason = req.body.socialReason);
+    req.body.siren && (producer.siren = req.body.siren);
+    req.body.iban && (producer.iban = req.body.iban);
+    req.body.bic && (producer.bic = req.body.bic);
+    req.body.address && (producer.address = req.body.address);
+
+    await producer.save();
+
+    console.log("before getProducerInfos");
+
+    /* récupérer les nouvelles infos pour mettre à jour le store */
+    await getProducerInfos(req, res);
+    console.log("after getProducerInfos");
   } catch (error) {
     // console.error("Error in updateProducer: ", error)
     return res.status(500).json({ error: error.message });
@@ -227,4 +266,5 @@ module.exports = {
   searchProducer,
   updateProducer,
   getProducerInfos,
+  initialiseProducer,
 };

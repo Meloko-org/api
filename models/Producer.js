@@ -5,11 +5,11 @@ const producerSchema = mongoose.Schema(
   {
     socialReason: {
       type: String,
-      required: true,
+      required: false,
     },
     siren: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
     },
     owner: {
@@ -19,17 +19,17 @@ const producerSchema = mongoose.Schema(
     },
     iban: {
       type: String,
-      required: true,
+      required: false,
       length: 34,
     },
     bic: {
       type: String,
-      required: true,
+      required: false,
       length: 11,
     },
     address: {
       type: addressSchema,
-      required: true,
+      required: false,
     },
   },
   { timestamps: true },

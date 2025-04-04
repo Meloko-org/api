@@ -9,11 +9,15 @@ const webhookReceiver = async (req, res) => {
       const createdUser = await userController.createNewUser(req.body.data);
       console.log("created user?", createdUser);
       if (!createdUser) {
-        res.status(409).json({ error: "user already exist" });
+        res
+          .status(409)
+          .json({ success: false, message: "L'utilisateur existe déjà." });
         return;
       }
 
-      res.status(201).json({ result: true });
+      res
+        .status(201)
+        .json({ success: true, message: "L'utilisateur est créé." });
       break;
     case req.body.type === "user.deleted":
       userId = req.body.data.id;

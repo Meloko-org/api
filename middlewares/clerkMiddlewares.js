@@ -7,25 +7,36 @@ const { createClerkClient, verifyToken } = require("@clerk/backend");
 // Check the Bearer Token supplied by the frontend
 const isUserLogged = async (req, res, next) => {
   try {
-    clerkMiddleware()(req, res, (err) => {
-      if (err) {
-        // console.error("Erreur dans ClerkExpressWithAuth :", err);
-        return res.status(500).json({ message: "Internal server error." });
-      }
+    // const { userId } = req.auth
+    // // If the user is not authenticated, return an empty object
+    // req.auth = userId ? auth : {}
 
-      // if req.auth.userId is null
-      if (!req.auth || !req.auth.userId) {
-        // console.error("Non autorisé : req.auth.userId est null ou non défini.");
-        return res.status(401).json({ message: "Unauthorized." });
-      }
-
-      // If authenticated, proceed to the controller
-      // console.log(
-      //   "Authentification réussie pour l'utilisateur :",
-      //   req.auth.userId,
-      // );
+    if (req.auth.userId) {
+      console.log("req.auth", req.auth);
       next();
-    });
+    } else {
+      return res.status(401).json({ message: "Unauthorized." });
+    }
+
+    // clerkMiddleware()(req, res, (err) => {
+    //   if (err) {
+    //     // console.error("Erreur dans ClerkExpressWithAuth :", err);
+    //     return res.status(500).json({ message: "Internal server error." });
+    //   }
+
+    //   // if req.auth.userId is null
+    //   if (!req.auth || !req.auth.userId) {
+    //     // console.error("Non autorisé : req.auth.userId est null ou non défini.");
+    //     return res.status(401).json({ message: "Unauthorized." });
+    //   }
+
+    //   // If authenticated, proceed to the controller
+    //   // console.log(
+    //   //   "Authentification réussie pour l'utilisateur :",
+    //   //   req.auth.userId,
+    //   // );
+    //   next();
+    // });
   } catch (error) {
     // console.error("Erreur interne dans isUserLogged :", error)
     return res.status(500).json({ message: "Internal server error." });

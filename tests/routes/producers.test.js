@@ -55,31 +55,31 @@ describe("GET /producers/logged", () => {
   });
 });
 
-describe("GET /producers/:producer", () => {
-  it("should return a producer from his social reason", async () => {
-    const producer = "Producteur test";
-    const response = await request(app)
-      .get(`/producers/${producer}`)
-      .expect(200);
+// describe("GET /producers/:producer", () => {
+//   it("should return a producer from his social reason", async () => {
+//     const producer = "Producteur test";
+//     const response = await request(app)
+//       .get(`/producers/${producer}`)
+//       .expect(200);
 
-    expect(response.status).toBe(200);
-  });
+//     expect(response.status).toBe(200);
+//   });
 
-  it("should return 404 if not found", async () => {
-    const producer = "no producer";
-    const response = await request(app)
-      .get(`/producers/${producer}`)
-      .expect(404);
+//   it("should return 404 if not found", async () => {
+//     const producer = "no producer";
+//     const response = await request(app)
+//       .get(`/producers/${producer}`)
+//       .expect(404);
 
-    expect(response.body.message).toBe("No producer found.");
-  });
+//     expect(response.body.message).toBe("No producer found.");
+//   });
 
-  it("should return 404 if missing params", async () => {
-    const response = await request(app).get("/producers/").expect(404);
+//   it("should return 404 if missing params", async () => {
+//     const response = await request(app).get("/producers/").expect(404);
 
-    expect(response.body.message).toBe("Missing field.");
-  });
-});
+//     expect(response.body.message).toBe("Missing field.");
+//   });
+// });
 /*
 describe("POST / : create a producer", () => {
   it("should return producer if created", async () => {

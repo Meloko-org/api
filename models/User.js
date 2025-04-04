@@ -46,8 +46,9 @@ const userSchema = mongoose.Schema(
     },
     clerkUUID: {
       type: String,
-      required: true,
+      default: null,
       unique: true,
+      sparse: true,
     },
     clerkPasswordEnabled: {
       type: String,

@@ -3,6 +3,7 @@ const { User, Role, Order, Producer } = require("../models");
 // Create a new user in the database using data provided by a Clerk webhook
 const createNewUser = async (clerkUserData) => {
   try {
+    console.log("clerkUserData", clerkUserData);
     const userRole = await Role.findOne({ name: "user" });
     if (!userRole) {
       return { success: false, message: "Le role user n'existe pas." };
@@ -21,11 +22,13 @@ const createNewUser = async (clerkUserData) => {
       clerkPasswordEnabled,
     });
 
+    console.log("newUser", newUser);
+
     await newUser.save();
 
     return true;
   } catch (error) {
-    // console.error(error);
+    console.error(error);
     return false;
   }
 };

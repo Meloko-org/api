@@ -7,6 +7,7 @@ const webhookReceiver = async (req, res) => {
   switch (true) {
     case req.body.type === "user.created":
       const createdUser = await userController.createNewUser(req.body.data);
+      console.log("created user?", createdUser);
       if (!createdUser) {
         res
           .status(409)

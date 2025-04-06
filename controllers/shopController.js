@@ -106,19 +106,24 @@ const updateClickCollect = async (req, res) => {
     console.log("body :", JSON.stringify(req.body, null, 2));
 
     if (!validationModule.checkBody(req.body, checkBodyFields)) {
-      throw new Error("Missing fields.");
+      return res
+        .status(404)
+        .json({ success: false, message: "Les infos ne sont pas passées." });
     }
 
     const producer = await isProducerUser(req.auth.userId);
 
-    console.log("producer Id : ", producer._id);
-
-    const shop = await Shop.findOne({ producer: producer._id });
-    if (!shop) {
-      throw new Error("No shop found.");
+    if (!producer) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No producer found" });
     }
 
-    console.log("shopId :", shop._id);
+    const shop = await Shop.findOne({ producer: producer._id });
+
+    if (!shop) {
+      return res.status(404).json({ success: false, message: "No shop found" });
+    }
 
     // avant d'apporter des modification à clickCollect, il faut s'assurer que clickCollect ne soit pas null
     if (!shop.clickCollect) {
@@ -140,7 +145,9 @@ const updateClickCollect = async (req, res) => {
     );
 
     if (updatedShop.mofifiedCount === 0) {
-      res.status(400).json({ message: "No changes made." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Aucun changement effectué." });
     }
 
     const updatedShopDetails = await Shop.findById(shop._id);
@@ -148,12 +155,12 @@ const updateClickCollect = async (req, res) => {
     console.log("updatedShop: ", updatedShop);
 
     res.status(200).json({
-      message: "Click & Collect updated successfully",
+      success: true,
       shop: updatedShopDetails,
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, message: "Internal server error" });
     return;
   }
 };
@@ -478,7 +485,7 @@ const updateShopMarkets = async (req, res) => {
     const { shopId, markets } = req.body;
     const shop = await Shop.findById(shopId);
     if (!shop) {
-      throw new Error("No shop found.");
+      return res.status(404).json({ success: false, message: "No shop found" });
     }
 
     markets.forEach((marketUpdate) => {
@@ -515,10 +522,10 @@ const updateShopMarkets = async (req, res) => {
 
     // console.log("retournées :", JSON.stringify(updatedMarkets, null, 2));
 
-    res.status(200).json(updatedMarkets);
+    res.status(200).json({ success: true, markets: updatedMarkets });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, message: "Internal server error" });
     return;
   }
 };

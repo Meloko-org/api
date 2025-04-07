@@ -11,4 +11,6 @@ const tagCategorySchema = mongoose.Schema({
   },
 });
 
-module.export = tagCategorySchema;
+const TagCategory = mongosse.model("tagCategories", tagCategorySchema);
+
+module.export = TagCategory;

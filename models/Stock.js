@@ -48,6 +48,9 @@ const stockSchema = mongoose.Schema(
       type: String,
       required: false,
     },
+    image: {
+      type: String,
+    },
     tags: [
       {
         type: mongoose.Schema.Types.ObjectId,

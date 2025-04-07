@@ -13,6 +13,10 @@ const tagSchema = mongoose.Schema(
     color: {
       type: String,
     },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "tagCategories",
+    },
   },
   { timestamps: true },
 );

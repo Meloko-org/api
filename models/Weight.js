@@ -11,4 +11,6 @@ const weightSchema = mongoose.Schema({
   },
 });
 
-module.export = weightSchema;
+const Weight = mongoose.model("weights", weightSchema);
+
+module.export = Weight;

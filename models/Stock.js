@@ -28,6 +28,26 @@ const stockSchema = mongoose.Schema(
       type: String,
       required: false,
     },
+    origin: {
+      type: String,
+      required: false,
+    },
+    format: {
+      type: String,
+      required: false,
+    },
+    portion: {
+      type: String,
+      required: false,
+    },
+    bestBeforeDate: {
+      type: String,
+      required: false,
+    },
+    description: {
+      type: String,
+      required: false,
+    },
     tags: [
       {
         type: mongoose.Schema.Types.ObjectId,

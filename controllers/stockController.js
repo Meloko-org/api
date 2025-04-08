@@ -106,15 +106,16 @@ const getStocksByShop = async (req, res) => {
     }
 
     // Recherche
-    const stocks = await Stock.find({ shop: shopId }).populate({
-      path: "product",
-      populate: {
-        path: "family",
-        model: "productFamily",
-        populate: { path: "category", model: "productcategory" },
-      },
-    });
-    // .populate("tags")
+    const stocks = await Stock.find({ shop: shopId })
+      .populate({
+        path: "product",
+        populate: {
+          path: "family",
+          model: "productFamily",
+          populate: { path: "category", model: "productcategory" },
+        },
+      })
+      .populate("tags");
     // .populate({
     //   path: "shop",
     //   populate: {

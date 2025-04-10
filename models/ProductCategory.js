@@ -14,6 +14,11 @@ const productCategorySchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    type: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "types",
+      required: true,
+    },
   },
   { timestamps: true },
 );

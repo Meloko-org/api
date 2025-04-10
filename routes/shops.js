@@ -19,6 +19,12 @@ router.put(
   shopController.updateClickCollect,
 );
 
+router.put(
+  "/updateTypes",
+  clerkMiddlewares.isUserLogged,
+  shopController.updateTypes,
+);
+
 // Search for shops based on various parameters
 router.post("/search", shopController.searchShops);
 // search for markets based on city or department

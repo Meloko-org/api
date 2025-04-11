@@ -9,26 +9,22 @@ const {
   Type,
   Market,
 } = require("../models");
+const { isProducerUser, hasShop } = require("../helpers/authHelpers");
 const mongoose = require("mongoose");
 const { validationModule } = require("../modules");
 const Fuse = require("fuse.js");
 
-/**
- * Permet de savoir s'il existe un user avec ce clerkUUID et si ce user a un profil Producer
- * @param {string} clerkUUID
- * @returns producer
- */
-const isProducerUser = async (clerkUUID) => {
-  const user = await User.findOne({ clerkUUID });
-  if (!user) {
-    throw new Error("No user found.");
-  }
-  const producer = await Producer.findOne({ owner: user._id });
-  if (!producer) {
-    throw new Error("User has no producer profile.");
-  }
-  return producer;
-};
+// const isProducerUser = async (clerkUUID) => {
+//   const user = await User.findOne({ clerkUUID });
+//   if (!user) {
+//     throw new Error("No user found.");
+//   }
+//   const producer = await Producer.findOne({ owner: user._id });
+//   if (!producer) {
+//     throw new Error("User has no producer profile.");
+//   }
+//   return producer;
+// };
 
 const createOrUpdateShop = async (req, res) => {
   try {
@@ -95,6 +91,36 @@ const createOrUpdateShop = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+const updateTypes = async (req, res) => {
+  console.log("les types :", req.body.types);
+  try {
+    const checkBodyFields = ["types"];
+
+    if (!validationModule.checkBody(req.body, checkBodyFields)) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Les infos ne sont pas passées." });
+    }
+
+    const shop = await hasShop(req.auth.userId);
+
+    shop.types = req.body.types;
+    await shop.save();
+
+    console.log(shop.types);
+
+    res.status(200).json({
+      success: true,
+      types: shop.types,
+    });
+  } catch (error) {
+    res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Server error",
+    });
   }
 };
 
@@ -982,6 +1008,7 @@ const getCityCoordinates = async (city) => {
 module.exports = {
   // createNewShop,
   createOrUpdateShop,
+  updateTypes,
   updateClickCollect,
   searchShops,
   getById,

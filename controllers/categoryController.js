@@ -2,11 +2,15 @@ const ProductCategory = require("../models/ProductCategory");
 
 const getAllCategories = async (req, res) => {
   try {
-    const categories = await ProductCategory.find({}, { _id: 0, name: 1 });
-    res.status("200").json(categories);
+    const categories = await ProductCategory.find(
+      {},
+      { _id: 0, name: 1, type: 1 },
+    );
+
+    res.status("200").json({ success: true, categories });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ succes: false, message: error.message });
     return;
   }
 };

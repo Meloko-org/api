@@ -12,6 +12,10 @@ const stockSchema = mongoose.Schema(
       ref: "shops",
       required: true,
     },
+    productCustomName: {
+      type: String,
+      required: false,
+    },
     stock: {
       type: mongoose.Decimal128,
       required: true,
@@ -19,6 +23,37 @@ const stockSchema = mongoose.Schema(
     price: {
       type: mongoose.Decimal128,
       required: true,
+    },
+    pricePerKilo: {
+      type: mongoose.Decimal128,
+      required: true,
+    },
+    weightPerUnit: {
+      type: String,
+      required: false,
+    },
+    origin: {
+      type: String,
+      required: false,
+    },
+    format: {
+      type: String,
+      required: false,
+    },
+    portion: {
+      type: String,
+      required: false,
+    },
+    bestBeforeDate: {
+      type: String,
+      required: false,
+    },
+    description: {
+      type: String,
+      required: false,
+    },
+    image: {
+      type: String,
     },
     tags: [
       {

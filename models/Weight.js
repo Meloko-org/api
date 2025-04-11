@@ -1,0 +1,16 @@
+const mongoose = require("mongoose");
+
+const weightSchema = mongoose.Schema({
+  unit: {
+    type: String,
+    required: true,
+  },
+  measurement: {
+    type: Number,
+    required: true,
+  },
+});
+
+const Weight = mongoose.model("weights", weightSchema);
+
+module.export = Weight;

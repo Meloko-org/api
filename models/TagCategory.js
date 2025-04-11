@@ -9,6 +9,9 @@ const tagCategorySchema = mongoose.Schema({
     type: String,
     required: false,
   },
+  color: {
+    type: String,
+  },
 });
 
 const TagCategory = mongosse.model("tagCategories", tagCategorySchema);

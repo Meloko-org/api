@@ -26,6 +26,10 @@ const productSchema = mongoose.Schema(
       type: Boolean,
       required: true,
     },
+    suggestedTags: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "tags",
+    },
   },
   { timestamps: true },
 );

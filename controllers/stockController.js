@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { Stock, Shop, User } = require("../models");
 const validationModule = require("../modules/validation");
+const { isProducerUser, hasShop } = require("../helpers/authHelpers");
 
 const updateStock1 = async (req, res) => {
   try {
@@ -52,47 +53,40 @@ const updateStock1 = async (req, res) => {
 };
 
 const updateStocks = async (req, res) => {
+  console.log("updatestock :", req.body);
   try {
-    const user = await User.find({ clerkUUID: req.auth.userId });
-    if (!user) {
-      throw new Error("user not found.");
+    const shop = await hasShop(req.auth.userId);
+    if (!shop) {
+      return res
+        .status(404)
+        .json({ succes: false, message: "Shop not found." });
     }
 
-    const values = req.body;
-    const shopId = values[0].shop;
+    const { _id, product, stock, price, description, tags, ...rest } = req.body;
 
-    await Promise.all(
-      values.map(async (stockdata) => {
-        const { _id, price, stock, shop, product, tags } = stockdata;
+    const updatedPrice = mongoose.Types.Decimal128.fromString(price.toString());
 
-        const updatedPrice = mongoose.Types.Decimal128.fromString(
-          price.toString(),
-        );
-        const updatedStock = mongoose.Types.Decimal128.fromString(
-          stock.toString(),
-        );
+    const updatedStock = mongoose.Types.Decimal128.fromString(stock.toString());
 
-        return Stock.findOneAndUpdate(
-          { _id },
-          { product, shop, price: updatedPrice, stock: updatedStock, tags },
-          { upsert: true, new: true },
-        );
-      }),
+    const updatedProduct = await Stock.findOneAndUpdate(
+      { _id },
+      {
+        product: product._id,
+        shop: shop._id,
+        price: updatedPrice,
+        stock: updatedStock,
+        description,
+        tags: tags.map((t) => t._id),
+        ...rest,
+      },
+      { new: true },
     );
 
-    const updatedStocks = await Stock.find({ shop: shopId }).populate({
-      path: "product",
-      populate: {
-        path: "family",
-        model: "productFamily",
-        populate: { path: "category", model: "productcategory" },
-      },
-    });
-
-    res.status(200).json(updatedStocks);
+    res.status(200).json({ success: true, updatedProduct });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: true, message: "Internal server error" });
+    return;
   }
 };
 

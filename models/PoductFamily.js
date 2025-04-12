@@ -19,6 +19,12 @@ const productFamilySchema = mongoose.Schema(
       ref: "productcategory",
       default: null,
     },
+    suggestedTags: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "tagCategories",
+      },
+    ],
   },
   { timestamps: true },
 );

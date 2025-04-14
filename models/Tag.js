@@ -10,9 +10,6 @@ const tagSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    color: {
-      type: String,
-    },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "tagCategories",

@@ -10,4 +10,6 @@ router.post(
   tagController.createNewTag,
 );
 
+router.get("/suggested/:familyId", tagController.getSuggestedTags);
+
 module.exports = router;

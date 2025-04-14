@@ -68,7 +68,7 @@ const updateStocks = async (req, res) => {
 
     const updatedStock = mongoose.Types.Decimal128.fromString(stock.toString());
 
-    const updatedProduct = await Stock.findOneAndUpdate(
+    await Stock.findOneAndUpdate(
       { _id },
       {
         product: product._id,
@@ -81,6 +81,17 @@ const updateStocks = async (req, res) => {
       },
       { new: true },
     );
+
+    const updatedProduct = await Stock.findById(_id)
+      .populate({
+        path: "product",
+        populate: {
+          path: "family",
+          model: "productFamily",
+          populate: { path: "category", model: "productcategory" },
+        },
+      })
+      .populate("tags");
 
     res.status(200).json({ success: true, updatedProduct });
   } catch (error) {
@@ -124,7 +135,7 @@ const getStocksByShop = async (req, res) => {
         .json({ status: false, message: "Aucun produit pour ce shop." });
     }
 
-    console.log("stocks :", JSON.stringify(stocks, null, 2));
+    // console.log("stocks :", JSON.stringify(stocks, null, 2));
 
     res.status(200).json({ success: true, stocks });
   } catch (error) {

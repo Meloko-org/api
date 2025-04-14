@@ -14,6 +14,10 @@ const productFamilySchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    isSubCategory: {
+      type: Boolean,
+      required: true,
+    },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "productcategory",

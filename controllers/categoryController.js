@@ -1,3 +1,4 @@
+const { ProductFamily } = require("../models");
 const ProductCategory = require("../models/ProductCategory");
 
 const getAllCategories = async (req, res) => {
@@ -15,6 +16,41 @@ const getAllCategories = async (req, res) => {
   }
 };
 
+const getProductsTypesByCategory = async (req, res) => {
+  try {
+    const families = await ProductFamily.find().populate("category");
+
+    const mapping = new Map();
+
+    for (const family of families) {
+      const categoryName = family.category?.name;
+      const types = family.productsTypes || []; // ex: ["bulk", "classic"]
+
+      if (!categoryName) continue;
+
+      if (!mapping.has(categoryName)) {
+        mapping.set(categoryName, new Set());
+      }
+
+      types.forEach((type) => mapping.get(categoryName).add(type));
+    }
+
+    // Convertit la map en objet classique
+    const result = {};
+    for (const [category, typesSet] of mapping.entries()) {
+      result[category] = Array.from(typesSet);
+    }
+
+    console.log(result);
+
+    res.json({ success: true, categories: result });
+  } catch (error) {
+    console.error("Erreur dans /categories/products-types:", error);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+};
+
 module.exports = {
   getAllCategories,
+  getProductsTypesByCategory,
 };

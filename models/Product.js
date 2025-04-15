@@ -22,14 +22,6 @@ const productSchema = mongoose.Schema(
       type: weightSchema,
       required: true,
     },
-    hasCustomName: {
-      type: Boolean,
-      required: true,
-    },
-    suggestedTags: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "tags",
-    },
   },
   { timestamps: true },
 );

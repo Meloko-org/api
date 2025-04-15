@@ -12,7 +12,13 @@ const productFamilySchema = mongoose.Schema(
     },
     image: {
       type: String,
+      required: false,
+    },
+    productsTypes: {
+      type: [String],
+      enum: ["bulk", "classic", "both"],
       required: true,
+      default: ["classic"],
     },
     category: {
       type: mongoose.Schema.Types.ObjectId,

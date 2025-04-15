@@ -4,4 +4,6 @@ const { categoryController } = require("../controllers");
 
 router.get("/", categoryController.getAllCategories);
 
+router.get("/products-types", categoryController.getProductsTypesByCategory);
+
 module.exports = router;

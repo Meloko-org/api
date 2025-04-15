@@ -46,6 +46,7 @@ const getUserInfos = async (req, res) => {
         bookmarks: 1,
         clerkPasswordEnabled: 1,
         stripeUUID: 1,
+        addresses: 1,
       },
     ).populate({
       path: "bookmarks",

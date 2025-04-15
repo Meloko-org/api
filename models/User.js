@@ -24,7 +24,13 @@ const favsearchSchema = mongoose.Schema(
         default: null,
       },
     ],
-    address: addressSchema,
+    addresses: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "addresses",
+        default: null,
+      },
+    ],
     isMyPosition: {
       type: Boolean,
       default: false,

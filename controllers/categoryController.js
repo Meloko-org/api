@@ -1,5 +1,4 @@
-const { ProductFamily } = require("../models");
-const ProductCategory = require("../models/ProductCategory");
+const { ProductFamily, ProductCategory } = require("../models");
 
 const getAllCategories = async (req, res) => {
   try {

@@ -24,19 +24,23 @@ const favsearchSchema = mongoose.Schema(
         default: null,
       },
     ],
-    addresses: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "addresses",
-        default: null,
-      },
-    ],
     isMyPosition: {
       type: Boolean,
       default: false,
     },
     radius: {
       type: Number,
+      default: null,
+    },
+  },
+  { timestamps: true },
+);
+
+const userAddressSchema = mongoose.Schema(
+  {
+    address: addressSchema,
+    name: {
+      type: String,
       default: null,
     },
   },
@@ -85,6 +89,7 @@ const userSchema = mongoose.Schema(
       type: [mongoose.Schema.Types.ObjectId],
       ref: "shops",
     },
+    addresses: [userAddressSchema],
     favSearch: [favsearchSchema],
   },
   { timestamps: true },

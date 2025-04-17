@@ -52,6 +52,49 @@ const updateStock1 = async (req, res) => {
   }
 };
 
+const createStocks = async (req, res) => {
+  try {
+    const shop = await hasShop(req.auth.userId);
+    if (!shop)
+      return res
+        .status(404)
+        .json({ success: false, message: "Shop not found." });
+
+    const { product, price, stock, description, tags, ...rest } = req.body;
+
+    const newStock = new Stock({
+      product: product._id,
+      shop: shop._id,
+      price: mongoose.Types.Decimal128.fromString(price.toString()),
+      stock: mongoose.Types.Decimal128.fromString(stock.toString()),
+      description,
+      tags: tags.map((t) => t._id),
+      ...rest,
+    });
+
+    await newStock.save();
+
+    const populatedStock = await Stock.findById(newStock._id)
+      .populate({
+        path: "product",
+        populate: {
+          path: "family",
+          model: "productFamily",
+          populate: {
+            path: "category",
+            model: "productcategory",
+          },
+        },
+      })
+      .populate("tags");
+
+    res.status(200).json({ success: true, product: populatedStock });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 const updateStocks = async (req, res) => {
   console.log("updatestock :", req.body);
   try {
@@ -146,6 +189,7 @@ const getStocksByShop = async (req, res) => {
 };
 
 module.exports = {
+  createStocks,
   updateStocks,
   getStocksByShop,
 };

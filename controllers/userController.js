@@ -33,6 +33,43 @@ const createNewUser = async (clerkUserData) => {
   }
 };
 
+const createNewUserAddress = async (req, res) => {
+  try {
+    const user = await User.findOne({ clerkUUID: req.auth.userId });
+    console.warn(req.body);
+    const { name, address } = req.body;
+
+    user.addresses.push({
+      name,
+      address: {
+        address1: address.address1,
+        address2: address.address2,
+        postalCode: address.postalCode,
+        city: address.city,
+        country: address.country,
+      },
+    });
+
+    await user.save();
+    await user.populate({
+      path: "bookmarks",
+      model: "shops",
+      populate: {
+        path: "notes",
+        models: "notes",
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
+
 const getUserInfos = async (req, res) => {
   try {
     const user = await User.findOne(
@@ -311,4 +348,5 @@ module.exports = {
   updateUser,
   addShopToBookmark,
   removeShopFromBookmark,
+  createNewUserAddress,
 };

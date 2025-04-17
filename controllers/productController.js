@@ -115,9 +115,75 @@ const getProductById = async (req, res) => {
   }
 };
 
+const getProductsForFamily = async (req, res) => {
+  try {
+    const { familyName } = req.params;
+
+    console.log(familyName);
+
+    const family = await ProductFamily.findOne({ name: familyName });
+
+    console.log(family);
+
+    const products = await Product.find({ family: family._id }).populate({
+      path: "family",
+      match: { _id: family._id },
+    });
+
+    console.log(products);
+
+    res.status(200).json({ success: true, products });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const getProductsForCategory = async (req, res) => {
+  try {
+    const { categoryName } = req.params;
+
+    const category = await ProductCategory.findOne({ name: categoryName });
+    console.log("la cat :", category);
+
+    const products = await Product.aggregate([
+      {
+        $lookup: {
+          from: "productfamilies", // attention au nom exact de la collection !
+          localField: "family",
+          foreignField: "_id",
+          as: "family",
+        },
+      },
+      { $unwind: "$family" },
+      {
+        $lookup: {
+          from: "productcategories",
+          localField: "family.category",
+          foreignField: "_id",
+          as: "family.category",
+        },
+      },
+      { $unwind: "$family.category" },
+      {
+        $match: {
+          "family.category._id": category._id,
+        },
+      },
+    ]);
+
+    console.log(products);
+
+    res.status(200).json({ success: true, products });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 module.exports = {
   createNewProductCategory,
   createNewProductFamily,
   createNewProduct,
   getProductById,
+  getProductsForFamily,
+  getProductsForCategory,
 };

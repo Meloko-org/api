@@ -11,11 +11,13 @@ const stockController = require("./stockController");
 const stripeController = require("./stripeController");
 const businessController = require("./businessController");
 const orderController = require("./orderController");
+const familyController = require("./familyController");
 
 module.exports = {
   clerkController,
   userController,
   categoryController,
+  familyController,
   producerController,
   shopController,
   typeController,

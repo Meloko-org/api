@@ -38,4 +38,8 @@ router.get(
   productController.getProductById,
 );
 
+router.get("/family/:familyName", productController.getProductsForFamily);
+
+router.get("/category/:categoryName", productController.getProductsForCategory);
+
 module.exports = router;

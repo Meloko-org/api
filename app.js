@@ -12,6 +12,7 @@ const {
   authRouter,
   clerkRouter,
   categoriesRouter,
+  familiesRouter,
   producersRouter,
   shopsRouter,
   rolesRouter,
@@ -39,6 +40,7 @@ app.use("/users", usersRouter);
 app.use("/auth", authRouter);
 app.use("/clerk", clerkRouter);
 app.use("/categories", categoriesRouter);
+app.use("/families", familiesRouter);
 app.use("/producers", producersRouter);
 app.use("/shops", shopsRouter);
 app.use("/stocks", stocksRouter);

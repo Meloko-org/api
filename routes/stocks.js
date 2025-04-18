@@ -9,6 +9,12 @@ router.post(
   stockController.updateStocks,
 );
 
+router.post(
+  "/create",
+  clerkMiddlewares.isUserLogged,
+  stockController.createStocks,
+);
+
 router.get(
   "/:shopId",
   //clerkMiddlewares.isUserLogged,

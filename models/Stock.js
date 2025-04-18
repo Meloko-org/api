@@ -26,7 +26,7 @@ const stockSchema = mongoose.Schema(
     },
     pricePerKilo: {
       type: mongoose.Decimal128,
-      required: true,
+      required: false,
     },
     weightPerUnit: {
       type: String,

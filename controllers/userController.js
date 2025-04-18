@@ -342,6 +342,38 @@ const removeShopFromBookmark = async (req, res) => {
   }
 };
 
+const removeUserAddress = async (req, res) => {
+  try {
+    const user = await User.findOne({ clerkUUID: req.auth.userId });
+
+    if (!user) {
+      throw new Error("No user found");
+    }
+
+    user.addresses = user.addresses.filter(
+      (addr) => addr._id.toString() !== req.params.addressId,
+    );
+
+    await user.save();
+    await user.populate({
+      path: "bookmarks",
+      model: "shops",
+      populate: {
+        path: "notes",
+        models: "notes",
+      },
+    });
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    return;
+  }
+};
+
 module.exports = {
   createNewUser,
   getUserInfos,
@@ -349,4 +381,5 @@ module.exports = {
   addShopToBookmark,
   removeShopFromBookmark,
   createNewUserAddress,
+  removeUserAddress,
 };

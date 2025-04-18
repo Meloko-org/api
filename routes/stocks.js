@@ -15,6 +15,12 @@ router.post(
   stockController.createStocks,
 );
 
+router.delete(
+  "/:id",
+  clerkMiddlewares.isUserLogged,
+  stockController.deleteStocks,
+);
+
 router.get(
   "/:shopId",
   //clerkMiddlewares.isUserLogged,

@@ -3,55 +3,6 @@ const { Stock, Shop, User } = require("../models");
 const validationModule = require("../modules/validation");
 const { isProducerUser, hasShop } = require("../helpers/authHelpers");
 
-const updateStock1 = async (req, res) => {
-  try {
-    const checkBodyFields = ["product", "shop", "stock", "price", "tags"];
-    // faire une verification
-    if (validationModule.checkBody(req.body, checkBodyFields)) {
-      const { product, shop, stock, price, tags } = req.body;
-
-      const shopData = await Shop.findOne({ _id: shop }).populate("producer");
-
-      const user = await User.findOne({
-        clerkUUID: "user_2kHhC1eGdQcKdPwk9hY2gz3kKHi",
-      });
-
-      // Si l'utilisateur n'est pas le proprietaire du shop concerné
-      if (!shopData.producer.owner.equals(user._id)) {
-        throw new Error("You do not have privileges to change this stock.");
-      }
-
-      // faire une recherche de stock pour le magasin et le produit
-      let existingStock = await Stock.findOne({ product: product, shop: shop });
-
-      // si le stock n'existe pas, on le crée
-      if (!existingStock) {
-        existingStock = new Stock({
-          product,
-          shop,
-          stock,
-          price,
-          tags,
-        });
-      } else {
-        // sinon mettre à jour le stock
-        existingStock.stock = stock !== undefined ? stock : existingStock.stock;
-        existingStock.price = price !== undefined ? price : existingStock.price;
-        existingStock.tags = tags !== undefined ? tags : existingStock.tags;
-      }
-
-      await existingStock.save();
-
-      res.json({ result: true, stock: existingStock });
-    } else {
-      throw new Error("Missing fields.");
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: error.message });
-  }
-};
-
 const createStocks = async (req, res) => {
   try {
     const shop = await hasShop(req.auth.userId);
@@ -144,6 +95,43 @@ const updateStocks = async (req, res) => {
   }
 };
 
+const deleteStocks = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const shop = await hasShop(req.auth.userId);
+    if (!shop)
+      return res
+        .status(404)
+        .json({ success: false, message: "No shop found." });
+
+    const deletedStock = await Stock.findByIdAndDelete(id);
+    if (!deletedStock)
+      return res
+        .status(404)
+        .json({ success: false, message: "Stock not found." });
+
+    const newStocks = await Stock.find({ shop: shop._id })
+      .populate({
+        path: "product",
+        populate: {
+          path: "family",
+          model: "productFamily",
+          populate: {
+            path: "category",
+            model: "productcategory",
+          },
+        },
+      })
+      .populate("tags");
+
+    res.status(200).json({ success: true, stocks: newStocks });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ succes: false, message: "Internal server error." });
+  }
+};
+
 const getStocksByShop = async (req, res) => {
   try {
     const { shopId } = req.params;
@@ -191,5 +179,6 @@ const getStocksByShop = async (req, res) => {
 module.exports = {
   createStocks,
   updateStocks,
+  deleteStocks,
   getStocksByShop,
 };

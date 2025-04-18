@@ -50,7 +50,7 @@ const getSuggestedTags = async (req, res) => {
 
     // si aucun catégorie de tags n'est définie, on retourne tousles tags
     if (tagCategoryIds.length === 0) {
-      console.lg("aucune catégorie de tag définie pour cette famille.");
+      console.log("aucune catégorie de tag définie pour cette famille.");
 
       // on récupère d'abord tous les tags
       const allTags = await Tag.find().lean();

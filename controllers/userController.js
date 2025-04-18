@@ -33,6 +33,43 @@ const createNewUser = async (clerkUserData) => {
   }
 };
 
+const createNewUserAddress = async (req, res) => {
+  try {
+    const user = await User.findOne({ clerkUUID: req.auth.userId });
+    console.warn(req.body);
+    const { name, address } = req.body;
+
+    user.addresses.push({
+      name,
+      address: {
+        address1: address.address1,
+        address2: address.address2,
+        postalCode: address.postalCode,
+        city: address.city,
+        country: address.country,
+      },
+    });
+
+    await user.save();
+    await user.populate({
+      path: "bookmarks",
+      model: "shops",
+      populate: {
+        path: "notes",
+        models: "notes",
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+};
+
 const getUserInfos = async (req, res) => {
   try {
     const user = await User.findOne(
@@ -46,6 +83,7 @@ const getUserInfos = async (req, res) => {
         bookmarks: 1,
         clerkPasswordEnabled: 1,
         stripeUUID: 1,
+        addresses: 1,
       },
     ).populate({
       path: "bookmarks",
@@ -304,10 +342,44 @@ const removeShopFromBookmark = async (req, res) => {
   }
 };
 
+const removeUserAddress = async (req, res) => {
+  try {
+    const user = await User.findOne({ clerkUUID: req.auth.userId });
+
+    if (!user) {
+      throw new Error("No user found");
+    }
+
+    user.addresses = user.addresses.filter(
+      (addr) => addr._id.toString() !== req.params.addressId,
+    );
+
+    await user.save();
+    await user.populate({
+      path: "bookmarks",
+      model: "shops",
+      populate: {
+        path: "notes",
+        models: "notes",
+      },
+    });
+
+    res.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    return;
+  }
+};
+
 module.exports = {
   createNewUser,
   getUserInfos,
   updateUser,
   addShopToBookmark,
   removeShopFromBookmark,
+  createNewUserAddress,
+  removeUserAddress,
 };

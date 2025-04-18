@@ -27,6 +27,20 @@ router.post(
   userController.addShopToBookmark,
 );
 
+/* add a new address to the user */
+router.post(
+  "/addresses",
+  clerkMiddlewares.isUserLogged,
+  userController.createNewUserAddress,
+);
+
+/* remove an address from the user addresses */
+router.delete(
+  "/addresses/:addressId",
+  clerkMiddlewares.isUserLogged,
+  userController.removeUserAddress,
+);
+
 /* remove a shop from the user's bookmarks */
 router.delete(
   "/bookmarks/:shopId",

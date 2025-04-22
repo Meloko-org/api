@@ -25,7 +25,24 @@ const createStocks = async (req, res) => {
 
     await newStock.save();
 
-    const populatedStock = await Stock.findById(newStock._id)
+    // const populatedStock = await Stock.findById(newStock._id)
+    //   .populate({
+    //     path: "product",
+    //     populate: {
+    //       path: "family",
+    //       model: "productFamily",
+    //       populate: {
+    //         path: "category",
+    //         model: "productcategory",
+    //       },
+    //     },
+    //   })
+    //   .populate("tags");
+
+    // res.status(200).json({ success: true, product: populatedStock });
+
+    // retourne tous les produits
+    const newStocks = await Stock.find({ shop: shop._id })
       .populate({
         path: "product",
         populate: {
@@ -39,7 +56,7 @@ const createStocks = async (req, res) => {
       })
       .populate("tags");
 
-    res.status(200).json({ success: true, product: populatedStock });
+    res.status(200).json({ success: true, stocks: newStocks });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Internal server error" });
@@ -76,18 +93,36 @@ const updateStocks = async (req, res) => {
       { new: true },
     );
 
-    const updatedProduct = await Stock.findById(_id)
+    // retourne juste le produit mis à jour
+    // const updatedProduct = await Stock.findById(_id)
+    //   .populate({
+    //     path: "product",
+    //     populate: {
+    //       path: "family",
+    //       model: "productFamily",
+    //       populate: { path: "category", model: "productcategory" },
+    //     },
+    //   })
+    //   .populate("tags");
+
+    // res.status(200).json({ success: true, updatedProduct });
+
+    // retourne tous les produits
+    const newStocks = await Stock.find({ shop: shop._id })
       .populate({
         path: "product",
         populate: {
           path: "family",
           model: "productFamily",
-          populate: { path: "category", model: "productcategory" },
+          populate: {
+            path: "category",
+            model: "productcategory",
+          },
         },
       })
       .populate("tags");
 
-    res.status(200).json({ success: true, updatedProduct });
+    res.status(200).json({ success: true, stocks: newStocks });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: true, message: "Internal server error" });
@@ -99,13 +134,15 @@ const deleteStocks = async (req, res) => {
   try {
     const { id } = req.params;
 
+    console.log("id reçue: ", id);
+
     const shop = await hasShop(req.auth.userId);
     if (!shop)
       return res
         .status(404)
         .json({ success: false, message: "No shop found." });
 
-    const deletedStock = await Stock.findByIdAndDelete(id);
+    const deletedStock = await Stock.findByIdAndDelete({ _id: id });
     if (!deletedStock)
       return res
         .status(404)

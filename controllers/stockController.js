@@ -13,6 +13,15 @@ const createStocks = async (req, res) => {
 
     const { product, price, stock, description, tags, ...rest } = req.body;
 
+    if (!price || !stock) {
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "Des informations sont manquantes. (prix, quantité)",
+        });
+    }
+
     const newStock = new Stock({
       product: product._id,
       shop: shop._id,
@@ -24,22 +33,6 @@ const createStocks = async (req, res) => {
     });
 
     await newStock.save();
-
-    // const populatedStock = await Stock.findById(newStock._id)
-    //   .populate({
-    //     path: "product",
-    //     populate: {
-    //       path: "family",
-    //       model: "productFamily",
-    //       populate: {
-    //         path: "category",
-    //         model: "productcategory",
-    //       },
-    //     },
-    //   })
-    //   .populate("tags");
-
-    // res.status(200).json({ success: true, product: populatedStock });
 
     // retourne tous les produits
     const newStocks = await Stock.find({ shop: shop._id })
@@ -75,8 +68,16 @@ const updateStocks = async (req, res) => {
 
     const { _id, product, stock, price, description, tags, ...rest } = req.body;
 
-    const updatedPrice = mongoose.Types.Decimal128.fromString(price.toString());
+    if (!price || !stock) {
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "Des informations sont manquantes. (prix, quantité)",
+        });
+    }
 
+    const updatedPrice = mongoose.Types.Decimal128.fromString(price.toString());
     const updatedStock = mongoose.Types.Decimal128.fromString(stock.toString());
 
     await Stock.findOneAndUpdate(
@@ -92,20 +93,6 @@ const updateStocks = async (req, res) => {
       },
       { new: true },
     );
-
-    // retourne juste le produit mis à jour
-    // const updatedProduct = await Stock.findById(_id)
-    //   .populate({
-    //     path: "product",
-    //     populate: {
-    //       path: "family",
-    //       model: "productFamily",
-    //       populate: { path: "category", model: "productcategory" },
-    //     },
-    //   })
-    //   .populate("tags");
-
-    // res.status(200).json({ success: true, updatedProduct });
 
     // retourne tous les produits
     const newStocks = await Stock.find({ shop: shop._id })
@@ -133,8 +120,6 @@ const updateStocks = async (req, res) => {
 const deleteStocks = async (req, res) => {
   try {
     const { id } = req.params;
-
-    console.log("id reçue: ", id);
 
     const shop = await hasShop(req.auth.userId);
     if (!shop)

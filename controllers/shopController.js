@@ -26,6 +26,46 @@ const Fuse = require("fuse.js");
 //   return producer;
 // };
 
+const updateShop = async (req, res) => {
+  try {
+    const shop = await hasShop(req.auth.userId);
+    if (!shop) {
+      return res
+        .status(404)
+        .json({ succes: false, message: "Shop not found." });
+    }
+
+    const { _id, name, siret, shortDesc, longDesc, logo, address, ...rest } =
+      req.body;
+
+    /* Add coordinates to address */
+    const coordinates = await getCoordinates(address);
+    address.latitude = coordinates.lat;
+    address.longitude = coordinates.lon;
+
+    await Shop.findOneAndUpdate(
+      { _id },
+      {
+        producer: shop.producer,
+        name,
+        siret,
+        shortDesc,
+        longDesc,
+        logo,
+        address,
+        ...rest,
+      },
+    );
+
+    const updatedShop = await Shop.findById(_id);
+
+    res.status(200).json({ success: true, shop: updatedShop });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: true, message: "Internal server error" });
+  }
+};
+
 const createOrUpdateShop = async (req, res) => {
   try {
     const requiredFields = ["name", "description", "address", "siret", "types"];
@@ -1007,6 +1047,7 @@ const getCityCoordinates = async (city) => {
 
 module.exports = {
   // createNewShop,
+  updateShop,
   createOrUpdateShop,
   updateTypes,
   updateClickCollect,

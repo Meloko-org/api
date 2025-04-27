@@ -15,7 +15,7 @@ const createMockShop = async (producerid) => {
       latitude: "11.215454",
       longitude: "32.215454",
     },
-    description: "description du shop",
+    shortDesc: "description du shop",
     photos: [],
     video: [],
     types: [],

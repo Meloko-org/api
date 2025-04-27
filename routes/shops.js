@@ -13,6 +13,12 @@ router.post(
   shopController.createOrUpdateShop,
 );
 
+router.post(
+  "/update",
+  clerkMiddlewares.isUserLogged,
+  shopController.updateShop,
+);
+
 router.put(
   "/clickCollect",
   clerkMiddlewares.isUserLogged,

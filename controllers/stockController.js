@@ -14,12 +14,10 @@ const createStocks = async (req, res) => {
     const { product, price, stock, description, tags, ...rest } = req.body;
 
     if (!price || !stock) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Des informations sont manquantes. (prix, quantité)",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "Des informations sont manquantes. (prix, quantité)",
+      });
     }
 
     const newStock = new Stock({
@@ -69,12 +67,10 @@ const updateStocks = async (req, res) => {
     const { _id, product, stock, price, description, tags, ...rest } = req.body;
 
     if (!price || !stock) {
-      return res
-        .status(404)
-        .json({
-          success: false,
-          message: "Des informations sont manquantes. (prix, quantité)",
-        });
+      return res.status(404).json({
+        success: false,
+        message: "Des informations sont manquantes. (prix, quantité)",
+      });
     }
 
     const updatedPrice = mongoose.Types.Decimal128.fromString(price.toString());

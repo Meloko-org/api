@@ -35,9 +35,13 @@ const shopSchema = mongoose.Schema(
     logo: {
       type: String,
     },
-    description: {
+    shortDesc: {
       type: String,
       required: true,
+    },
+    longDesc: {
+      type: String,
+      required: false,
     },
     photos: [
       {
@@ -66,6 +70,14 @@ const shopSchema = mongoose.Schema(
     notes: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "notes",
+    },
+    isPremium: {
+      type: Boolean,
+      default: false,
+    },
+    PremiumDate: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true },

@@ -14,18 +14,6 @@ const mongoose = require("mongoose");
 const { validationModule } = require("../modules");
 const Fuse = require("fuse.js");
 
-// const isProducerUser = async (clerkUUID) => {
-//   const user = await User.findOne({ clerkUUID });
-//   if (!user) {
-//     throw new Error("No user found.");
-//   }
-//   const producer = await Producer.findOne({ owner: user._id });
-//   if (!producer) {
-//     throw new Error("User has no producer profile.");
-//   }
-//   return producer;
-// };
-
 const updateShop = async (req, res) => {
   try {
     const shop = await hasShop(req.auth.userId);
@@ -156,6 +144,33 @@ const updateTypes = async (req, res) => {
       success: true,
       types: shop.types,
     });
+  } catch (error) {
+    res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Server error",
+    });
+  }
+};
+
+const updateOffline = async (req, res) => {
+  try {
+    const shop = await hasShop(req.auth.userId);
+    if (!shop) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Shop not found." });
+    }
+
+    const { isOpen, reopenDate } = req.body;
+
+    shop.isOpen = isOpen;
+    shop.reopenDate = reopenDate;
+
+    await shop.save();
+
+    const updatedShop = await Shop.findById(shop._id);
+
+    res.status(200).json({ success: true, shop: updatedShop });
   } catch (error) {
     res.status(err.statusCode || 500).json({
       success: false,
@@ -1050,6 +1065,7 @@ module.exports = {
   updateShop,
   createOrUpdateShop,
   updateTypes,
+  updateOffline,
   updateClickCollect,
   searchShops,
   getById,

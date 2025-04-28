@@ -26,6 +26,12 @@ router.put(
 );
 
 router.put(
+  "/offline",
+  clerkMiddlewares.isUserLogged,
+  shopController.updateOffline,
+);
+
+router.put(
   "/updateTypes",
   clerkMiddlewares.isUserLogged,
   shopController.updateTypes,

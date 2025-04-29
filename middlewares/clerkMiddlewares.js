@@ -12,7 +12,7 @@ const isUserLogged = async (req, res, next) => {
     // req.auth = userId ? auth : {}
 
     if (req.auth.userId) {
-      console.log("req.auth", req.auth);
+      // console.log("req.auth", req.auth);
       next();
     } else {
       return res.status(401).json({ message: "Unauthorized." });

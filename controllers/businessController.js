@@ -1,49 +1,42 @@
 const { User, Producer, Shop, Order } = require("../models");
-
+const { isProducerUser, hasShop } = require("../helpers/authHelpers");
 const { isShop } = require("../modules/verification");
-
-/**
- * Permet de savoir s'il existe un user avec ce clerkUUID et si ce user a
- * un profil Producer et enfin si ce producer a un shop
- * @param {string} clerkUUID
- * @returns shop
- */
-/*const isShop = async (clerkUUID) => {
-  const user = await User.findOne({ clerkUUID });
-  if (!user) {
-    throw new Error("No user found.");
-  }
-  const producer = await Producer.findOne({ owner: user._id });
-  if (!producer) {
-    throw new Error("User has no producer profile.");
-  }
-
-  const shop = Shop.findOne({ producer: producer._id });
-  if (!shop) {
-    throw new Error("Shop not found.");
-  }
-  return shop;
-};*/
 
 const getAllOrders = async (req, res) => {
   try {
-    const shop = await isShop(req.auth.userId);
+    const shop = await hasShop(req.auth.userId);
+    if (!shop) {
+      return res
+        .status(404)
+        .json({ succes: false, message: "Shop not found." });
+    }
 
-    // console.log("shop: ", shop);
+    // console.log(shop)
 
-    const orders = await Order.find({
+    // on récupère toutes les commandes qui concernent le shop
+    let orders = await Order.find({
       details: { $elemMatch: { shop: shop._id } },
     })
       .sort({ createdAt: -1 })
       .populate("user", "lastname firstname")
       .populate("details.market")
       .populate("details.products.product");
+    // .populate("details.shop")
 
-    // console.log(orders);
+    // on filtre les détails de la commandes pour ne conserver que celles
+    // qui concernent le shop
+    orders = orders.map((order) => ({
+      ...order.toObject(),
+      details: order.details.filter(
+        (detail) =>
+          detail.shop && detail.shop._id.toString() === shop._id.toString(),
+      ),
+    }));
 
-    res.status(200).json(orders);
+    res.status(200).json({ success: true, orders });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Erreur dans getAllOrders :", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

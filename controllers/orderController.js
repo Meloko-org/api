@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { Order } = require("../models");
 const { validationModule } = require("../modules");
 const { isShop, isUser } = require("../modules/verification");
+const { isProducerUser, hasShop } = require("../helpers/authHelpers");
 
 const getOrdersByUser = async (req, res) => {
   try {
@@ -70,7 +71,12 @@ const getOrderDetailsById = async (req, res) => {
     }
 
     // récupération du shopId
-    const shop = await isShop(req.auth.userId);
+    const shop = await hasShop(req.auth.userId);
+    if (!shop) {
+      return res
+        .status(404)
+        .json({ succes: false, message: "Shop not found." });
+    }
 
     const order = await Order.findOne({
       _id: req.params.id,
@@ -84,29 +90,31 @@ const getOrderDetailsById = async (req, res) => {
             path: "products.product",
             model: "stocks",
             select: "-createdAt -updatedAt",
-            populate: {
-              path: "product",
-              model: "products",
-              select: "name image weight family",
-              populate: {
-                path: "family",
-                model: "productFamily",
+            populate: [
+              {
+                path: "product",
+                model: "products",
+                select: "name image weight family",
+                populate: {
+                  path: "family",
+                  model: "productFamily",
+                  select: "name",
+                },
+              },
+              {
+                path: "tags",
+                model: "tags",
                 select: "name",
               },
-            },
+            ],
           },
-          // {
-          // 	path: "shop",
-          // 	model: "shops",
-          // 	select: "name"
-          // }
         ],
       });
-    // console.log(order);
-    res.status(200).json(order);
+    console.log(order);
+    res.status(200).json({ success: true, order });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ succes: false, message: error.message });
   }
 };
 

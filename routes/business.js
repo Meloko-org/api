@@ -4,9 +4,15 @@ const { businessController } = require("../controllers");
 const { clerkMiddlewares } = require("../middlewares");
 
 router.get(
-  "/all",
+  "/summary",
   clerkMiddlewares.isUserLogged,
-  businessController.getAllOrders,
+  businessController.getOrderSummary,
+);
+
+router.get(
+  "/orders",
+  clerkMiddlewares.isUserLogged,
+  businessController.getOrders,
 );
 
 router.get(

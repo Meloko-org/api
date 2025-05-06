@@ -38,7 +38,8 @@ router.put(
 );
 
 // Search for shops based on various parameters
-router.post("/search", shopController.searchShops);
+// router.post("/search", shopController.searchShops);
+router.post("/search", shopController.searchShopsOrMarkets);
 // search for markets based on city or department
 router.post("/markets", shopController.searchMarkets);
 // add a market to a shop

@@ -246,14 +246,446 @@ const updateClickCollect = async (req, res) => {
   }
 };
 
+const searchShopsOrMarkets = async (req, res) => {
+  try {
+    const checkBodyFields = ["query", "radius", "userPosition", "searchType"];
+
+    if (!validationModule.checkBody(req.body, checkBodyFields)) {
+      res
+        .status(404)
+        .json({ success: false, message: "Des champs sont manquants." });
+    }
+
+    const { query, userPosition, radius, searchType } = req.body;
+
+    const bounds = calculateMaxLatitudeLongitude(userPosition, radius);
+
+    console.log("params : ", query, userPosition, radius, searchType);
+    console.log("bounds: ", bounds);
+
+    if (searchType === "shop") {
+      // on établie la liste des shops (isOpen = true)
+      // - qui se trouvent dans le périmètre défini puisque c'est une recherche par shop
+      // - qui vendent le ou les produits recherchés (avec fuse) si stock > 0
+      const shops = await Shop.aggregate([
+        {
+          $match: {
+            isOpen: true,
+            "address.latitude": {
+              $gte: bounds.latitude.min,
+              $lte: bounds.latitude.max,
+            },
+            "address.longitude": {
+              $gte: bounds.longitude.min,
+              $lte: bounds.longitude.max,
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "stocks",
+            localField: "_id",
+            let: { product_id: "$product" },
+            pipeline: [
+              {
+                $match: {
+                  stock: { $gt: 0 },
+                },
+              },
+              {
+                $lookup: {
+                  from: "products",
+                  localField: "product",
+                  let: { family_id: "$family" },
+                  pipeline: [
+                    {
+                      $lookup: {
+                        from: "productfamilies",
+                        localField: "family",
+                        foreignField: "_id",
+                        as: "family",
+                      },
+                    },
+                    {
+                      $unwind: {
+                        path: "$family",
+                        preserveNullAndEmptyArrays: true,
+                      },
+                    },
+                  ],
+                  foreignField: "_id",
+                  as: "product",
+                },
+              },
+              {
+                $unwind: {
+                  path: "$product",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $lookup: {
+                  from: "tags",
+                  localField: "tags",
+                  foreignField: "_id",
+                  as: "tags",
+                },
+              },
+            ],
+            foreignField: "shop",
+            as: "stocks",
+          },
+        },
+        // {
+        //   $lookup: {
+        //     from: "types",
+        //     localField: "types",
+        //     foreignField: "_id",
+        //     as: "types",
+        //   },
+        // },
+        {
+          $lookup: {
+            from: "notes",
+            localField: "notes",
+            foreignField: "_id",
+            as: "notes",
+          },
+        },
+      ]);
+
+      // Étape 1 : construire une liste à aplatir pour la recherche Fuse
+      const fuseItems = [];
+
+      shops.forEach((shop) => {
+        shop.stocks.forEach((stock) => {
+          fuseItems.push({
+            shopId: shop._id.toString(),
+            stock,
+            shop,
+            searchable: [
+              stock.productCustomName || "",
+              stock.product?.name || "",
+              stock.product?.family?.name || "",
+              ...(stock.tags?.map((tag) => tag.name) || []),
+            ].join(" "),
+          });
+        });
+      });
+
+      // Étape 2 : configuration de Fuse
+      const fuse = new Fuse(fuseItems, {
+        keys: ["searchable"],
+        threshold: 0.3, // ajustable
+      });
+
+      // Étape 3 : lancer la recherche
+      const fuseResults = fuse.search(query);
+
+      // Étape 4 : regrouper les résultats par shop, en comptant le nombre de produits matchés
+      const shopMatchesMap = new Map();
+
+      fuseResults.forEach(({ item }) => {
+        const shopId = item.shopId;
+        if (!shopMatchesMap.has(shopId)) {
+          shopMatchesMap.set(shopId, {
+            shop: item.shop,
+            matchedStocks: [],
+          });
+        }
+        shopMatchesMap.get(shopId).matchedStocks.push(item.stock);
+      });
+
+      // Étape 5 : transformer en tableau et trier par nombre de produits matchés puis distance
+      let matchedShops = Array.from(shopMatchesMap.values());
+
+      // Calculer la distance
+      matchedShops = matchedShops.map((entry) => {
+        const { shop } = entry;
+        const distance = calculateDistance(
+          userPosition.latitude,
+          userPosition.longitude,
+          parseFloat(shop.address.latitude),
+          parseFloat(shop.address.longitude),
+        );
+        return {
+          ...entry,
+          distance,
+          matchCount: entry.matchedStocks.length,
+        };
+      });
+
+      // Trier : d'abord par matchCount (desc), puis par distance (asc)
+      matchedShops.sort((a, b) => {
+        if (b.matchCount !== a.matchCount) {
+          return b.matchCount - a.matchCount;
+        }
+        return a.distance - b.distance;
+      });
+
+      // Et renvoyer au frontend
+      return res.status(200).json({
+        success: true,
+        producerResults: matchedShops.map(
+          ({ shop, matchedStocks, distance }) => ({
+            ...shop,
+            relevantProducts: matchedStocks,
+            distance,
+          }),
+        ),
+      });
+    }
+
+    if (searchType === "market") {
+      const matchedMarkets = await Market.find({
+        "address.latitude": {
+          $gte: bounds.latitude.min,
+          $lte: bounds.latitude.max,
+        },
+        "address.longitude": {
+          $gte: bounds.longitude.min,
+          $lte: bounds.longitude.max,
+        },
+      });
+
+      const matchedMarketIds = matchedMarkets.map((m) => m._id);
+
+      const shops = await Shop.aggregate([
+        {
+          $match: {
+            isOpen: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "stocks",
+            localField: "_id",
+            let: { product_id: "$product" },
+            pipeline: [
+              {
+                $match: {
+                  stock: { $gt: 0 },
+                },
+              },
+              {
+                $lookup: {
+                  from: "products",
+                  localField: "product",
+                  let: { family_id: "$family" },
+                  pipeline: [
+                    {
+                      $lookup: {
+                        from: "productfamilies",
+                        localField: "family",
+                        foreignField: "_id",
+                        as: "family",
+                      },
+                    },
+                    {
+                      $unwind: {
+                        path: "$family",
+                        preserveNullAndEmptyArrays: true,
+                      },
+                    },
+                  ],
+                  foreignField: "_id",
+                  as: "product",
+                },
+              },
+              {
+                $unwind: {
+                  path: "$product",
+                  preserveNullAndEmptyArrays: true,
+                },
+              },
+              {
+                $lookup: {
+                  from: "tags",
+                  localField: "tags",
+                  foreignField: "_id",
+                  as: "tags",
+                },
+              },
+            ],
+            foreignField: "shop",
+            as: "stocks",
+          },
+        },
+        {
+          $lookup: {
+            from: "markets",
+            localField: "markets.market",
+            foreignField: "_id",
+            as: "populatedMarkets",
+          },
+        },
+        {
+          $addFields: {
+            markets: {
+              $map: {
+                input: "$markets",
+                as: "marketEntry",
+                in: {
+                  $mergeObjects: [
+                    "$$marketEntry",
+                    {
+                      market: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$populatedMarkets",
+                              as: "pm",
+                              cond: {
+                                $eq: ["$$pm._id", "$$marketEntry.market"],
+                              },
+                            },
+                          },
+                          0,
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            populatedMarkets: 0, // on nettoie ce champ temporaire
+          },
+        },
+        // {
+        //   $lookup: {
+        //     from: "types",
+        //     localField: "types",
+        //     foreignField: "_id",
+        //     as: "types",
+        //   },
+        // },
+        {
+          $lookup: {
+            from: "notes",
+            localField: "notes",
+            foreignField: "_id",
+            as: "notes",
+          },
+        },
+      ]);
+
+      // Étape 1 : construire une liste à aplatir pour la recherche Fuse
+      const fuseItems = [];
+
+      shops.forEach((shop) => {
+        shop.stocks.forEach((stock) => {
+          fuseItems.push({
+            shopId: shop._id.toString(),
+            stock,
+            shop,
+            searchable: [
+              stock.productCustomName || "",
+              stock.product?.name || "",
+              stock.product?.family?.name || "",
+              ...(stock.tags?.map((tag) => tag.name) || []),
+            ].join(" "),
+          });
+        });
+      });
+
+      // Étape 2 : configuration de Fuse
+      const fuse = new Fuse(fuseItems, {
+        keys: ["searchable"],
+        threshold: 0.3, // ajustable
+      });
+
+      // Étape 3 : lancer la recherche
+      const fuseResults = fuse.search(query);
+
+      // Étape 4 : regrouper les résultats par shop, en comptant le nombre de produits matchés
+      const shopMatchesMap = new Map();
+
+      fuseResults.forEach(({ item }) => {
+        const shopId = item.shopId;
+        if (!shopMatchesMap.has(shopId)) {
+          shopMatchesMap.set(shopId, {
+            shop: item.shop,
+            matchedStocks: [],
+          });
+        }
+        shopMatchesMap.get(shopId).matchedStocks.push(item.stock);
+      });
+
+      // Étape 5 : transformer en tableau et trier par nombre de produits matchés puis distance
+      let matchedShops = Array.from(shopMatchesMap.values());
+
+      // Étape 4 : identifier les markets actifs associés à ces shops
+      const marketMap = new Map();
+
+      matchedShops.forEach(({ shop, matchedStocks }) => {
+        if (Array.isArray(shop.markets)) {
+          shop.markets.forEach((marketData) => {
+            if (marketData.isActive && marketData.market) {
+              const marketId = marketData.market._id.toString();
+              if (!marketMap.has(marketId)) {
+                marketMap.set(marketId, {
+                  market: marketData.market,
+                  shops: [],
+                  distance: null, // à calculer ensuite
+                });
+              }
+              marketMap.get(marketId).shops.push({
+                ...shop,
+                matchedStocks,
+              });
+            }
+          });
+        }
+      });
+
+      // Étape 5 : calcul des distances + formattage final
+      const marketResults = Array.from(marketMap.values()).map((entry) => {
+        const { market } = entry;
+        console.log("market :", market);
+        const distance = calculateDistance(
+          userPosition.latitude,
+          userPosition.longitude,
+          parseFloat(market.address.latitude),
+          parseFloat(market.address.longitude),
+        );
+        return {
+          ...entry,
+          distance,
+        };
+      });
+
+      // Étape 6 : tri des markets (par distance par exemple)
+      marketResults.sort((a, b) => a.distance - b.distance);
+
+      console.log("markets :", marketResults);
+
+      return res.status(200).json({
+        success: true,
+        marketResults,
+      });
+    }
+  } catch (error) {
+    console.error("Erreur dans searchShopsOrMarkets:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Erreur interne du serveur" });
+  }
+};
+
 const searchShops = async (req, res) => {
   try {
     // define the fields coming from req.body to check
-    const checkBodyFields = ["query", "radius", "userPosition"];
+    const checkBodyFields = ["query", "radius", "userPosition", "searchType"];
+
+    console.log("req body :", req.body);
 
     // If all expected fields are present
     if (validationModule.checkBody(req.body, checkBodyFields)) {
-      const { query, userPosition, radius } = req.body;
+      const { query, userPosition, radius, searchType } = req.body;
 
       // Get the min and max latitude and longitude
       const searchArea = calculateMaxLatitudeLongitude(userPosition, radius);
@@ -278,6 +710,11 @@ const searchShops = async (req, res) => {
             localField: "_id",
             let: { product_id: "$product" },
             pipeline: [
+              {
+                $match: {
+                  stock: { $gt: 0 },
+                },
+              },
               {
                 $lookup: {
                   from: "products",
@@ -350,28 +787,28 @@ const searchShops = async (req, res) => {
         // Define the keys and weights that the fuzzy search will be applied
         const searchKeys = [
           {
-            name: "name",
+            name: "productCustomName",
             weight: 1,
           },
-          {
-            name: "description",
-            weight: 1,
-          },
+          // {
+          //   name: "description",
+          //   weight: 1,
+          // },
           {
             name: "stocks.product.name",
             weight: 1,
           },
           {
             name: "stocks.product.family.name",
-            weight: 1,
-          },
-          {
-            name: "types.name",
             weight: 0.5,
           },
+          // {
+          //   name: "types.name",
+          //   weight: 0.5,
+          // },
           {
             name: "stocks.product.tags.name",
-            weight: 0.5,
+            weight: 0.8,
           },
         ];
 
@@ -382,7 +819,7 @@ const searchShops = async (req, res) => {
           includeMatches: true,
           keys: searchKeys,
           shouldSort: true,
-          // threshold: 0.6
+          threshold: 0.3,
         };
 
         // Instantiate a Fuse class
@@ -1067,6 +1504,7 @@ module.exports = {
   updateTypes,
   updateOffline,
   updateClickCollect,
+  searchShopsOrMarkets,
   searchShops,
   getById,
   deleteShop,

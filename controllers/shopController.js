@@ -423,12 +423,14 @@ const searchShopsOrMarkets = async (req, res) => {
         return a.distance - b.distance;
       });
 
+      // console.log("matchedShops :", matchedShops)
+
       // Et renvoyer au frontend
       return res.status(200).json({
         success: true,
         producerResults: matchedShops.map(
           ({ shop, matchedStocks, distance }) => ({
-            ...shop,
+            shop: shop,
             relevantProducts: matchedStocks,
             distance,
           }),
@@ -437,6 +439,7 @@ const searchShopsOrMarkets = async (req, res) => {
     }
 
     if (searchType === "market") {
+      // on détermine les markets dans le périmètre
       const matchedMarkets = await Market.find({
         "address.latitude": {
           $gte: bounds.latitude.min,
@@ -447,8 +450,10 @@ const searchShopsOrMarkets = async (req, res) => {
           $lte: bounds.longitude.max,
         },
       });
-
-      const matchedMarketIds = matchedMarkets.map((m) => m._id);
+      // on stocke leur id
+      const matchedMarketIdsSet = new Set(
+        matchedMarkets.map((m) => m._id.toString()),
+      );
 
       const shops = await Shop.aggregate([
         {
@@ -624,7 +629,11 @@ const searchShopsOrMarkets = async (req, res) => {
       matchedShops.forEach(({ shop, matchedStocks }) => {
         if (Array.isArray(shop.markets)) {
           shop.markets.forEach((marketData) => {
-            if (marketData.isActive && marketData.market) {
+            if (
+              marketData.isActive &&
+              marketData.market &&
+              matchedMarketIdsSet.has(marketData.market._id.toString())
+            ) {
               const marketId = marketData.market._id.toString();
               if (!marketMap.has(marketId)) {
                 marketMap.set(marketId, {
@@ -645,7 +654,7 @@ const searchShopsOrMarkets = async (req, res) => {
       // Étape 5 : calcul des distances + formattage final
       const marketResults = Array.from(marketMap.values()).map((entry) => {
         const { market } = entry;
-        console.log("market :", market);
+        // console.log("market :", market);
         const distance = calculateDistance(
           userPosition.latitude,
           userPosition.longitude,
@@ -661,7 +670,7 @@ const searchShopsOrMarkets = async (req, res) => {
       // Étape 6 : tri des markets (par distance par exemple)
       marketResults.sort((a, b) => a.distance - b.distance);
 
-      console.log("markets :", marketResults);
+      // console.log("markets :", marketResults);
 
       return res.status(200).json({
         success: true,

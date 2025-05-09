@@ -428,13 +428,11 @@ const searchShopsOrMarkets = async (req, res) => {
       // Et renvoyer au frontend
       return res.status(200).json({
         success: true,
-        producerResults: matchedShops.map(
-          ({ shop, matchedStocks, distance }) => ({
-            shop: shop,
-            relevantProducts: matchedStocks,
-            distance,
-          }),
-        ),
+        shopResults: matchedShops.map(({ shop, matchedStocks, distance }) => ({
+          shop: shop,
+          relevantProducts: matchedStocks,
+          distance,
+        })),
       });
     }
 
@@ -670,7 +668,7 @@ const searchShopsOrMarkets = async (req, res) => {
       // Étape 6 : tri des markets (par distance par exemple)
       marketResults.sort((a, b) => a.distance - b.distance);
 
-      // console.log("markets :", marketResults);
+      console.log("markets :", marketResults);
 
       return res.status(200).json({
         success: true,

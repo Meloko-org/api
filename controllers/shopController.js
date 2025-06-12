@@ -248,7 +248,7 @@ const updateClickCollect = async (req, res) => {
 
 const searchShopsOrMarkets = async (req, res) => {
   try {
-    const checkBodyFields = ["query", "radius", "userPosition", "searchType"];
+    const checkBodyFields = ["radius", "userPosition", "searchType"];
 
     if (!validationModule.checkBody(req.body, checkBodyFields)) {
       res
@@ -256,7 +256,9 @@ const searchShopsOrMarkets = async (req, res) => {
         .json({ success: false, message: "Des champs sont manquants." });
     }
 
-    const { query, userPosition, radius, searchType } = req.body;
+    const { query = "", userPosition, radius, searchType } = req.body;
+
+    const isQueryProvided = query && query.trim() !== "";
 
     const bounds = calculateMaxLatitudeLongitude(userPosition, radius);
 
@@ -343,18 +345,18 @@ const searchShopsOrMarkets = async (req, res) => {
         },
       ]);
 
-      console.log(
-        shops
-          .map((shop) =>
-            shop.stocks.map((stock) => ({
-              productCustomName: stock.productCustomName,
-              productName: stock.product?.name,
-              familyName: stock.product?.family?.name,
-              tagNames: stock.tags?.map((tag) => tag.name),
-            })),
-          )
-          .flat(),
-      );
+      // console.log(
+      //   shops
+      //     .map((shop) =>
+      //       shop.stocks.map((stock) => ({
+      //         productCustomName: stock.productCustomName,
+      //         productName: stock.product?.name,
+      //         familyName: stock.product?.family?.name,
+      //         tagNames: stock.tags?.map((tag) => tag.name),
+      //       })),
+      //     )
+      //     .flat(),
+      // );
 
       // Étape 1 : construire une liste à aplatir pour la recherche Fuse
       const fuseItems = shops
@@ -387,25 +389,42 @@ const searchShopsOrMarkets = async (req, res) => {
         keys: ["searchable"],
       });
 
-      // Étape 3 : lancer la recherche
-      const fuseResults = fuse.search(query);
+      let matchedShops;
 
-      // Étape 4 : regrouper les résultats par shop, en comptant le nombre de produits matchés
-      const shopMatchesMap = new Map();
+      if (isQueryProvided) {
+        // Étape 3 : lancer la recherche
+        const fuseResults = fuse.search(query);
 
-      fuseResults.forEach(({ item }) => {
-        const shopId = item.shopId;
-        if (!shopMatchesMap.has(shopId)) {
-          shopMatchesMap.set(shopId, {
-            shop: item.shop,
-            matchedStocks: [],
-          });
-        }
-        shopMatchesMap.get(shopId).matchedStocks.push(item.stock);
-      });
+        // Étape 4 : regrouper les résultats par shop, en comptant le nombre de produits matchés
+        const shopMatchesMap = new Map();
+
+        fuseResults.forEach(({ item }) => {
+          const shopId = item.shopId;
+          if (!shopMatchesMap.has(shopId)) {
+            shopMatchesMap.set(shopId, {
+              shop: item.shop,
+              matchedStocks: [],
+            });
+          }
+          shopMatchesMap.get(shopId).matchedStocks.push(item.stock);
+        });
+
+        // Étape 5 : transformer en tableau et trier par nombre de produits matchés puis distance
+        matchedShops = Array.from(shopMatchesMap.values()).map((entry) => ({
+          ...entry,
+          matchCount: entry.matchedStocks.length,
+        }));
+      } else {
+        // Pas de query -> on retourne tous les shops trouvés dans le périmètre avec leurs stocks
+        matchedShops = shops.map((shop) => ({
+          shop,
+          matchedStocks: shop.stocks,
+          matchCount: shop.stocks.length,
+        }));
+      }
 
       // Étape 5 : transformer en tableau et trier par nombre de produits matchés puis distance
-      let matchedShops = Array.from(shopMatchesMap.values());
+      // matchedShops = Array.from(shopMatchesMap.values());
 
       // Calculer la distance
       matchedShops = matchedShops.map((entry) => {
@@ -612,25 +631,40 @@ const searchShopsOrMarkets = async (req, res) => {
         keys: ["searchable"],
       });
 
-      // Étape 3 : lancer la recherche
-      const fuseResults = fuse.search(query);
+      let matchedShops;
 
-      // Étape 4 : regrouper les résultats par shop, en comptant le nombre de produits matchés
-      const shopMatchesMap = new Map();
+      if (isQueryProvided) {
+        // Étape 3 : lancer la recherche
+        const fuseResults = fuse.search(query);
 
-      fuseResults.forEach(({ item }) => {
-        const shopId = item.shopId;
-        if (!shopMatchesMap.has(shopId)) {
-          shopMatchesMap.set(shopId, {
-            shop: item.shop,
-            matchedStocks: [],
-          });
-        }
-        shopMatchesMap.get(shopId).matchedStocks.push(item.stock);
-      });
+        // Étape 4 : regrouper les résultats par shop, en comptant le nombre de produits matchés
+        const shopMatchesMap = new Map();
+
+        fuseResults.forEach(({ item }) => {
+          const shopId = item.shopId;
+          if (!shopMatchesMap.has(shopId)) {
+            shopMatchesMap.set(shopId, {
+              shop: item.shop,
+              matchedStocks: [],
+            });
+          }
+          shopMatchesMap.get(shopId).matchedStocks.push(item.stock);
+        });
+
+        // Étape 5 : transformer en tableau et trier par nombre de produits matchés puis distance
+        matchedShops = Array.from(shopMatchesMap.values()).map((entry) => ({
+          ...entry,
+          matchCount: entry.matchedStocks.length,
+        }));
+      } else {
+        matchedShops = shops.map((shop) => ({
+          shop,
+          matchedStocks: shop.stocks,
+        }));
+      }
 
       // Étape 5 : transformer en tableau et trier par nombre de produits matchés puis distance
-      let matchedShops = Array.from(shopMatchesMap.values());
+      // matchedShops = Array.from(shopMatchesMap.values());
 
       // Étape 4 : identifier les markets actifs associés à ces shops
       const marketMap = new Map();

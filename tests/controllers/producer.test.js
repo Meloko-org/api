@@ -205,7 +205,7 @@ describe("getProducerInfos", () => {
     );
   });
 
-  it("should return 404 if no producer found", async () => {
+  it("should return 200 if no producer found", async () => {
     const req = {
       auth: {
         userId: mockUser2.clerkUUID,
@@ -218,7 +218,7 @@ describe("getProducerInfos", () => {
 
     await getProducerInfos(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.status).toHaveBeenCalledWith(200);
 
     expect(res.json).toHaveBeenCalledWith({
       success: false,

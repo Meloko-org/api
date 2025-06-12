@@ -64,6 +64,11 @@ router.post(
 router.get("/:id", shopController.getById);
 
 router.get(
+  "/:shopId/stocks-by-category/:categoryName",
+  shopController.getStocksByShopAndCategory,
+);
+
+router.get(
   "/myshop/:producer",
   clerkMiddlewares.isUserLogged,
   shopController.getByProducer,

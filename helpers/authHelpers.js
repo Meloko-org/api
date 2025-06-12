@@ -3,10 +3,10 @@ const CustomError = require("./CustomError");
 
 const isProducerUser = async (clerkUUID) => {
   const user = await User.findOne({ clerkUUID });
-  if (!user) throw new CustomError("No user found", 404);
+  if (!user) throw new CustomError("No user found", 200);
 
   const producer = await Producer.findOne({ owner: user._id });
-  if (!producer) throw new CustomError("User has no producer profile", 403);
+  if (!producer) throw new CustomError("User has no producer profile", 200);
 
   return producer;
 };
@@ -15,7 +15,7 @@ const hasShop = async (clerkUUID) => {
   const producer = await isProducerUser(clerkUUID);
   const shop = await Shop.findOne({ producer: producer._id });
 
-  if (!shop) throw new CustomError("No shop found", 404);
+  if (!shop) throw new CustomError("No shop found", 200);
 
   return shop;
 };

@@ -106,7 +106,7 @@ describe("getUserInfos", () => {
     );
   });
 
-  it("should return a 404 error if user not found", async () => {
+  it("should return a 200 error if user not found", async () => {
     // Mock de la requête et de la réponse
     const req = {
       auth: {
@@ -120,7 +120,7 @@ describe("getUserInfos", () => {
 
     await getUserInfos(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       success: false,
       message: "User not found",

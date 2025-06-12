@@ -91,7 +91,7 @@ const getProducerInfos = async (req, res) => {
 
     if (!userId) {
       return res
-        .status(404)
+        .status(200)
         .json({ success: false, message: "Utilisateur non trouvé." });
     }
 
@@ -99,7 +99,7 @@ const getProducerInfos = async (req, res) => {
 
     if (!producer) {
       return res
-        .status(404)
+        .status(200)
         .json({ success: false, message: "No producer found" });
     }
 

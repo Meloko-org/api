@@ -284,42 +284,40 @@ const searchShopsOrMarkets = async (req, res) => {
         {
           $lookup: {
             from: "stocks",
-            localField: "_id",
-            let: { product_id: "$product" },
+            let: { shopId: "$_id" },
             pipeline: [
               {
                 $match: {
-                  stock: { $gt: 0 },
+                  $expr: {
+                    $and: [
+                      { $eq: ["$shop", "$$shopId"] },
+                      { $gt: ["$stock", 0] },
+                    ],
+                  },
                 },
               },
               {
                 $lookup: {
                   from: "products",
                   localField: "product",
-                  let: { family_id: "$family" },
-                  pipeline: [
-                    {
-                      $lookup: {
-                        from: "productfamilies",
-                        localField: "family",
-                        foreignField: "_id",
-                        as: "family",
-                      },
-                    },
-                    {
-                      $unwind: {
-                        path: "$family",
-                        preserveNullAndEmptyArrays: true,
-                      },
-                    },
-                  ],
                   foreignField: "_id",
                   as: "product",
                 },
               },
               {
+                $unwind: "$product",
+              },
+              {
+                $lookup: {
+                  from: "productfamilies",
+                  localField: "product.family",
+                  foreignField: "_id",
+                  as: "product.family",
+                },
+              },
+              {
                 $unwind: {
-                  path: "$product",
+                  path: "$product.family",
                   preserveNullAndEmptyArrays: true,
                 },
               },
@@ -332,18 +330,9 @@ const searchShopsOrMarkets = async (req, res) => {
                 },
               },
             ],
-            foreignField: "shop",
             as: "stocks",
           },
         },
-        // {
-        //   $lookup: {
-        //     from: "types",
-        //     localField: "types",
-        //     foreignField: "_id",
-        //     as: "types",
-        //   },
-        // },
         {
           $lookup: {
             from: "notes",
@@ -354,29 +343,48 @@ const searchShopsOrMarkets = async (req, res) => {
         },
       ]);
 
-      // Étape 1 : construire une liste à aplatir pour la recherche Fuse
-      const fuseItems = [];
+      console.log(
+        shops
+          .map((shop) =>
+            shop.stocks.map((stock) => ({
+              productCustomName: stock.productCustomName,
+              productName: stock.product?.name,
+              familyName: stock.product?.family?.name,
+              tagNames: stock.tags?.map((tag) => tag.name),
+            })),
+          )
+          .flat(),
+      );
 
-      shops.forEach((shop) => {
-        shop.stocks.forEach((stock) => {
-          fuseItems.push({
-            shopId: shop._id.toString(),
-            stock,
-            shop,
-            searchable: [
+      // Étape 1 : construire une liste à aplatir pour la recherche Fuse
+      const fuseItems = shops
+        .map((shop) =>
+          shop.stocks.map((stock) => {
+            const searchable = [
               stock.productCustomName || "",
               stock.product?.name || "",
               stock.product?.family?.name || "",
               ...(stock.tags?.map((tag) => tag.name) || []),
-            ].join(" "),
-          });
-        });
-      });
+            ]
+              .join(" ")
+              .toLowerCase(); // 👈 pour rendre insensible à la casse
+
+            return {
+              shop,
+              stock,
+              searchable,
+            };
+          }),
+        )
+        .flat();
+
+      // fuseItems.forEach(item => console.log(item.searchable));
 
       // Étape 2 : configuration de Fuse
       const fuse = new Fuse(fuseItems, {
+        includeScore: true,
+        threshold: 0.5, // ajustable
         keys: ["searchable"],
-        threshold: 0.3, // ajustable
       });
 
       // Étape 3 : lancer la recherche
@@ -462,42 +470,40 @@ const searchShopsOrMarkets = async (req, res) => {
         {
           $lookup: {
             from: "stocks",
-            localField: "_id",
-            let: { product_id: "$product" },
+            let: { shopId: "$_id" },
             pipeline: [
               {
                 $match: {
-                  stock: { $gt: 0 },
+                  $expr: {
+                    $and: [
+                      { $eq: ["$shop", "$$shopId"] },
+                      { $gt: ["$stock", 0] },
+                    ],
+                  },
                 },
               },
               {
                 $lookup: {
                   from: "products",
                   localField: "product",
-                  let: { family_id: "$family" },
-                  pipeline: [
-                    {
-                      $lookup: {
-                        from: "productfamilies",
-                        localField: "family",
-                        foreignField: "_id",
-                        as: "family",
-                      },
-                    },
-                    {
-                      $unwind: {
-                        path: "$family",
-                        preserveNullAndEmptyArrays: true,
-                      },
-                    },
-                  ],
                   foreignField: "_id",
                   as: "product",
                 },
               },
               {
+                $unwind: "$product",
+              },
+              {
+                $lookup: {
+                  from: "productfamilies",
+                  localField: "product.family",
+                  foreignField: "_id",
+                  as: "product.family",
+                },
+              },
+              {
                 $unwind: {
-                  path: "$product",
+                  path: "$product.family",
                   preserveNullAndEmptyArrays: true,
                 },
               },
@@ -510,7 +516,6 @@ const searchShopsOrMarkets = async (req, res) => {
                 },
               },
             ],
-            foreignField: "shop",
             as: "stocks",
           },
         },
@@ -577,28 +582,34 @@ const searchShopsOrMarkets = async (req, res) => {
       ]);
 
       // Étape 1 : construire une liste à aplatir pour la recherche Fuse
-      const fuseItems = [];
-
-      shops.forEach((shop) => {
-        shop.stocks.forEach((stock) => {
-          fuseItems.push({
-            shopId: shop._id.toString(),
-            stock,
-            shop,
-            searchable: [
+      const fuseItems = shops
+        .map((shop) =>
+          shop.stocks.map((stock) => {
+            const searchable = [
               stock.productCustomName || "",
               stock.product?.name || "",
               stock.product?.family?.name || "",
               ...(stock.tags?.map((tag) => tag.name) || []),
-            ].join(" "),
-          });
-        });
-      });
+            ]
+              .join(" ")
+              .toLowerCase(); // 👈 pour rendre insensible à la casse
+
+            return {
+              shop,
+              stock,
+              searchable,
+            };
+          }),
+        )
+        .flat();
+
+      // fuseItems.forEach(item => console.log(item.searchable));
 
       // Étape 2 : configuration de Fuse
       const fuse = new Fuse(fuseItems, {
+        includeScore: true,
+        threshold: 0.5, // ajustable
         keys: ["searchable"],
-        threshold: 0.3, // ajustable
       });
 
       // Étape 3 : lancer la recherche
@@ -1453,6 +1464,103 @@ const getStocksFromProductsFamily = async (familyName, shopId) => {
   }
 };
 
+const getStocksByShopAndCategory = async (req, res) => {
+  try {
+    const { shopId, categoryName } = req.params;
+
+    const stocks = await Stock.aggregate([
+      {
+        $match: {
+          shop: new mongoose.Types.ObjectId(shopId),
+        },
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "product",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+      {
+        $lookup: {
+          from: "productfamilies",
+          localField: "product.family",
+          foreignField: "_id",
+          as: "family",
+        },
+      },
+      { $unwind: "$family" },
+      {
+        $lookup: {
+          from: "productcategories",
+          localField: "family.category",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+      { $unwind: "$category" },
+      {
+        $match: {
+          "category.name": categoryName,
+        },
+      },
+      {
+        $lookup: {
+          from: "tags",
+          localField: "tags",
+          foreignField: "_id",
+          as: "tags",
+        },
+      },
+    ]);
+
+    console.log(stocks);
+
+    const formattedStocks = stocks.map((stock) => ({
+      _id: stock._id,
+      price: stock.price,
+      stock: stock.stock,
+      shop: stock.shop,
+      productCustomName: stock.productCustomName,
+      pricePerKilo: stock.pricePerKilo,
+      weightPerUnit: stock.weightPerUnit,
+      origin: stock.origin,
+      format: stock.format,
+      portion: stock.portion,
+      bestBeforeDate: stock.bestBeforeDate,
+      image: stock.image,
+      tags: stock.tags,
+      description: stock.description,
+      product: {
+        _id: stock.product._id,
+        name: stock.product.name,
+        image: stock.product.image,
+        weight: stock.product.weight,
+        family: {
+          _id: stock.family._id,
+          name: stock.family.name,
+          productsTypes: stock.family.productsTypes,
+          category: {
+            _id: stock.category._id,
+            name: stock.category.name,
+          },
+        },
+      },
+    }));
+
+    res.status(200).json({
+      success: true,
+      stocks: formattedStocks,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Erreur interne du serveur." });
+  }
+};
+
 const deleteShop = async (req, res) => {
   try {
     const shopId = req.params.shopId;
@@ -1521,6 +1629,7 @@ module.exports = {
   addMarkets,
   updateShopMarkets,
   getAvailableProductsForAShop,
+  getStocksByShopAndCategory,
   addProductsToAShop,
   getMarketById,
 };

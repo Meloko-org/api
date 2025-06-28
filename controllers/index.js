@@ -12,6 +12,7 @@ const stripeController = require("./stripeController");
 const businessController = require("./businessController");
 const orderController = require("./orderController");
 const familyController = require("./familyController");
+const crewController = require("./crewController");
 
 module.exports = {
   clerkController,
@@ -20,6 +21,7 @@ module.exports = {
   familyController,
   producerController,
   shopController,
+  crewController,
   typeController,
   roleController,
   tagController,

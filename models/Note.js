@@ -13,6 +13,12 @@ const noteSchema = mongoose.Schema(
     comment: {
       type: String,
     },
+    isTourist: {
+      type: Boolean,
+    },
+    photo: {
+      type: String,
+    },
   },
   { timestamps: true },
 );

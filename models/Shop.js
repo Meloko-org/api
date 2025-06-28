@@ -16,6 +16,22 @@ const shopMarketsSchema = mongoose.Schema({
   openingHours: [openingHours],
 });
 
+const crewMembersSchema = mongoose.Schema({
+  forname: {
+    type: String,
+    required: true,
+  },
+  role: {
+    type: String,
+  },
+  description: {
+    type: String,
+  },
+  photo: {
+    type: String,
+  },
+});
+
 const shopSchema = mongoose.Schema(
   {
     producer: {
@@ -79,6 +95,7 @@ const shopSchema = mongoose.Schema(
       type: Date,
       default: null,
     },
+    crew: [crewMembersSchema],
   },
   { timestamps: true },
 );

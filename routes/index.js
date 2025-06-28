@@ -5,6 +5,7 @@ const familiesRouter = require("./families");
 const producersRouter = require("./producers");
 const rolesRouter = require("./roles");
 const shopsRouter = require("./shops");
+const crewRouter = require("./crew");
 const typesRouter = require("./types");
 const usersRouter = require("./users");
 const tagsRouter = require("./tags");
@@ -22,6 +23,7 @@ module.exports = {
   producersRouter,
   rolesRouter,
   shopsRouter,
+  crewRouter,
   typesRouter,
   usersRouter,
   tagsRouter,

@@ -553,10 +553,9 @@ const searchShopsOrMarkets = async (req, res) => {
                 input: "$markets",
                 as: "marketEntry",
                 in: {
-                  $mergeObjects: [
-                    "$$marketEntry",
-                    {
-                      market: {
+                  $let: {
+                    vars: {
+                      matchedMarket: {
                         $arrayElemAt: [
                           {
                             $filter: {
@@ -571,12 +570,53 @@ const searchShopsOrMarkets = async (req, res) => {
                         ],
                       },
                     },
-                  ],
+                    in: {
+                      $mergeObjects: [
+                        "$$marketEntry",
+                        {
+                          market: {
+                            $ifNull: ["$$matchedMarket", {}], // <- si pas trouvé, on met un objet vide
+                          },
+                        },
+                      ],
+                    },
+                  },
                 },
               },
             },
           },
         },
+        // {
+        //   $addFields: {
+        //     markets: {
+        //       $map: {
+        //         input: "$markets",
+        //         as: "marketEntry",
+        //         in: {
+        //           $mergeObjects: [
+        //             "$$marketEntry",
+        //             {
+        //               market: {
+        //                 $arrayElemAt: [
+        //                   {
+        //                     $filter: {
+        //                       input: "$populatedMarkets",
+        //                       as: "pm",
+        //                       cond: {
+        //                         $eq: ["$$pm._id", "$$marketEntry.market"],
+        //                       },
+        //                     },
+        //                   },
+        //                   0,
+        //                 ],
+        //               },
+        //             },
+        //           ],
+        //         },
+        //       },
+        //     },
+        //   },
+        // },
         {
           $project: {
             populatedMarkets: 0, // on nettoie ce champ temporaire

@@ -77,7 +77,7 @@ router.get(
 router.delete(
   "/:shopId",
   clerkMiddlewares.isUserLogged,
-  rolesMiddleswares.isUserAdmin,
+  // rolesMiddleswares.isUserAdmin,
   shopController.deleteShop,
 );
 

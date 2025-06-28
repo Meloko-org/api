@@ -15,6 +15,7 @@ const {
   familiesRouter,
   producersRouter,
   shopsRouter,
+  crewRouter,
   rolesRouter,
   typesRouter,
   tagsRouter,
@@ -43,6 +44,7 @@ app.use("/categories", categoriesRouter);
 app.use("/families", familiesRouter);
 app.use("/producers", producersRouter);
 app.use("/shops", shopsRouter);
+app.use("/crew", crewRouter);
 app.use("/stocks", stocksRouter);
 app.use("/roles", rolesRouter);
 app.use("/types", typesRouter);

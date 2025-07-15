@@ -81,4 +81,22 @@ router.delete(
   shopController.deleteShop,
 );
 
+router.patch(
+  "/socials/networks",
+  clerkMiddlewares.isUserLogged,
+  shopController.updateSocialNetworks,
+);
+
+router.patch(
+  "/socialPostSettings",
+  clerkMiddlewares.isUserLogged,
+  shopController.updateSocialPostSettings,
+);
+
+router.get(
+  "/socialPostSettings/hashtags",
+  clerkMiddlewares.isUserLogged,
+  shopController.getAvailableHashtags,
+);
+
 module.exports = router;

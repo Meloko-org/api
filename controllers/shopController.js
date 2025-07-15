@@ -50,7 +50,7 @@ const updateShop = async (req, res) => {
     res.status(200).json({ success: true, shop: updatedShop });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: true, message: "Internal server error" });
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
@@ -1686,6 +1686,96 @@ const getCityCoordinates = async (city) => {
   return coordinates;
 };
 
+const updateSocialNetworks = async (req, res) => {
+  try {
+    const { network, updates } = req.body;
+
+    if (!["instagram", "facebook", "tiktok"].includes(network)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Réseau non supporté" });
+    }
+
+    const shop = await hasShop(req.auth.userId);
+    if (!shop) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Shop not found." });
+    }
+
+    shop.socials[network] = {
+      ...shop.socials[network]._doc,
+      ...updates,
+    };
+
+    await shop.save();
+
+    return res.status(200).json({ success: true, shop });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const updateSocialPostSettings = async (req, res) => {
+  try {
+    const { frequency, customHashtags, customMentions } = req.body;
+
+    const shop = await hasShop(req.auth.userId);
+    if (!shop) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Shop not found." });
+    }
+
+    if (frequency) {
+      shop.socialPostSettings.frequency = frequency;
+    }
+    if (customHashtags) {
+      shop.socialPostSettings.customHashtags = customHashtags;
+    }
+    if (customMentions) {
+      shop.socialPostSettings.customMentions = customMentions;
+    }
+
+    await shop.save();
+
+    return res.status(200).json({ success: true, shop });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+const getAvailableHashtags = async (req, res) => {
+  try {
+    const shop = await hasShop(req.auth.userId);
+    if (!shop) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Shop not found." });
+    }
+
+    const stocks = await Stock.find({ shop: shop._id }).populate("tags");
+    const tagMap = new Map();
+
+    stocks.forEach((stock) => {
+      stock.tags.forEach((tag) => {
+        tagMap.set(tag._id.toString(), tag);
+      });
+    });
+
+    console.log(tagMap);
+
+    const uniqueTags = Array.from(tagMap.values());
+
+    return res.status(200).json({ success: true, tags: uniqueTags });
+  } catch (error) {
+    console.error("Erreur getAvailableHashtags", error);
+    res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
 module.exports = {
   // createNewShop,
   updateShop,
@@ -1706,4 +1796,7 @@ module.exports = {
   getStocksByShopAndCategory,
   addProductsToAShop,
   getMarketById,
+  updateSocialNetworks,
+  updateSocialPostSettings,
+  getAvailableHashtags,
 };

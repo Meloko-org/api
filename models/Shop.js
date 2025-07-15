@@ -32,6 +32,21 @@ const crewMembersSchema = mongoose.Schema({
   },
 });
 
+const socialNetworkSchema = new mongoose.Schema(
+  {
+    connected: { type: Boolean, default: false },
+    isEnabled: { type: Boolean, default: false },
+    accessToken: { type: String }, // Token d'accès OAuth
+    refreshToken: { type: String }, // Token pour rafraîchir l'accès si applicable
+    userId: { type: String }, // ID du compte (ou page)
+    username: { type: String }, // Nom public (ex: @fermeduchamp)
+    pageId: { type: String }, // Spécifique à Facebook
+    pageName: { type: String }, // Spécifique à Facebook
+    expiresAt: { type: Date }, // Si applicable
+  },
+  { _id: false },
+); // Pas besoin d’ID pour les sous-documents ici
+
 const shopSchema = mongoose.Schema(
   {
     producer: {
@@ -96,6 +111,36 @@ const shopSchema = mongoose.Schema(
       default: null,
     },
     crew: [crewMembersSchema],
+    socials: {
+      instagram: { type: socialNetworkSchema, default: () => ({}) },
+      facebook: { type: socialNetworkSchema, default: () => ({}) },
+      tiktok: { type: socialNetworkSchema, default: () => ({}) },
+    },
+    socialPostSettings: {
+      frequency: {
+        mode: {
+          type: String,
+          enum: ["manual", "reminder"],
+          default: "manual",
+        },
+        timesPerWeek: {
+          type: Number,
+          default: 0,
+        },
+        preferredDays: {
+          type: [String],
+          default: [],
+        },
+      },
+      customHashtags: {
+        type: [String],
+        default: [],
+      },
+      customMentions: {
+        type: [String],
+        default: [],
+      },
+    },
   },
   { timestamps: true },
 );

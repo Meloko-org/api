@@ -12,6 +12,8 @@ const stripeController = require("./stripeController");
 const businessController = require("./businessController");
 const orderController = require("./orderController");
 const familyController = require("./familyController");
+const postController = require("./postController");
+const postThemeController = require("./postThemeController");
 
 module.exports = {
   clerkController,
@@ -28,4 +30,6 @@ module.exports = {
   stripeController,
   businessController,
   orderController,
+  postController,
+  postThemeController,
 };

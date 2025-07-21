@@ -23,6 +23,8 @@ const {
   stripeRouter,
   businessRouter,
   orderRouter,
+  postRouter,
+  postThemeRouter,
 } = require("./routes");
 
 var app = express();
@@ -51,5 +53,7 @@ app.use("/products", productsRouter);
 app.use("/stripe", stripeRouter);
 app.use("/business", businessRouter);
 app.use("/orders", orderRouter);
+app.use("/posts", postRouter);
+app.use("/postThemes", postThemeRouter);
 
 module.exports = app;

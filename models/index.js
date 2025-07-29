@@ -11,8 +11,9 @@ const Tag = require("./Tag");
 const Type = require("./Type");
 const User = require("./User");
 const Note = require("./Note");
-const Post = require("./Post");
 const PostTheme = require("./PostTheme");
+const GeneratedPost = require("./GeneratedPost");
+const ValidatedPost = require("./ValidatedPost");
 
 module.exports = {
   Market,
@@ -29,6 +30,7 @@ module.exports = {
   Type,
   User,
   Note,
-  Post,
   PostTheme,
+  GeneratedPost,
+  ValidatedPost,
 };

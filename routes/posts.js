@@ -9,9 +9,31 @@ router.post(
   postController.generatePost,
 );
 
-router.post("/", clerkMiddlewares.isUserLogged, postController.validatePost);
+router.post(
+  "/validate",
+  clerkMiddlewares.isUserLogged,
+  postController.validatePost,
+);
 
 router.get("/", clerkMiddlewares.isUserLogged, postController.getPostsFromShop);
+
+router.get(
+  "/programmed",
+  clerkMiddlewares.isUserLogged,
+  postController.getProgrammedPosts,
+);
+
+router.post(
+  "/postProgrammedPosts",
+  clerkMiddlewares.isUserLogged,
+  postController.postProgrammedPosts,
+);
+
+router.get(
+  "/history",
+  clerkMiddlewares.isUserLogged,
+  postController.getPostHistory,
+);
 
 router.post("/:id/publish", postController.publishPost);
 

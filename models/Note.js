@@ -10,11 +10,17 @@ const noteSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
     },
+    shop: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "shops",
+    },
     comment: {
       type: String,
     },
-    isTourist: {
-      type: Boolean,
+    source: {
+      type: String,
+      enum: ["purchase", "touristVisit"],
+      required: true,
     },
     photo: {
       type: String,

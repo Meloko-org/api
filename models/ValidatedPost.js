@@ -2,15 +2,22 @@ const mongoose = require("mongoose");
 
 const validatedPostSchema = mongoose.Schema(
   {
+    subjectType: {
+      type: String,
+      enum: ["product", "review", "activity"],
+      required: true,
+    },
     stock: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Stock",
-      required: true,
     },
-    shop: {
+    note: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Shop",
-      required: true,
+      ref: "Note",
+    },
+    activity: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Activity",
     },
     title: {
       type: String,

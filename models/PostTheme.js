@@ -22,6 +22,11 @@ const postThemeSchema = mongoose.Schema(
       type: Number,
       required: false,
     },
+    type: {
+      type: String,
+      enum: ["product", "review", "activity"],
+      required: true,
+    },
   },
   { timestamps: true },
 );

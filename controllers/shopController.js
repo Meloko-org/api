@@ -1350,18 +1350,23 @@ const calculateDistance = (lat1, lon1, lat2, lon2, unit) => {
   }
 };
 
-const getByProducer = async (req, res) => {
+const getShopInfos = async (req, res) => {
   try {
-    const checkBodyFields = ["producer"];
-
-    if (!validationModule.checkBody(req.params, checkBodyFields)) {
+    const shop = await hasShop(req.auth.userId);
+    if (!shop) {
       return res
         .status(404)
-        .json({ success: false, message: "Des champs sont manquants." });
+        .json({ succes: false, message: "Shop not found." });
     }
 
-    const shop = await Shop.findOne({ producer: req.params.producer })
-      .populate("notes")
+    const shopInfos = await Shop.findById(shop._id)
+      .populate({
+        path: "notes",
+        populate: {
+          path: "user",
+          model: "users",
+        },
+      })
       .populate({
         path: "types",
         model: "types",
@@ -1376,13 +1381,7 @@ const getByProducer = async (req, res) => {
         ],
       });
 
-    if (!shop) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Ce producteur n'a pas de shop." });
-    }
-
-    res.status(200).json({ success: true, shop });
+    res.status(200).json({ success: true, shopInfos });
   } catch (error) {
     console.log(error);
     return res
@@ -1788,7 +1787,7 @@ module.exports = {
   getById,
   deleteShop,
   getCoordinates,
-  getByProducer,
+  getShopInfos,
   searchMarkets,
   addMarkets,
   updateShopMarkets,

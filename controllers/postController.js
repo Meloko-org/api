@@ -1,6 +1,6 @@
 const {
   Shop,
-  Post,
+  Note,
   PostTheme,
   Stock,
   GeneratedPost,
@@ -20,40 +20,25 @@ const generatePost = async (req, res) => {
     }
 
     const {
-      stockId,
+      subjectType,
+      elementId,
       selectedThemeId,
       productTags = [],
-      // hashtags = [],
-      // mentions = [],
       networks,
     } = req.body;
 
-    const requiredFields = ["stockId", "selectedThemeId", "networks"];
+    const requiredFields = [
+      "subjectType",
+      "elementId",
+      "selectedThemeId",
+      "networks",
+    ];
 
     if (!validationModule.checkBody(req.body, requiredFields)) {
       throw new Error("Missing fields.");
     }
 
-    const stock = await Stock.findById(stockId).populate([
-      {
-        path: "product",
-        populate: {
-          path: "family",
-          model: "productFamily",
-        },
-      },
-      {
-        path: "tags",
-        model: "tags",
-      },
-    ]);
-
-    if (!stock) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Stock not found." });
-    }
-
+    // récupération du thème
     const theme = await PostTheme.findById(selectedThemeId);
     if (!theme) {
       return res
@@ -61,19 +46,66 @@ const generatePost = async (req, res) => {
         .json({ success: false, message: "Theme not found." });
     }
 
-    // à remplacer par l'appel à l'IA
-    // 🔮 FAKE TEXT : Simuler la génération
-    const productName =
-      stock.productCustomName ||
-      `${stock.product.family.name} ${stock.product.name}`;
-    const simulatedText = `🌿 Découvrez notre ${productName} !\n${theme.title}.\nDisponible en stock. Commandez vite !`;
-    const imageUrl = stock.image || stock.product.image || "";
+    // création du post selon le type
+
+    let stock = {};
+    let note = {};
+    let activity = {};
+    let simulatedText = "";
+    let imageUrl = "";
+    let elementTitle = "";
+
+    if (subjectType === "product") {
+      stock = await Stock.findById(elementId).populate([
+        {
+          path: "product",
+          populate: {
+            path: "family",
+            model: "productFamily",
+          },
+        },
+        {
+          path: "tags",
+          model: "tags",
+        },
+      ]);
+
+      if (!stock) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Stock not found." });
+      }
+
+      // à remplacer par l'appel à l'IA
+      // 🔮 FAKE TEXT : Simuler la génération
+      const productName =
+        stock.productCustomName ||
+        `${stock.product.family.name} ${stock.product.name}`;
+
+      elementTitle = productName;
+
+      simulatedText = `🌿 Texte généré par l'IA à propos\ndu produit ${productName}\net selon le thème ${theme.title}.`;
+      imageUrl = stock.image || stock.product.image || "";
+    } else if (subjectType === "review") {
+      note = await Note.findById(elementId).populate(user);
+
+      if (!note) {
+        return res
+          .status(404)
+          .json({ success: false, message: "note not found." });
+      }
+
+      elementTitle = note.user.lastname + " " + note.createdAt;
+    } else if (subjectType === "activity") {
+    }
 
     // création du post
     const post = await GeneratedPost.create({
-      stock: stock._id,
-      shop: shop._id,
-      title: productName,
+      subjectType,
+      stock: stock._id | null,
+      note: note._id | null,
+      activity: activity._id | null,
+      title: elementTitle,
       generatedText: simulatedText,
       imageUrl,
       networks,

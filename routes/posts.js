@@ -15,6 +15,12 @@ router.post(
   postController.validatePost,
 );
 
+router.post(
+  "/activities/by-product-type",
+  clerkMiddlewares.isUserLogged,
+  postController.getActivitiesByProductType,
+);
+
 router.get("/", clerkMiddlewares.isUserLogged, postController.getPostsFromShop);
 
 router.get(
@@ -35,6 +41,10 @@ router.get(
   postController.getPostHistory,
 );
 
-router.post("/:id/publish", postController.publishPost);
+router.delete(
+  "/delete/:postId",
+  clerkMiddlewares.isUserLogged,
+  postController.deleteProgrammedPost,
+);
 
 module.exports = router;

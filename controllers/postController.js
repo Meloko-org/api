@@ -1,3 +1,6 @@
+const { format } = require("date-fns");
+const { fr } = require("date-fns/locale");
+
 const {
   Shop,
   Note,
@@ -5,6 +8,7 @@ const {
   Stock,
   GeneratedPost,
   ValidatedPost,
+  Activity,
 } = require("../models");
 const { hasShop } = require("../helpers/authHelpers");
 const { validationModule } = require("../modules");
@@ -19,12 +23,15 @@ const generatePost = async (req, res) => {
         .json({ succes: false, message: "Shop not found." });
     }
 
+    // console.log("body :", req.body)
+
     const {
       subjectType,
       elementId,
       selectedThemeId,
       productTags = [],
       networks,
+      mediaUri,
     } = req.body;
 
     const requiredFields = [
@@ -48,9 +55,9 @@ const generatePost = async (req, res) => {
 
     // création du post selon le type
 
-    let stock = {};
-    let note = {};
-    let activity = {};
+    let stock = null;
+    let note = null;
+    let activity = null;
     let simulatedText = "";
     let imageUrl = "";
     let elementTitle = "";
@@ -87,7 +94,7 @@ const generatePost = async (req, res) => {
       simulatedText = `🌿 Texte généré par l'IA à propos\ndu produit ${productName}\net selon le thème ${theme.title}.`;
       imageUrl = stock.image || stock.product.image || "";
     } else if (subjectType === "review") {
-      note = await Note.findById(elementId).populate(user);
+      note = await Note.findById(elementId).populate("user");
 
       if (!note) {
         return res
@@ -95,16 +102,30 @@ const generatePost = async (req, res) => {
           .json({ success: false, message: "note not found." });
       }
 
-      elementTitle = note.user.lastname + " " + note.createdAt;
+      elementTitle =
+        note.user.lastname +
+        "\n" +
+        format(new Date(note.createdAt), "d MMMM yyyy", { locale: fr });
+      simulatedText =
+        "texte généré par l'IA à propos de l'avis laissé par le user";
+      imageUrl =
+        note.photo ||
+        "https://images.freeimages.com/images/large-previews/cb3/rapeseed-farmers-1433716.jpg?fmt=webp&h=350";
     } else if (subjectType === "activity") {
+      activity = await Activity.findById(elementId);
+
+      elementTitle = activity.title;
+      simulatedText =
+        "texte généré par l'IA à propos de l'activité du producer";
+      imageUrl = mediaUri;
     }
 
     // création du post
     const post = await GeneratedPost.create({
       subjectType,
-      stock: stock._id | null,
-      note: note._id | null,
-      activity: activity._id | null,
+      stock: stock?._id || null,
+      note: note?._id || null,
+      activity: activity?._id || null,
       title: elementTitle,
       generatedText: simulatedText,
       imageUrl,
@@ -115,7 +136,7 @@ const generatePost = async (req, res) => {
       globalMentions: shop?.socialPostSettings.customMentions,
     });
 
-    console.log("post :", post);
+    // console.log("post :", post);
 
     res.status(201).json({ success: true, post });
   } catch (error) {
@@ -134,7 +155,10 @@ const validatePost = async (req, res) => {
     }
 
     const {
-      stockId,
+      subjectType,
+      stock,
+      note,
+      activity,
       title,
       type,
       imageUrl,
@@ -151,8 +175,11 @@ const validatePost = async (req, res) => {
     const shopId = shop._id;
 
     const validatedPost = await ValidatedPost.create({
+      subjectType,
       shop: shopId,
-      stock: stockId,
+      stock,
+      note,
+      activity,
       title,
       type,
       imageUrl,
@@ -214,9 +241,9 @@ const getProgrammedPosts = async (req, res) => {
       shop: shop._id,
       scheduledFor: { $ne: null },
       status: "scheduled",
-    });
+    }).sort({ createdAt: -1 });
 
-    console.log(posts);
+    // console.log(posts);
     res.status(200).json({ success: true, posts });
   } catch (error) {
     console.error("Erreur lors de la génération du post :", error);
@@ -280,7 +307,65 @@ const getPostHistory = async (req, res) => {
 
 const getPostsFromShop = async (req, res) => {};
 
-const publishPost = async (req, res) => {};
+const deleteProgrammedPost = async (req, res) => {
+  try {
+    const shop = await hasShop(req.auth.userId);
+    if (!shop) {
+      return res
+        .status(404)
+        .json({ succes: false, message: "Shop not found." });
+    }
+
+    const { postId } = req.params;
+
+    const deletedPost = await ValidatedPost.deleteOne({ _id: postId });
+
+    if (!deletedPost.deletedCount) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Le post est introuvable." });
+    }
+
+    res.status(200).json({ success: true, message: "Le post est supprimé." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ succes: false, message: "Internal server error." });
+  }
+};
+
+const getActivitiesByProductType = async (req, res) => {
+  try {
+    const shop = await hasShop(req.auth.userId);
+    if (!shop) {
+      return res
+        .status(404)
+        .json({ succes: false, message: "Shop not found." });
+    }
+
+    const { productTypeIds } = req.body;
+
+    const activities = await Activity.find({
+      productType: { $in: productTypeIds },
+    })
+      .populate("productType", "name")
+      .lean();
+
+    const grouped = productTypeIds.map((typeId) => {
+      const typeActivities = activities.filter((a) =>
+        a.productType._id.equals(typeId),
+      );
+      return {
+        title: typeActivities[0]?.productType.name || "Sans catégorie",
+        data: typeActivities,
+      };
+    });
+
+    res.status(200).json({ success: true, activities: grouped });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ succes: false, message: "Internal server error." });
+  }
+};
 
 module.exports = {
   generatePost,
@@ -289,5 +374,6 @@ module.exports = {
   getProgrammedPosts,
   postProgrammedPosts,
   getPostHistory,
-  publishPost,
+  deleteProgrammedPost,
+  getActivitiesByProductType,
 };

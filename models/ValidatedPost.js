@@ -7,6 +7,11 @@ const validatedPostSchema = mongoose.Schema(
       enum: ["product", "review", "activity"],
       required: true,
     },
+    shop: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Shop",
+      required: true,
+    },
     stock: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Stock",
@@ -21,11 +26,6 @@ const validatedPostSchema = mongoose.Schema(
     },
     title: {
       type: String,
-      required: true,
-    },
-    type: {
-      type: String,
-      enum: ["product", "review", "activity"],
       required: true,
     },
     imageUrl: {

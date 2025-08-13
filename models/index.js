@@ -14,6 +14,7 @@ const Note = require("./Note");
 const PostTheme = require("./PostTheme");
 const GeneratedPost = require("./GeneratedPost");
 const ValidatedPost = require("./ValidatedPost");
+const Activity = require("./Activity");
 
 module.exports = {
   Market,
@@ -33,4 +34,5 @@ module.exports = {
   PostTheme,
   GeneratedPost,
   ValidatedPost,
+  Activity,
 };

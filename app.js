@@ -25,6 +25,8 @@ const {
   orderRouter,
   postRouter,
   postThemeRouter,
+  shopFeaturesRouter,
+  circuitRouter,
 } = require("./routes");
 
 var app = express();
@@ -55,5 +57,7 @@ app.use("/business", businessRouter);
 app.use("/orders", orderRouter);
 app.use("/posts", postRouter);
 app.use("/postThemes", postThemeRouter);
+app.use("/shopFeatures", shopFeaturesRouter);
+app.use("/circuits", circuitRouter);
 
 module.exports = app;

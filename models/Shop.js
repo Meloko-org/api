@@ -141,6 +141,10 @@ const shopSchema = mongoose.Schema(
         default: [],
       },
     },
+    features: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "shopfeatures",
+    },
   },
   { timestamps: true },
 );

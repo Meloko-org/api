@@ -6,6 +6,10 @@ const typeSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    label: {
+      type: String,
+      required: true,
+    },
     image: {
       type: String,
     },

@@ -15,6 +15,8 @@ const businessRouter = require("./business");
 const orderRouter = require("./order");
 const postRouter = require("./posts");
 const postThemeRouter = require("./postThemes");
+const shopFeaturesRouter = require("./shopFeatures");
+const circuitRouter = require("./circuit");
 
 module.exports = {
   authRouter,
@@ -34,4 +36,6 @@ module.exports = {
   orderRouter,
   postRouter,
   postThemeRouter,
+  shopFeaturesRouter,
+  circuitRouter,
 };

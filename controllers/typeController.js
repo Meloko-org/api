@@ -43,7 +43,19 @@ const getShopTypes = async (req, res) => {
   res.json(types);
 };
 
+const getTypeLabels = async (req, res) => {
+  try {
+    const labels = await Type.find({}, { _id: 1, label: 1 });
+
+    res.status(200).json({ success: true, labels });
+  } catch (error) {
+    console.log(error);
+    res.status(404).json({ succes: false, message: error });
+  }
+};
+
 module.exports = {
   createNewType,
   getShopTypes,
+  getTypeLabels,
 };

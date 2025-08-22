@@ -37,6 +37,12 @@ router.put(
   shopController.updateTypes,
 );
 
+router.put(
+  "/updateFeatures",
+  clerkMiddlewares.isUserLogged,
+  shopController.updateFeatures,
+);
+
 // Search for shops based on various parameters
 // router.post("/search", shopController.searchShops);
 router.post("/search", shopController.searchShopsOrMarkets);

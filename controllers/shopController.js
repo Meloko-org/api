@@ -152,6 +152,36 @@ const updateTypes = async (req, res) => {
   }
 };
 
+const updateFeatures = async (req, res) => {
+  try {
+    const checkBodyFields = ["features"];
+
+    if (!validationModule.checkBody(req.body, checkBodyFields)) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Les infos ne sont pas passées." });
+    }
+
+    const shop = await hasShop(req.auth.userId);
+
+    shop.features = req.body.features;
+    await shop.save();
+
+    await shop.populate("features");
+    console.log(shop.features);
+
+    res.status(200).json({
+      success: true,
+      features: shop.features,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
+
 const updateOffline = async (req, res) => {
   try {
     const shop = await hasShop(req.auth.userId);
@@ -1379,7 +1409,13 @@ const getShopInfos = async (req, res) => {
             model: "markets",
           },
         ],
+      })
+      .populate({
+        path: "features",
+        model: "shopfeatures",
       });
+
+    console.log(shopInfos);
 
     res.status(200).json({ success: true, shopInfos });
   } catch (error) {
@@ -1780,6 +1816,7 @@ module.exports = {
   updateShop,
   createOrUpdateShop,
   updateTypes,
+  updateFeatures,
   updateOffline,
   updateClickCollect,
   searchShopsOrMarkets,

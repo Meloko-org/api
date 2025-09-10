@@ -31,6 +31,10 @@ const producerSchema = mongoose.Schema(
       type: addressSchema,
       required: false,
     },
+    onboardingStep: {
+      type: Number,
+      required: true,
+    },
   },
   { timestamps: true },
 );

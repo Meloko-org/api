@@ -16,6 +16,7 @@ const postController = require("./postController");
 const postThemeController = require("./postThemeController");
 const shopFeaturesController = require("./shopFeaturesController");
 const circuitController = require("./circuitController");
+const onboardingController = require("./onboardingController");
 
 module.exports = {
   clerkController,
@@ -36,4 +37,5 @@ module.exports = {
   postThemeController,
   shopFeaturesController,
   circuitController,
+  onboardingController,
 };

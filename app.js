@@ -27,6 +27,7 @@ const {
   postThemeRouter,
   shopFeaturesRouter,
   circuitRouter,
+  onboardingRouter,
 } = require("./routes");
 
 var app = express();
@@ -59,5 +60,6 @@ app.use("/posts", postRouter);
 app.use("/postThemes", postThemeRouter);
 app.use("/shopFeatures", shopFeaturesRouter);
 app.use("/circuits", circuitRouter);
+app.use("/onboarding", onboardingRouter);
 
 module.exports = app;

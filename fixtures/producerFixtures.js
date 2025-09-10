@@ -15,6 +15,7 @@ const createMockProducer = async (mockUserId) => {
       city: "ville Test",
       country: "France",
     },
+    onboardingStep: 0,
   });
 
   await mockProducer.save();

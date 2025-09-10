@@ -23,11 +23,15 @@ const initialiseProducer = async (req, res) => {
         .json({ success: false, message: "Ce producteur existe déjà." });
     }
 
-    const newProducer = new Producer({ owner: owner._id });
+    const newProducer = new Producer({ owner: owner._id, onboardingStep: 0 });
 
     await newProducer.save();
 
-    res.status(201).json({ success: true, message: "Compte producteur créé." });
+    res.status(201).json({
+      success: true,
+      producer: newProducer,
+      message: "Compte producteur créé.",
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({

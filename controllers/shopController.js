@@ -13,13 +13,14 @@ const { isProducerUser, hasShop } = require("../helpers/authHelpers");
 const mongoose = require("mongoose");
 const { validationModule } = require("../modules");
 const Fuse = require("fuse.js");
+const { returnShop } = require("../helpers/shopHelpers");
 
 const updateShop = async (req, res) => {
   try {
     const shop = await hasShop(req.auth.userId);
     if (!shop) {
       return res
-        .status(404)
+        .status(200)
         .json({ succes: false, message: "Shop not found." });
     }
 
@@ -210,7 +211,7 @@ const updateOffline = async (req, res) => {
 };
 
 const updateClickCollect = async (req, res) => {
-  console.log("auth :", req.auth.userId);
+  console.log("youpi");
   try {
     const checkBodyFields = ["openingHours"];
 
@@ -247,6 +248,7 @@ const updateClickCollect = async (req, res) => {
       updateFields["clickCollect.instructions"] = req.body.instructions;
     }
     updateFields["clickCollect.openingHours"] = req.body.openingHours;
+    updateFields["clickCollect.isActive"] = req.body.isActive;
 
     // puis on met à jour le shop
     const updatedShop = await Shop.updateOne(
@@ -1058,10 +1060,16 @@ const searchMarkets = async (req, res) => {
     ]);
 
     if (!markets.length > 0) {
-      throw new Error("Auncune place de marché trouvée.");
+      return res
+        .status(200)
+        .json({
+          success: false,
+          data: null,
+          message: "Aucune place de marché trouvée.",
+        });
     }
 
-    return res.status(200).json(markets);
+    return res.status(200).json({ success: true, markets });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
@@ -1071,10 +1079,18 @@ const searchMarkets = async (req, res) => {
 
 const addMarkets = async (req, res) => {
   try {
-    const { shopId, marketIds } = req.body;
+    const shop = await hasShop(req.auth.userId);
+
+    if (!shop) {
+      return res
+        .status(200)
+        .json({ succes: false, message: "Shop not found." });
+    }
+
+    const { marketIds } = req.body;
 
     const updatedShop = await Shop.findByIdAndUpdate(
-      shopId,
+      shop._id,
       {
         $push: {
           markets: {
@@ -1092,26 +1108,50 @@ const addMarkets = async (req, res) => {
       },
     );
 
-    if (!updatedShop) {
-      throw new Error("No shop found.");
-    } else {
-      const markets = await Shop.findById(shopId, {
-        _id: 0,
-        markets: 1,
-      }).populate({
-        path: "markets",
-        populate: [
-          {
-            path: "market",
-            model: "markets",
-          },
-        ],
-      });
+    // if (!updatedShop) {
+    //   throw new Error("No shop found.");
+    // } else {
+    //   const markets = await Shop.findById(shop._id, {
+    //     _id: 0,
+    //     markets: 1,
+    //   }).populate({
+    //     path: "markets",
+    //     populate: [
+    //       {
+    //         path: "market",
+    //         model: "markets",
+    //       },
+    //     ],
+    //   });
 
-      res
+    //   res
+    //     .status(200)
+    //     .json({ success: true, markets });
+    // }
+
+    if (!updatedShop) {
+      return res
         .status(200)
-        .json({ message: "Place(s) de marché ajoutée(s)", markets });
+        .json({
+          success: false,
+          message: "Impossible de mettre à jour les points de vente.",
+        });
     }
+
+    /* termine la fonction en retournant tout le shop (sans les produits) */
+    const returnedShop = await returnShop(shop._id);
+    if (!returnedShop) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Impossible de retourner le shop." });
+    }
+    res
+      .status(200)
+      .json({
+        success: true,
+        shop: returnedShop,
+        message: "Point de vente ajouté.",
+      });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
@@ -1120,13 +1160,15 @@ const addMarkets = async (req, res) => {
 };
 
 const updateShopMarkets = async (req, res) => {
-  console.log("passées :", JSON.stringify(req.body.markets, null, 2));
+  // console.log("passées :", JSON.stringify(req.body, null, 2));
   try {
-    const { shopId, markets } = req.body;
-    const shop = await Shop.findById(shopId);
+    const shop = await hasShop(req.auth.userId);
+
     if (!shop) {
-      return res.status(404).json({ success: false, message: "No shop found" });
+      return res.status(200).json({ success: false, message: "No shop found" });
     }
+
+    const markets = req.body;
 
     markets.forEach((marketUpdate) => {
       const existingMarket = shop.markets.find(
@@ -1145,24 +1187,34 @@ const updateShopMarkets = async (req, res) => {
       }
     });
 
-    const updatedShop = await shop.save();
+    // const updatedShop = await shop.save();
 
-    const updatedMarkets = await Shop.findById(shopId, {
-      _id: 0,
-      markets: 1,
-    }).populate({
-      path: "markets",
-      populate: [
-        {
-          path: "market",
-          model: "markets",
-        },
-      ],
-    });
+    // const updatedMarkets = await Shop.findById(shopId, {
+    //   _id: 0,
+    //   markets: 1,
+    // }).populate({
+    //   path: "markets",
+    //   populate: [
+    //     {
+    //       path: "market",
+    //       model: "markets",
+    //     },
+    //   ],
+    // });
 
-    // console.log("retournées :", JSON.stringify(updatedMarkets, null, 2));
+    // res.status(200).json({ success: true, markets: updatedMarkets });
 
-    res.status(200).json({ success: true, markets: updatedMarkets });
+    await shop.save();
+
+    /* termine la fonction en retournant tout le shop (sans les produits) */
+    const returnedShop = await returnShop(shop._id);
+    if (!returnedShop) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Impossible de retourner le shop." });
+    }
+    console.log("shopRetourné :", returnedShop);
+    res.status(200).json({ success: true, shop: returnedShop });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Internal server error" });
@@ -1389,35 +1441,46 @@ const getShopInfos = async (req, res) => {
         .json({ succes: false, message: "Shop not found." });
     }
 
-    const shopInfos = await Shop.findById(shop._id)
-      .populate({
-        path: "notes",
-        populate: {
-          path: "user",
-          model: "users",
-        },
-      })
-      .populate({
-        path: "types",
-        model: "types",
-      })
-      .populate({
-        path: "markets",
-        populate: [
-          {
-            path: "market",
-            model: "markets",
-          },
-        ],
-      })
-      .populate({
-        path: "features",
-        model: "shopfeatures",
-      });
+    // const shopInfos = await Shop.findById(shop._id)
+    //   .populate({
+    //     path: "notes",
+    //     populate: {
+    //       path: "user",
+    //       model: "users",
+    //     },
+    //   })
+    //   .populate({
+    //     path: "types",
+    //     model: "types",
+    //   })
+    //   .populate({
+    //     path: "markets",
+    //     populate: [
+    //       {
+    //         path: "market",
+    //         model: "markets",
+    //       },
+    //     ],
+    //   })
+    //   .populate({
+    //     path: "features",
+    //     model: "shopfeatures",
+    //   });
 
-    console.log(shopInfos);
+    // console.log(shopInfos);
 
-    res.status(200).json({ success: true, shopInfos });
+    // res.status(200).json({ success: true, shopInfos });
+
+    const withStocks = req.query.withStocks === "true";
+
+    /* termine la fonction en retournant tout le shop (avec les produits) */
+    const returnedShop = await returnShop(shop._id, withStocks);
+    if (!returnedShop) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Impossible de retourner le shop." });
+    }
+    res.status(200).json({ success: true, shopInfos: returnedShop });
   } catch (error) {
     console.log(error);
     return res
@@ -1715,8 +1778,8 @@ const getCityCoordinates = async (city) => {
   );
   const data = await response.json();
   const coordinates = {
-    latitude: data.features[0].geometry.coordinates[0],
-    longitude: data.features[0].geometry.coordinates[1],
+    latitude: data.features[0].geometry.coordinates[1],
+    longitude: data.features[0].geometry.coordinates[0],
   };
   return coordinates;
 };

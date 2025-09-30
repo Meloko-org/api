@@ -7,7 +7,7 @@ const getAllCategories = async (req, res) => {
       { _id: 0, name: 1, type: 1 },
     );
 
-    res.status("200").json({ success: true, categories });
+    res.status(200).json({ success: true, categories });
   } catch (error) {
     console.error(error);
     res.status(500).json({ succes: false, message: error.message });
@@ -15,6 +15,9 @@ const getAllCategories = async (req, res) => {
   }
 };
 
+/*  Retourne les catégories de produit avec le type de produit (bulk ou classic)
+    d'après les familles de produit
+*/
 const getProductsTypesByCategory = async (req, res) => {
   try {
     const families = await ProductFamily.find().populate("category");
@@ -33,6 +36,7 @@ const getProductsTypesByCategory = async (req, res) => {
 
       types.forEach((type) => mapping.get(categoryName).add(type));
     }
+    // test
 
     // Convertit la map en objet classique
     const result = {};

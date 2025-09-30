@@ -1,4 +1,7 @@
 const mongoose = require("mongoose");
+// import { decimal128ToJSON, decimal128Setter } from "../helpers/decimalHelpers";
+const { decimal128ToJSON } = require("../helpers/decimalHelpers");
+const { numberToDecimal128 } = require("../helpers/decimalHelpers");
 
 const stockSchema = mongoose.Schema(
   {
@@ -64,6 +67,9 @@ const stockSchema = mongoose.Schema(
   },
   { timestamps: true },
 );
+
+decimal128ToJSON(stockSchema);
+numberToDecimal128(stockSchema);
 
 const Stock = mongoose.model("stocks", stockSchema);
 module.exports = Stock;

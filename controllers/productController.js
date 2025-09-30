@@ -1,5 +1,6 @@
 const { Product, ProductCategory, ProductFamily } = require("../models");
 const { validationModule } = require("../modules");
+const { cleanMongoDoc } = require("../helpers/aggregateHelpers");
 
 const createNewProductCategory = async (req, res) => {
   try {
@@ -145,7 +146,7 @@ const getProductsForCategory = async (req, res) => {
     const category = await ProductCategory.findOne({ name: categoryName });
     console.log("la cat :", category);
 
-    const products = await Product.aggregate([
+    let products = await Product.aggregate([
       {
         $lookup: {
           from: "productfamilies", // attention au nom exact de la collection !
@@ -171,7 +172,9 @@ const getProductsForCategory = async (req, res) => {
       },
     ]);
 
-    console.log(products);
+    products = cleanMongoDoc(products);
+
+    console.log(products[0]);
 
     res.status(200).json({ success: true, products });
   } catch (error) {

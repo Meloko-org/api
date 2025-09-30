@@ -28,4 +28,16 @@ router.post(
   onboardingController.onboarding4,
 );
 
+router.post(
+  "/5",
+  clerkMiddlewares.isUserLogged,
+  onboardingController.onboarding5,
+);
+
+router.post(
+  "/6",
+  clerkMiddlewares.isUserLogged,
+  onboardingController.onboarding6,
+);
+
 module.exports = router;

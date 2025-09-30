@@ -188,9 +188,73 @@ const onboarding4 = async (req, res) => {
   }
 };
 
+const onboarding5 = async (req, res) => {
+  try {
+    const shop = await hasShop(req.auth.userId);
+
+    if (!shop) {
+      return res
+        .status(200)
+        .json({ success: false, message: "No shop found." });
+    }
+
+    let producer = await Producer.findById(shop.producer);
+
+    producer = await Producer.findOneAndUpdate(
+      { _id: producer._id },
+      { onboardingStep: 5 },
+      {
+        new: true, // retourne le document mis à jour
+        upsert: false, // crée le document s'il n'existe pas
+        runValidators: true, // applique les validations du modèle
+      },
+    );
+
+    res.status(200).json({ success: true, producer });
+  } catch (error) {
+    console.log(error);
+    res.status(200).json({ success: false, message: "Internal server error" });
+    return;
+  }
+};
+
+const onboarding6 = async (req, res) => {
+  try {
+    const shop = await hasShop(req.auth.userId);
+
+    if (!shop) {
+      return res
+        .status(200)
+        .json({ success: false, message: "No shop found." });
+    }
+
+    let producer = await Producer.findById(shop.producer);
+
+    producer = await Producer.findOneAndUpdate(
+      { _id: producer._id },
+      { onboardingStep: 6 },
+      {
+        new: true, // retourne le document mis à jour
+        upsert: false, // crée le document s'il n'existe pas
+        runValidators: true, // applique les validations du modèle
+      },
+    );
+
+    console.log("producer onboarding6 :", producer);
+
+    res.status(200).json({ success: true, producer });
+  } catch (error) {
+    console.log(error);
+    res.status(200).json({ success: false, message: "Internal server error" });
+    return;
+  }
+};
+
 module.exports = {
   onboarding1,
   onboarding2,
   onboarding3,
   onboarding4,
+  onboarding5,
+  onboarding6,
 };

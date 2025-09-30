@@ -49,9 +49,17 @@ router.post("/search", shopController.searchShopsOrMarkets);
 // search for markets based on city or department
 router.post("/markets", shopController.searchMarkets);
 // add a market to a shop
-router.put("/markets/add", shopController.addMarkets);
+router.put(
+  "/markets/add",
+  clerkMiddlewares.isUserLogged,
+  shopController.addMarkets,
+);
 // update existing markets
-router.put("/markets/update", shopController.updateShopMarkets);
+router.put(
+  "/markets/update",
+  clerkMiddlewares.isUserLogged,
+  shopController.updateShopMarkets,
+);
 // get market by id
 router.get("/markets/:marketId", shopController.getMarketById);
 // add products to a shop

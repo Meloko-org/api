@@ -30,7 +30,8 @@ const returnShop = async (shopId, withStocks = false) => {
     .populate({
       path: "features",
       model: "shopfeatures",
-    });
+    })
+    .lean(); // <-- transforme direct en objet JS simple
 
   if (!shop) return null;
 
@@ -40,12 +41,13 @@ const returnShop = async (shopId, withStocks = false) => {
         path: "product",
         populate: {
           path: "family",
-          model: "productfamilies",
+          model: "productFamily",
         },
       })
-      .populate("tags");
+      .populate("tags")
+      .lean();
 
-    shop._doc.products = stocks;
+    shop.products = stocks;
   }
 
   return shop;

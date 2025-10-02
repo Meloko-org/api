@@ -1060,13 +1060,11 @@ const searchMarkets = async (req, res) => {
     ]);
 
     if (!markets.length > 0) {
-      return res
-        .status(200)
-        .json({
-          success: false,
-          data: null,
-          message: "Aucune place de marché trouvée.",
-        });
+      return res.status(200).json({
+        success: false,
+        data: null,
+        message: "Aucune place de marché trouvée.",
+      });
     }
 
     return res.status(200).json({ success: true, markets });
@@ -1130,12 +1128,10 @@ const addMarkets = async (req, res) => {
     // }
 
     if (!updatedShop) {
-      return res
-        .status(200)
-        .json({
-          success: false,
-          message: "Impossible de mettre à jour les points de vente.",
-        });
+      return res.status(200).json({
+        success: false,
+        message: "Impossible de mettre à jour les points de vente.",
+      });
     }
 
     /* termine la fonction en retournant tout le shop (sans les produits) */
@@ -1145,13 +1141,11 @@ const addMarkets = async (req, res) => {
         .status(200)
         .json({ success: false, message: "Impossible de retourner le shop." });
     }
-    res
-      .status(200)
-      .json({
-        success: true,
-        shop: returnedShop,
-        message: "Point de vente ajouté.",
-      });
+    res.status(200).json({
+      success: true,
+      shop: returnedShop,
+      message: "Point de vente ajouté.",
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
@@ -1473,13 +1467,19 @@ const getShopInfos = async (req, res) => {
 
     const withStocks = req.query.withStocks === "true";
 
+    console.log("withStocks :", withStocks);
+
     /* termine la fonction en retournant tout le shop (avec les produits) */
     const returnedShop = await returnShop(shop._id, withStocks);
+
     if (!returnedShop) {
       return res
         .status(200)
         .json({ success: false, message: "Impossible de retourner le shop." });
     }
+
+    // console.log("returnedShop :", returnedShop.products)
+
     res.status(200).json({ success: true, shopInfos: returnedShop });
   } catch (error) {
     console.log(error);

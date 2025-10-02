@@ -1,9 +1,13 @@
 const mongoose = require("mongoose");
 
-/* Permet de convertir un Decimal128 en number 
-  A utiliser dans chaque model
-*/
-function decimal128ToJSON(schema) {
+/*
+    Ce plugin permet de convertir des decimal128 en number quand on extrait
+    des données de la base et il permet aussi de convertir des number en
+    decimal128 quand on injecte des données dans la base.
+ */
+
+function decimalNumberPlugin(schema) {
+  // 1️⃣ Conversion automatique JSON (Decimal128 → number)
   schema.set("toJSON", {
     transform: (doc, ret) => {
       function convert(obj) {
@@ -17,33 +21,28 @@ function decimal128ToJSON(schema) {
             }
           }
 
-          // Cas spécifique : ObjectId → on ne touche pas
+          // Cas spécifique : ObjectId → ne pas toucher
           if (obj._bsontype === "ObjectID") {
             return obj;
           }
 
-          // Cas spécifique : Date → on ne touche pas
+          // Cas spécifique : Date → ne pas toucher
           if (obj instanceof Date) {
             return obj;
           }
 
-          // Parcours récursif des sous-objets
+          // Parcours récursif
           for (const key in obj) {
             obj[key] = convert(obj[key]);
           }
         }
         return obj;
       }
-
       return convert(ret);
     },
   });
-}
 
-/* Permet de convertir un number en Decimal128 
-  A utiliser dans chaque model
-*/
-function numberToDecimal128(schema) {
+  // 2️⃣ Conversion automatique lors des set (number → Decimal128)
   schema.eachPath((path, schemaType) => {
     if (schemaType.instance === "Decimal128") {
       schemaType.set(function (val) {
@@ -55,7 +54,9 @@ function numberToDecimal128(schema) {
   });
 }
 
+// 👉 Application globale à tous les schémas
+mongoose.plugin(decimalNumberPlugin);
+
 module.exports = {
-  decimal128ToJSON,
-  numberToDecimal128,
+  decimalNumberPlugin,
 };

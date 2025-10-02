@@ -52,6 +52,8 @@ const getOrderSummary = async (req, res) => {
       };
     });
 
+    console.log("orders :", filteredOrders);
+
     res.status(200).json({ success: true, orders: filteredOrders });
   } catch (error) {
     console.error("Erreur dans getAllOrders :", error);

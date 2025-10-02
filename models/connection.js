@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { decimalNumberPlugin } = require("../plugins/decimalNumberPlugin");
 
 /**
  * L'utilisation de mongodb-memory-server pour faire des tests oblige à tester
@@ -9,6 +10,8 @@ const mongoose = require("mongoose");
 
 if (process.env.NODE_ENV !== "test") {
   const connectionString = process.env.CONNECTION_STRING;
+
+  mongoose.plugin(decimalNumberPlugin);
 
   mongoose
     .connect(connectionString, { connectTimeoutMS: 2000 })

@@ -185,6 +185,7 @@ const getStocksByShop = async (req, res) => {
     }
 
     // console.log("stocks :", JSON.stringify(stocks, null, 2));
+    console.log("stocks :", stocks);
 
     res.status(200).json({ success: true, stocks });
   } catch (error) {

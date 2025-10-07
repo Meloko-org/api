@@ -97,6 +97,12 @@ const shopSchema = mongoose.Schema(
       default: null,
     },
     markets: [shopMarketsSchema],
+    marketsPreviouslyActive: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        required: false,
+      },
+    ],
     clickCollect: clickCollectSchema,
     notes: {
       type: [mongoose.Schema.Types.ObjectId],

@@ -18,6 +18,7 @@ const postThemeRouter = require("./postThemes");
 const shopFeaturesRouter = require("./shopFeatures");
 const circuitRouter = require("./circuit");
 const onboardingRouter = require("./onboarding");
+const withdrawsRouter = require("./withdraws");
 
 module.exports = {
   authRouter,
@@ -40,4 +41,5 @@ module.exports = {
   shopFeaturesRouter,
   circuitRouter,
   onboardingRouter,
+  withdrawsRouter,
 };

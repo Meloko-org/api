@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
-const { decimal128ToJSON } = require("../helpers/decimalHelpers");
-const { numberToDecimal128 } = require("../helpers/decimalHelpers");
+const { decimalNumberPlugin } = require("../plugins/decimalNumberPlugin");
 
 const productDetailSchema = mongoose.Schema({
   product: {
@@ -75,8 +74,7 @@ const orderSchema = mongoose.Schema(
   { timestamps: true },
 );
 
-// decimal128ToJSON(orderSchema);
-// numberToDecimal128(orderSchema);
+// orderSchema.plugin(decimalNumberPlugin)
 
 const Order = mongoose.model("orders", orderSchema);
 

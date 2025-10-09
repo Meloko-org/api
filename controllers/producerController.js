@@ -1,12 +1,4 @@
-const {
-  Producer,
-  User,
-  Shop,
-  ProductCategory,
-  ProductFamily,
-  Product,
-  Stock,
-} = require("../models");
+const { Producer, User } = require("../models");
 const { validationModule } = require("../modules");
 const userController = require("./userController");
 

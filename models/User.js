@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const { decimalNumberPlugin } = require("../plugins/decimalNumberPlugin");
+
 const addressSchema = require("./Address");
 
 const favsearchSchema = mongoose.Schema(
@@ -94,6 +96,8 @@ const userSchema = mongoose.Schema(
   },
   { timestamps: true },
 );
+
+// userSchema.plugin(decimalNumberPlugin)
 
 const User = mongoose.model("users", userSchema);
 

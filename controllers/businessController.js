@@ -52,7 +52,7 @@ const getOrderSummary = async (req, res) => {
       };
     });
 
-    console.log("orders :", filteredOrders);
+    console.log("orders :", JSON.stringify(filteredOrders, null, 2));
 
     res.status(200).json({ success: true, orders: filteredOrders });
   } catch (error) {

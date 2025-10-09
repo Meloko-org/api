@@ -44,13 +44,11 @@ const activate = async (req, res) => {
 
     console.log("returned :", returnedShop);
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        shop: returnedShop,
-        message: `Le mode ${modeLabel} est ${value ? "activé" : "désactivé"}.`,
-      });
+    res.status(200).json({
+      success: true,
+      shop: returnedShop,
+      message: `Le mode ${modeLabel} est ${value ? "activé" : "désactivé"}.`,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

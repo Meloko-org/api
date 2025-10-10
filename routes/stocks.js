@@ -15,6 +15,11 @@ router.post(
   stockController.createStocks,
 );
 
+router.post(
+  "/delete/:id",
+  clerkMiddlewares.isUserLogged,
+  stockController.softDeleteStocks,
+);
 router.delete(
   "/:id",
   clerkMiddlewares.isUserLogged,

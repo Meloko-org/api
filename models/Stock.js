@@ -63,6 +63,10 @@ const stockSchema = mongoose.Schema(
         ref: "tags",
       },
     ],
+    isDeleted: {
+      type: Boolean,
+      required: false,
+    },
   },
   { timestamps: true },
 );

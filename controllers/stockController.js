@@ -113,6 +113,7 @@ const updateStocks = async (req, res) => {
   }
 };
 
+/* cette fonction n'est plus utilisée au profit de softDeleteStocks */
 const deleteStocks = async (req, res) => {
   try {
     const { id } = req.params;
@@ -150,6 +151,52 @@ const deleteStocks = async (req, res) => {
   }
 };
 
+const softDeleteStocks = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const shop = await hasShop(req.auth.userId);
+    if (!shop)
+      return res
+        .status(200)
+        .json({ success: false, message: "No shop found." });
+
+    const deletedStock = await Stock.findByIdAndUpdate(id, { isDeleted: true });
+    if (!deletedStock) {
+      return res
+        .status(200)
+        .json({
+          success: false,
+          message: "Suppression impossible : produit non trouvé.",
+        });
+    }
+
+    const newStocks = await Stock.find({ shop: shop._id, isDeleted: false })
+      .populate({
+        path: "product",
+        populate: {
+          path: "family",
+          model: "productFamily",
+          populate: {
+            path: "category",
+            model: "productcategory",
+          },
+        },
+      })
+      .populate("tags");
+
+    console.log(
+      "NEWSTOCKS :",
+      newStocks.map((s) => "isDeleted :" + s.isDeleted),
+    );
+
+    res.status(200).json({ success: true, stocks: newStocks });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ succes: false, message: "Internal server error." });
+  }
+};
+
 const getStocksByShop = async (req, res) => {
   try {
     const { shopId } = req.params;
@@ -160,7 +207,7 @@ const getStocksByShop = async (req, res) => {
     }
 
     // Recherche
-    const stocks = await Stock.find({ shop: shopId })
+    const stocks = await Stock.find({ shop: shopId, isDeleted: false })
       .populate({
         path: "product",
         populate: {
@@ -199,5 +246,6 @@ module.exports = {
   createStocks,
   updateStocks,
   deleteStocks,
+  softDeleteStocks,
   getStocksByShop,
 };

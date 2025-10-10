@@ -326,6 +326,7 @@ const searchShopsOrMarkets = async (req, res) => {
                     $and: [
                       { $eq: ["$shop", "$$shopId"] },
                       { $gt: ["$stock", 0] },
+                      { $eq: ["$isDeleted", false] },
                     ],
                   },
                 },
@@ -376,6 +377,8 @@ const searchShopsOrMarkets = async (req, res) => {
           },
         },
       ]);
+
+      console.log(shops.map((s) => s.address));
 
       // console.log(
       //   shops
@@ -529,6 +532,7 @@ const searchShopsOrMarkets = async (req, res) => {
                     $and: [
                       { $eq: ["$shop", "$$shopId"] },
                       { $gt: ["$stock", 0] },
+                      { $eq: ["$isDeleted", false] },
                     ],
                   },
                 },

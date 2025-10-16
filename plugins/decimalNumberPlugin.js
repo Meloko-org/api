@@ -41,6 +41,9 @@ function decimalNumberPlugin(schema) {
   schema.set("toJSON", {
     transform: (doc, ret) => convertDecimal(ret),
   });
+  schema.set("toObject", {
+    transform: (doc, ret) => convertDecimal(ret),
+  });
 
   // ✅ 2. Conversion pour les agrégations uniquement
   schema.post(["aggregate"], function (result) {

@@ -249,6 +249,9 @@ const updateBookmarks = async (req, res) => {
         models: "notes",
       },
     });
+
+    console.log("user :", user);
+
     const userOrders = await Order.find({ user: user._id, isPaid: true })
       .populate({
         path: "details",
@@ -280,11 +283,11 @@ const updateBookmarks = async (req, res) => {
       })
       .sort("-createdAt");
 
-    console.log({
-      success: true,
-      user: { ...user.toObject(), orders: userOrders },
-      message,
-    });
+    // console.log({
+    //   success: true,
+    //   user: { ...user.toObject(), orders: userOrders },
+    //   message,
+    // });
 
     res.status(200).json({
       success: true,

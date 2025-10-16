@@ -163,12 +163,10 @@ const softDeleteStocks = async (req, res) => {
 
     const deletedStock = await Stock.findByIdAndUpdate(id, { isDeleted: true });
     if (!deletedStock) {
-      return res
-        .status(200)
-        .json({
-          success: false,
-          message: "Suppression impossible : produit non trouvé.",
-        });
+      return res.status(200).json({
+        success: false,
+        message: "Suppression impossible : produit non trouvé.",
+      });
     }
 
     const newStocks = await Stock.find({ shop: shop._id, isDeleted: false })

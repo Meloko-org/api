@@ -1,4 +1,5 @@
 const { User, Role, Order, Producer } = require("../models");
+const mongoose = require("mongoose");
 
 // Create a new user in the database using data provided by a Clerk webhook
 const createNewUser = async (clerkUserData) => {
@@ -214,15 +215,30 @@ const updateUser = async (req, res) => {
   }
 };
 
-const addShopToBookmark = async (req, res) => {
+const updateBookmarks = async (req, res) => {
   try {
+    console.log("shopId :", req.params.shopId);
     const user = await User.findOne({ clerkUUID: req.auth.userId });
 
     if (!user) {
-      throw new Error("No user found");
+      return res
+        .status(200)
+        .json({ success: false, message: "User not found" });
     }
 
-    user.bookmarks.push(req.params.shopId);
+    let message;
+
+    if (
+      !user.bookmarks.some((shop) => shop._id.toString() === req.params.shopId)
+    ) {
+      user.bookmarks.push(req.params.shopId);
+      message = "Favori ajouté.";
+    } else {
+      user.bookmarks = user.bookmarks.filter(
+        (shop) => shop._id.toString() !== req.params.shopId,
+      );
+      message = "Favori supprimé.";
+    }
 
     await user.save();
     await user.populate({
@@ -265,17 +281,19 @@ const addShopToBookmark = async (req, res) => {
       .sort("-createdAt");
 
     console.log({
-      result: true,
+      success: true,
       user: { ...user.toObject(), orders: userOrders },
+      message,
     });
 
     res.status(200).json({
-      result: true,
+      success: true,
       user: { ...user.toObject(), orders: userOrders },
+      message,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ success: false, message: "Internal server error" });
     return;
   }
 };
@@ -378,7 +396,7 @@ module.exports = {
   createNewUser,
   getUserInfos,
   updateUser,
-  addShopToBookmark,
+  updateBookmarks,
   removeShopFromBookmark,
   createNewUserAddress,
   removeUserAddress,

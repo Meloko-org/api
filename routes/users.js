@@ -24,7 +24,7 @@ router.put("/logged", clerkMiddlewares.isUserLogged, userController.updateUser);
 router.post(
   "/bookmarks/:shopId",
   clerkMiddlewares.isUserLogged,
-  userController.addShopToBookmark,
+  userController.updateBookmarks,
 );
 
 /* add a new address to the user */

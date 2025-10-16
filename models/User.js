@@ -87,10 +87,12 @@ const userSchema = mongoose.Schema(
       type: String,
       default: null,
     },
-    bookmarks: {
-      type: [mongoose.Schema.Types.ObjectId],
-      ref: "shops",
-    },
+    bookmarks: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "shops",
+      },
+    ],
     addresses: [userAddressSchema],
     favSearch: [favsearchSchema],
   },

@@ -16,6 +16,7 @@ const {
   createNewUser,
   updateUser,
   addShopToBookmark,
+  updateBookmarks,
 } = require("../../controllers/userController");
 
 // initialisation des mocks avant chaque test
@@ -173,7 +174,7 @@ describe("Bookmarks", () => {
       json: jest.fn(),
     };
 
-    await addShopToBookmark(req, res);
+    await updateBookmarks(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
 
@@ -185,7 +186,7 @@ describe("Bookmarks", () => {
     // Validation des champs de l'utilisateur
     expect(receivedResponse).toMatchObject(
       expect.objectContaining({
-        result: true,
+        success: true,
         user: expect.objectContaining({
           _id: mockUser1._id,
           email: expect.any(String),
@@ -216,6 +217,7 @@ describe("Bookmarks", () => {
             }),
           ],
         }),
+        message: expect.any(String),
       }),
     );
   });

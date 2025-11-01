@@ -1,5 +1,6 @@
 const { Shop, Producer, User, Stock } = require("../models");
 const { hasShop } = require("../helpers/authHelpers");
+const { convertDecimal } = require("../plugins/decimalNumberPlugin");
 
 /* 	à utiliser à la fin d'une fonction controller pour retourner le shop 
 		On peut choisir de retourner simplement le shop 
@@ -50,7 +51,7 @@ const returnShop = async (shopId, withStocks = false) => {
     shop.products = stocks;
   }
 
-  return shop;
+  return convertDecimal(shop);
 };
 
 module.exports = {

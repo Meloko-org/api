@@ -72,4 +72,5 @@ mongoose.plugin(decimalNumberPlugin);
 
 module.exports = {
   decimalNumberPlugin,
+  convertDecimal,
 };

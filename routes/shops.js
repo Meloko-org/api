@@ -81,7 +81,8 @@ router.get(
   shopController.getShopInfos,
 );
 
-router.get("/:id", shopController.getById);
+// router.get("/:id", shopController.getById);
+router.get("/:id", shopController.getFullShopById);
 
 router.get(
   "/:shopId/stocks-by-category/:categoryName",

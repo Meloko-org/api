@@ -378,21 +378,6 @@ const searchShopsOrMarkets = async (req, res) => {
         },
       ]);
 
-      console.log(shops.map((s) => s.address));
-
-      // console.log(
-      //   shops
-      //     .map((shop) =>
-      //       shop.stocks.map((stock) => ({
-      //         productCustomName: stock.productCustomName,
-      //         productName: stock.product?.name,
-      //         familyName: stock.product?.family?.name,
-      //         tagNames: stock.tags?.map((tag) => tag.name),
-      //       })),
-      //     )
-      //     .flat(),
-      // );
-
       // Étape 1 : construire une liste à aplatir pour la recherche Fuse
       const fuseItems = shops
         .map((shop) =>
@@ -484,8 +469,6 @@ const searchShopsOrMarkets = async (req, res) => {
         }
         return a.distance - b.distance;
       });
-
-      // console.log("matchedShops :", matchedShops)
 
       // Et renvoyer au frontend
       return res.status(200).json({
@@ -789,7 +772,7 @@ const searchShopsOrMarkets = async (req, res) => {
       // Étape 6 : tri des markets (par distance par exemple)
       marketResults.sort((a, b) => a.distance - b.distance);
 
-      console.log("markets :", marketResults);
+      // console.log("markets :", marketResults);
 
       return res.status(200).json({
         success: true,
@@ -1514,6 +1497,83 @@ const getMarketById = async (req, res) => {
   }
 };
 
+const getFullShopById = async (req, res) => {
+  try {
+    const checkBodyFields = ["id"];
+    if (!validationModule.checkBody(req.params, checkBodyFields)) {
+      return res
+        .status(200)
+        .json({ success: false, data: null, message: "Missing fields." });
+    }
+
+    const shop = await returnShop(req.params.id);
+    if (!shop) {
+      return res.status(404).json({
+        success: false,
+        message: "Shop not found.",
+      });
+    }
+
+    const stocks = await Stock.find({
+      shop: shop._id,
+      stock: { $gt: 0 },
+      isDeleted: false,
+    }).populate([
+      {
+        path: "product",
+        populate: {
+          path: "family",
+          model: "productFamily",
+          populate: {
+            path: "category",
+            model: "productcategory",
+          },
+        },
+      },
+      {
+        path: "tags",
+        model: "tags",
+      },
+    ]);
+
+    const fullShop = {
+      shop,
+      categories: [],
+    };
+
+    if (stocks.length > 0) {
+      stocks.forEach((stock) => {
+        const existingCategory = stock.product.family.category;
+        if (!existingCategory) return;
+
+        let categoryObj = fullShop.categories.find(
+          (obj) =>
+            obj.category._id.toString() ===
+            stock.product.family.category._id.toString(),
+        );
+
+        console.log("cat obj :", categoryObj);
+
+        if (categoryObj) {
+          categoryObj.stocks.push(stock);
+        } else {
+          fullShop.categories.push({
+            category: existingCategory,
+            stocks: [stock],
+          });
+        }
+      });
+    }
+
+    // console.log("fullShop :", JSON.stringify(fullShop, null, 2))
+
+    return res.status(200).json({ success: true, fullShop });
+  } catch (error) {
+    console.log(error.message);
+    res.status(200).json({ success: false, message: "Internal server error" });
+  }
+};
+
 const getById = async (req, res) => {
   try {
     const checkBodyFields = ["id"];
@@ -1588,6 +1648,8 @@ const getById = async (req, res) => {
           }
         });
       }
+
+      console.log("shop :", shop);
 
       res.json({ result: true, shop });
     } else {
@@ -1888,6 +1950,7 @@ module.exports = {
   updateClickCollect,
   searchShopsOrMarkets,
   searchShops,
+  getFullShopById,
   getById,
   deleteShop,
   getCoordinates,

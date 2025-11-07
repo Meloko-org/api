@@ -34,6 +34,12 @@ router.post(
   userController.createNewUserAddress,
 );
 
+router.post(
+  "/addresses/default",
+  clerkMiddlewares.isUserLogged,
+  userController.setDefaultAddress,
+);
+
 /* remove an address from the user addresses */
 router.delete(
   "/addresses/:addressId",

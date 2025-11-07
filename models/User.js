@@ -45,6 +45,10 @@ const userAddressSchema = mongoose.Schema(
       type: String,
       default: null,
     },
+    isDefault: {
+      type: Boolean,
+      required: false,
+    },
   },
   { timestamps: true },
 );

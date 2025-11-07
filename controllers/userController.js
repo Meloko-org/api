@@ -1,5 +1,6 @@
 const { User, Role, Order, Producer } = require("../models");
 const mongoose = require("mongoose");
+const { isUser } = require("../modules/verification");
 
 // Create a new user in the database using data provided by a Clerk webhook
 const createNewUser = async (clerkUserData) => {
@@ -40,6 +41,8 @@ const createNewUserAddress = async (req, res) => {
     console.warn(req.body);
     const { name, address } = req.body;
 
+    const isDefault = user.addresses.length === 0;
+
     user.addresses.push({
       name,
       address: {
@@ -49,25 +52,36 @@ const createNewUserAddress = async (req, res) => {
         city: address.city,
         country: address.country,
       },
+      isDefault,
     });
 
     await user.save();
-    await user.populate({
-      path: "bookmarks",
-      model: "shops",
-      populate: {
-        path: "notes",
-        models: "notes",
-      },
-    });
 
-    res.status(200).json({
-      success: true,
-      user,
-    });
+    res.status(200).json({ success: true, addresses: user.addresses });
   } catch (error) {
     console.error(error);
-    return false;
+    res.status(500).json({ success: false, message: "Internal server error" });
+    return;
+  }
+};
+
+const setDefaultAddress = async (req, res) => {
+  try {
+    const user = await isUser(req.auth.userId);
+    if (!user) return { success: false, data: null, message: "No user found." };
+
+    const { addressId } = req.body;
+
+    user.addresses.forEach((adr) => {
+      adr.isDefault = adr._id.toString() === addressId;
+    });
+
+    await user.save();
+
+    res.status(200).json({ success: true, addresses: user.addresses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Internal server error" });
+    return;
   }
 };
 
@@ -365,32 +379,33 @@ const removeShopFromBookmark = async (req, res) => {
 
 const removeUserAddress = async (req, res) => {
   try {
-    const user = await User.findOne({ clerkUUID: req.auth.userId });
+    // const user = await User.findOne({ clerkUUID: req.auth.userId });
 
-    if (!user) {
-      throw new Error("No user found");
-    }
+    // if (!user) {
+    //   throw new Error("No user found");
+    // }
+
+    const user = await isUser(req.auth.userId);
+    if (!user) return { success: false, data: null, message: "No user found." };
 
     user.addresses = user.addresses.filter(
       (addr) => addr._id.toString() !== req.params.addressId,
     );
 
     await user.save();
-    await user.populate({
-      path: "bookmarks",
-      model: "shops",
-      populate: {
-        path: "notes",
-        models: "notes",
-      },
-    });
+    // await user.populate({
+    //   path: "bookmarks",
+    //   model: "shops",
+    //   populate: {
+    //     path: "notes",
+    //     models: "notes",
+    //   },
+    // });
 
-    res.json({
-      success: true,
-      user,
-    });
+    res.json({ success: true, addresses: user.addresses });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
     return;
   }
 };
@@ -402,5 +417,6 @@ module.exports = {
   updateBookmarks,
   removeShopFromBookmark,
   createNewUserAddress,
+  setDefaultAddress,
   removeUserAddress,
 };

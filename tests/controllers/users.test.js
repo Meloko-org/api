@@ -152,8 +152,11 @@ describe("updateUser", () => {
 
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
-        firstname: "new firstname",
-        lastname: "new lastname",
+        success: true,
+        user: expect.objectContaining({
+          firstname: "new firstname",
+          lastname: "new lastname",
+        }),
       }),
     );
   });

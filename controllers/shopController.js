@@ -605,50 +605,11 @@ const searchShopsOrMarkets = async (req, res) => {
             },
           },
         },
-        // {
-        //   $addFields: {
-        //     markets: {
-        //       $map: {
-        //         input: "$markets",
-        //         as: "marketEntry",
-        //         in: {
-        //           $mergeObjects: [
-        //             "$$marketEntry",
-        //             {
-        //               market: {
-        //                 $arrayElemAt: [
-        //                   {
-        //                     $filter: {
-        //                       input: "$populatedMarkets",
-        //                       as: "pm",
-        //                       cond: {
-        //                         $eq: ["$$pm._id", "$$marketEntry.market"],
-        //                       },
-        //                     },
-        //                   },
-        //                   0,
-        //                 ],
-        //               },
-        //             },
-        //           ],
-        //         },
-        //       },
-        //     },
-        //   },
-        // },
         {
           $project: {
             populatedMarkets: 0, // on nettoie ce champ temporaire
           },
         },
-        // {
-        //   $lookup: {
-        //     from: "types",
-        //     localField: "types",
-        //     foreignField: "_id",
-        //     as: "types",
-        //   },
-        // },
         {
           $lookup: {
             from: "notes",

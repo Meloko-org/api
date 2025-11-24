@@ -16,6 +16,7 @@ const GeneratedPost = require("./GeneratedPost");
 const ValidatedPost = require("./ValidatedPost");
 const Activity = require("./Activity");
 const ShopFeatures = require("./ShopFeatures");
+const InvoiceCounter = require("./InvoiceCounter");
 
 module.exports = {
   Market,
@@ -37,4 +38,5 @@ module.exports = {
   ValidatedPost,
   Activity,
   ShopFeatures,
+  InvoiceCounter,
 };

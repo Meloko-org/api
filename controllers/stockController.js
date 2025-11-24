@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { Stock, Shop, User } = require("../models");
 const validationModule = require("../modules/validation");
 const { isProducerUser, hasShop } = require("../helpers/authHelpers");
+const { eurosToCents } = require("../helpers/priceHelpers");
 
 const createStocks = async (req, res) => {
   try {
@@ -20,11 +21,17 @@ const createStocks = async (req, res) => {
       });
     }
 
+    const price_cents = eurosToCents(price);
+    const stock_value =
+      product.weight.unit === "gr"
+        ? Math.round(NUmber(stock) * 1000)
+        : Number(stock);
+
     const newStock = new Stock({
       product: product._id,
       shop: shop._id,
-      price: mongoose.Types.Decimal128.fromString(price.toString()),
-      stock: mongoose.Types.Decimal128.fromString(stock.toString()),
+      price: price_cents,
+      stock: stock_value,
       description,
       tags: tags.map((t) => t._id),
       ...rest,
@@ -73,16 +80,19 @@ const updateStocks = async (req, res) => {
       });
     }
 
-    const updatedPrice = mongoose.Types.Decimal128.fromString(price.toString());
-    const updatedStock = mongoose.Types.Decimal128.fromString(stock.toString());
+    const price_cents = eurosToCents(price);
+    const stock_value =
+      product.weight.unit === "gr"
+        ? Math.round(NUmber(stock) * 1000)
+        : Number(stock);
 
     await Stock.findOneAndUpdate(
       { _id },
       {
         product: product._id,
         shop: shop._id,
-        price: updatedPrice,
-        stock: updatedStock,
+        price: price_cents,
+        stock: stock_value,
         description,
         tags: tags.map((t) => t._id),
         ...rest,

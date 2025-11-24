@@ -22,6 +22,10 @@ const productSchema = mongoose.Schema(
       type: weightSchema,
       required: true,
     },
+    vatRate: {
+      type: Number,
+      required: true,
+    },
   },
   { timestamps: true },
 );

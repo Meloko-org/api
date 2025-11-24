@@ -38,6 +38,18 @@ const cors = require("cors");
 app.use(cors());
 app.use(clerkMiddleware());
 app.use(logger("dev"));
+
+/* déclaration des routes webhook de stripe ici, avant app.use(express.json()) pour
+  permettre la vérification de la signature du webhook de stripe
+*/
+const { stripeController } = require("./controllers");
+app.post(
+  "/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  stripeController.webhookReceiver,
+);
+/* ------------------ */
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());

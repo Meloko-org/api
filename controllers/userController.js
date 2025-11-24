@@ -147,6 +147,8 @@ const getUserInfos = async (req, res) => {
       })
       .sort("-createdAt");
 
+    console.log("userOrders :", JSON.stringify(userOrders, null, 2));
+
     const isProducer = await Producer.findOne({ owner: user._id });
 
     let producer;
@@ -175,7 +177,9 @@ const updateUser = async (req, res) => {
     const user = await User.findOne({ clerkUUID: req.auth.userId });
 
     if (!user) {
-      throw new Error("No user found");
+      return res
+        .status(200)
+        .json({ success: false, message: "User not found" });
     }
 
     // req.body.email && (user.email = req.body.email)
@@ -191,6 +195,7 @@ const updateUser = async (req, res) => {
       },
     });
 
+    // à supprimer
     const userOrders = await Order.find({ user: user._id, isPaid: true })
       .populate({
         path: "details",
@@ -222,9 +227,13 @@ const updateUser = async (req, res) => {
       })
       .sort("-createdAt");
 
-    res.status(200).json({ ...user.toObject(), orders: userOrders });
+    res.status(200).json({
+      success: true,
+      user: { ...user.toObject(), orders: userOrders },
+    });
   } catch (error) {
     console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
     return;
   }
 };

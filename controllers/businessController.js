@@ -47,7 +47,7 @@ const getOrderSummary = async (req, res) => {
         user: order.user,
         detail: {
           status: detail?.status,
-          shopTotalPrice: detail?.shopTotalPrice,
+          shopTotalTTC: detail?.shopTotalTTC,
         },
       };
     });

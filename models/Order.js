@@ -10,6 +10,31 @@ const productDetailSchema = mongoose.Schema({
     type: Number,
     required: true,
   },
+  unit: {
+    type: String,
+    enum: ["gr", "piece"],
+    required: true,
+  },
+  unitPriceTTC: {
+    type: Number,
+    required: true,
+  },
+  unitPriceHT: {
+    type: Number,
+    required: true,
+  },
+  vatRate: {
+    type: Number,
+    required: true,
+  },
+  vatAmount: {
+    type: Number,
+    required: true,
+  },
+  totalPriceTTC: {
+    type: Number,
+    required: true,
+  },
   isConfirmed: {
     type: Boolean,
     default: null,
@@ -36,8 +61,16 @@ const orderDetailSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "shops",
   },
-  shopTotalPrice: {
-    type: mongoose.Decimal128,
+  shopTotalHT: {
+    type: Number,
+    required: true,
+  },
+  shopTotalVAT: {
+    type: Number,
+    required: true,
+  },
+  shopTotalTTC: {
+    type: Number,
     required: true,
   },
   status: {
@@ -52,6 +85,61 @@ const orderSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
     },
+    billingAddress: {
+      name: {
+        type: String,
+      },
+      address1: {
+        type: String,
+        required: true,
+      },
+      address2: {
+        type: String,
+      },
+      postalCode: {
+        type: String,
+        required: true,
+      },
+      city: {
+        type: String,
+        required: true,
+      },
+      country: {
+        type: String,
+        required: true,
+      },
+      latitude: mongoose.Decimal128,
+      longitude: mongoose.Decimal128,
+    },
+    shippingAddres: {
+      type: {
+        name: {
+          type: String,
+        },
+        address1: {
+          type: String,
+          // required: true,
+        },
+        address2: {
+          type: String,
+        },
+        postalCode: {
+          type: String,
+          // required: true,
+        },
+        city: {
+          type: String,
+          // required: true,
+        },
+        country: {
+          type: String,
+          // required: true,
+        },
+        latitude: mongoose.Decimal128,
+        longitude: mongoose.Decimal128,
+      },
+      default: null,
+    },
     details: [orderDetailSchema],
     isWithdrawn: {
       type: Boolean,
@@ -61,20 +149,34 @@ const orderSchema = mongoose.Schema(
       type: Boolean,
       required: true,
     },
+    paymentMethod: {
+      type: String,
+      required: true,
+    },
     stripePIId: {
       type: String,
       unique: true,
       required: true,
     },
-    totalPrice: {
-      type: mongoose.Decimal128,
+    totalHT: {
+      type: Number,
+      required: true,
+    },
+    totalVAT: {
+      type: Number,
+      required: true,
+    },
+    totalTTC: {
+      type: Number,
+      required: true,
+    },
+    invoiceNumber: {
+      type: String,
       required: true,
     },
   },
   { timestamps: true },
 );
-
-// orderSchema.plugin(decimalNumberPlugin)
 
 const Order = mongoose.model("orders", orderSchema);
 

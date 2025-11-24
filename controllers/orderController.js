@@ -3,8 +3,101 @@ const { Order } = require("../models");
 const { validationModule } = require("../modules");
 const { isShop, isUser } = require("../modules/verification");
 const { isProducerUser, hasShop } = require("../helpers/authHelpers");
+const { computeGlobalOrderStatus } = require("../helpers/orderHelpers");
 
 const getOrdersByUser = async (req, res) => {
+  try {
+    const user = await isUser(req.auth.userId);
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: "Utilisateur non trouvé.",
+      });
+    }
+
+    /* paramètres de la query */
+    const status = req.query.status;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    /* On récupère toutes les commandes */
+    const orders = await Order.find({
+      user: user._id,
+    })
+      .sort({ createdAt: -1 })
+      .populate("user", "firstname lastname email")
+      .populate({
+        path: "details",
+        populate: [
+          {
+            path: "products.product",
+            model: "stocks",
+            select: "-createdAt -updatedAt",
+            populate: {
+              path: "product",
+              model: "products",
+              select: "name image weight family",
+              populate: {
+                path: "family",
+                model: "productFamily",
+                select: "name",
+              },
+            },
+          },
+          {
+            path: "shop",
+            model: "shops",
+            select: "name notes address",
+            populate: [
+              {
+                path: "notes",
+                model: "notes",
+              },
+              {
+                path: "markets.market",
+                model: "markets",
+                select: "name address",
+              },
+            ],
+          },
+        ],
+      })
+      .lean();
+
+    /* on ajoute le status global à chaque order */
+    const ordersWithStatus = orders.map((o) => ({
+      ...o,
+      globalStatus: computeGlobalOrderStatus(o),
+    }));
+
+    // console.log("ordersWithStatus :", ordersWithStatus)
+
+    /* on filtre les orders selon le status demandé */
+    const filteredOrders =
+      status === "all"
+        ? ordersWithStatus
+        : ordersWithStatus.filter((o) => o.globalStatus.includes(status));
+
+    /* pagination */
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const pageData = filteredOrders.slice(start, end);
+
+    res.status(200).json({
+      success: true,
+      orders: pageData,
+      total: filteredOrders.length,
+      page,
+      totalPages: Math.ceil(filteredOrders / limit),
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getOrdersByUser_old = async (req, res) => {
   try {
     if (!req.params.id) {
       throw new Error("User id missing.");
@@ -13,7 +106,10 @@ const getOrdersByUser = async (req, res) => {
     const user = await isUser(req.auth.userId);
 
     if (!user) {
-      throw new Error("No user found.");
+      res.status(404).json({
+        success: false,
+        message: "Utilisateur non trouvé.",
+      });
     }
 
     const orders = await Order.find({ user: user._id })
@@ -57,10 +153,10 @@ const getOrdersByUser = async (req, res) => {
 
     // console.log(JSON.stringify(orders, null, 2));
 
-    res.status(200).json(orders);
+    res.status(200).json({ success: true, orders });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

@@ -99,6 +99,12 @@ const userSchema = mongoose.Schema(
     ],
     addresses: [userAddressSchema],
     favSearch: [favsearchSchema],
+    settings: {
+      helpHints: {
+        type: Boolean,
+        default: true,
+      },
+    },
   },
   { timestamps: true },
 );

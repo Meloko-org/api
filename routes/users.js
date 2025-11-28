@@ -20,6 +20,13 @@ router.get(
 /* update user's info */
 router.put("/logged", clerkMiddlewares.isUserLogged, userController.updateUser);
 
+/* update settings helpHints */
+router.put(
+  "/toggleHelpHints",
+  clerkMiddlewares.isUserLogged,
+  userController.toggleHelpHints,
+);
+
 /* add a shop to the user's bookmarks */
 router.post(
   "/bookmarks/:shopId",

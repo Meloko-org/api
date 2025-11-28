@@ -89,19 +89,22 @@ describe("getUserInfos", () => {
           avatar: null,
           bookmarks: expect.any(Array),
           favSearch: expect.any(Array),
-          orders: [
-            expect.objectContaining({
-              _id: mockOrder._id,
-              user: mockUser1._id,
-              details: expect.any(Array),
-              isWithdrawn: expect.any(Boolean),
-              isPaid: true,
-              stripePIId: expect.any(String),
-              createdAt: expect.any(Date),
-              updatedAt: expect.any(Date),
-              __v: expect.any(Number),
-            }),
-          ],
+          settings: expect.objectContaining({
+            helpHints: expect.any(Boolean),
+          }),
+          // orders: [
+          //   expect.objectContaining({
+          //     _id: mockOrder._id,
+          //     user: mockUser1._id,
+          //     details: expect.any(Array),
+          //     isWithdrawn: expect.any(Boolean),
+          //     isPaid: true,
+          //     stripePIId: expect.any(String),
+          //     createdAt: expect.any(Date),
+          //     updatedAt: expect.any(Date),
+          //     __v: expect.any(Number),
+          //   }),
+          // ],
         }),
       }),
     );

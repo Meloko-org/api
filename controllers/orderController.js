@@ -48,7 +48,7 @@ const getOrdersByUser = async (req, res) => {
           {
             path: "shop",
             model: "shops",
-            select: "name notes address",
+            // select: "name notes address",
             populate: [
               {
                 path: "notes",
@@ -91,69 +91,6 @@ const getOrdersByUser = async (req, res) => {
       page,
       totalPages: Math.ceil(filteredOrders / limit),
     });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-const getOrdersByUser_old = async (req, res) => {
-  try {
-    if (!req.params.id) {
-      throw new Error("User id missing.");
-    }
-
-    const user = await isUser(req.auth.userId);
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        message: "Utilisateur non trouvé.",
-      });
-    }
-
-    const orders = await Order.find({ user: user._id })
-      .populate("user", "firstname lastname email")
-      .populate({
-        path: "details",
-        populate: [
-          {
-            path: "products.product",
-            model: "stocks",
-            select: "-createdAt -updatedAt",
-            populate: {
-              path: "product",
-              model: "products",
-              select: "name image weight family",
-              populate: {
-                path: "family",
-                model: "productFamily",
-                select: "name",
-              },
-            },
-          },
-          {
-            path: "shop",
-            model: "shops",
-            select: "name notes address",
-            populate: [
-              {
-                path: "notes",
-                model: "notes",
-              },
-              {
-                path: "markets.market",
-                model: "markets",
-                select: "name address",
-              },
-            ],
-          },
-        ],
-      });
-
-    // console.log(JSON.stringify(orders, null, 2));
-
-    res.status(200).json({ success: true, orders });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: error.message });

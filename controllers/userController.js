@@ -99,6 +99,7 @@ const getUserInfos = async (req, res) => {
         clerkPasswordEnabled: 1,
         stripeUUID: 1,
         addresses: 1,
+        settings: 1,
       },
     ).populate({
       path: "bookmarks",
@@ -116,38 +117,39 @@ const getUserInfos = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    const userOrders = await Order.find({ user: user._id, isPaid: true })
-      .populate({
-        path: "details",
-        populate: [
-          {
-            path: "products",
-            populate: {
-              path: "product",
-              model: "stocks",
-              populate: {
-                path: "product",
-                model: "products",
-                populate: {
-                  path: "family",
-                  model: "productFamily",
-                },
-              },
-            },
-          },
-          {
-            path: "shop",
-            model: "shops",
-            populate: {
-              path: "notes",
-              model: "notes",
-            },
-          },
-        ],
-      })
-      .sort("-createdAt");
+    // on ne retroune plus les orders avec les infos du user
+    // const userOrders = await Order.find({ user: user._id, isPaid: true })
+    //   .populate({
+    //     path: "details",
+    //     populate: [
+    //       {
+    //         path: "products",
+    //         populate: {
+    //           path: "product",
+    //           model: "stocks",
+    //           populate: {
+    //             path: "product",
+    //             model: "products",
+    //             populate: {
+    //               path: "family",
+    //               model: "productFamily",
+    //             },
+    //           },
+    //         },
+    //       },
+    //       {
+    //         path: "shop",
+    //         model: "shops",
+    //         populate: {
+    //           path: "notes",
+    //           model: "notes",
+    //         },
+    //       },
+    //     ],
+    //   })
+    //   .sort("-createdAt");
 
-    console.log("userOrders :", JSON.stringify(userOrders, null, 2));
+    // console.log("userOrders :", JSON.stringify(userOrders, null, 2));
 
     const isProducer = await Producer.findOne({ owner: user._id });
 
@@ -158,7 +160,7 @@ const getUserInfos = async (req, res) => {
       success: true,
       user: {
         ...user.toObject(),
-        orders: userOrders,
+        // orders: userOrders,
         producer,
       },
     });
@@ -419,6 +421,29 @@ const removeUserAddress = async (req, res) => {
   }
 };
 
+const toggleHelpHints = async (req, res) => {
+  try {
+    const user = await User.findOne({ clerkUUID: req.auth.userId });
+
+    if (!user) {
+      return res
+        .status(200)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const helpHints = req.body.helpHints;
+
+    user.settings.helpHints = helpHints;
+    await user.save();
+
+    res.status(200).json({ success: true, helpHints });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+    return;
+  }
+};
+
 module.exports = {
   createNewUser,
   getUserInfos,
@@ -428,4 +453,5 @@ module.exports = {
   createNewUserAddress,
   setDefaultAddress,
   removeUserAddress,
+  toggleHelpHints,
 };

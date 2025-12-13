@@ -104,6 +104,7 @@ const createOrUpdateShop = async (req, res) => {
       notes: [],
       clickCollect: null,
       logo,
+      lastInvoiceNumber: 0,
     };
 
     // on crée un filter qui permettra à la fonction findOneAndUpdate de vérifier
@@ -1513,7 +1514,7 @@ const getFullShopById = async (req, res) => {
             stock.product.family.category._id.toString(),
         );
 
-        console.log("cat obj :", categoryObj);
+        // console.log("cat obj :", categoryObj);
 
         if (categoryObj) {
           categoryObj.stocks.push(stock);

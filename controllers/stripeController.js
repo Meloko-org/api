@@ -1,5 +1,5 @@
 const { computeHTandVAT, eurosToCents } = require("../helpers/priceHelpers");
-const { Order, InvoiceCounter } = require("../models");
+const { Order, InvoiceCounter, ShopInvoiceCounter } = require("../models");
 const { validationModule } = require("../modules");
 const { isUser } = require("../modules/verification");
 
@@ -134,7 +134,7 @@ const paymentSheet = async (req, res) => {
     );
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: eurosToCents(amount),
+      amount: amount,
       currency: "eur",
       customer: customer.id,
       automatic_payment_methods: {
@@ -317,24 +317,35 @@ const createNewOrder = async (
       let shopTotalTTC = 0;
 
       const products = shopCart.products.map((p) => {
-        const vatRate = p.stockData.product.vatRate || 5.5;
+        const productPriceTTC_cents = Number(p.stockData.price);
+        if (!Number.isFinite(productPriceTTC_cents)) {
+          throw new Error("Prix produit invalide");
+        }
 
-        const productPriceTTC = Number(p.stockData.price);
         const rawQuantity = Number(p.quantity);
+        if (!Number.isFinite(rawQuantity)) {
+          throw new Error("Quantité invalide");
+        }
 
-        const quantity =
-          p.stockData.product.weight.unit === "gr"
-            ? rawQuantity / 1000
-            : rawQuantity;
+        const unit = p.stockData.product.weight.unit;
+        const unitDiv = unit === "gr" ? 1000 : 1;
 
-        const { productPriceHT, productVAT } = computeHTandVAT(
-          productPriceTTC,
+        const vatRate = Number(p.stockData.product.vatRate ?? 5.5);
+
+        // calcul des prix unitaires HT et VAT en centimes du produit
+        const { unitPriceHT_cents, unitVAT_cents } = computeHTandVAT(
+          productPriceTTC_cents,
           vatRate,
         );
 
-        const amountProductTTC = productPriceTTC * quantity;
-        const amountProductHT = productPriceHT * quantity;
-        const amountProductVAT = productVAT * quantity;
+        // calcul des montants pour la quantité
+        const amountProductTTC = Math.round(
+          (productPriceTTC_cents * rawQuantity) / unitDiv,
+        );
+        const amountProductHT = Math.round(
+          (unitPriceHT_cents * rawQuantity) / unitDiv,
+        );
+        const amountProductVAT = amountProductTTC - amountProductHT;
 
         shopTotalHT += amountProductHT;
         shopTotalVAT += amountProductVAT;
@@ -343,14 +354,19 @@ const createNewOrder = async (
         return {
           product: p.stockData._id,
           quantity: rawQuantity,
-          unit: p.stockData.product.weight.unit,
-          unitPriceHT: productPriceHT,
-          unitPriceTTC: productPriceTTC,
+          unit,
+          unitPriceHT: unitPriceHT_cents,
+          unitPriceTTC: productPriceTTC_cents,
           vatRate,
-          vatAmount: productVAT,
+          vatAmount: unitVAT_cents,
           totalPriceTTC: amountProductTTC,
         };
       });
+
+      // arrondi des totaux pour le shop
+      shopTotalHT = Math.round(shopTotalHT);
+      shopTotalVAT = Math.round(shopTotalVAT);
+      shopTotalTTC = Math.round(shopTotalTTC);
 
       totalHT += shopTotalHT;
       totalVAT += shopTotalVAT;
@@ -365,8 +381,20 @@ const createNewOrder = async (
         shopTotalHT,
         shopTotalVAT,
         shopTotalTTC,
+        shopInvoiceNumber: await generateShopInvoiceNumber(shopCart.shop._id),
         status: "pending",
       });
+    }
+
+    // arrondis des totaux
+    totalHT = Math.round(totalHT);
+    totalVAT = Math.round(totalVAT);
+    totalTTC = Math.round(totalTTC);
+
+    // correction au cas ou TTC !== HT + VAT
+    if (totalTTC !== totalHT + totalVAT) {
+      const delta = totalTTC - (totalHT + totalVAT);
+      totalVAT += delta;
     }
 
     const newOrder = new Order({
@@ -410,6 +438,22 @@ const generateInvoiceNumber = async () => {
   const paddedSequence = counter.sequence.toString().padStart(6, "0");
 
   return `${year}-${paddedSequence}`;
+};
+
+const generateShopInvoiceNumber = async (shopId) => {
+  const year = new Date().getFullYear();
+
+  const counter = await ShopInvoiceCounter.findOneAndUpdate(
+    { shop: shopId, year },
+    { $inc: { sequence: 1 } },
+    { upsert: true, new: true },
+  );
+
+  const prefix = shopId.slice(-5);
+
+  const paddedSequence = counter.sequence.toString().padStart(6, "0");
+
+  return `${prefix}-${year}-${paddedSequence}`;
 };
 
 const calculateOrderPrice = (details) => {

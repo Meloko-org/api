@@ -4,6 +4,12 @@ const { orderController } = require("../controllers");
 const { clerkMiddlewares } = require("../middlewares");
 
 router.get(
+  "/user/:id",
+  clerkMiddlewares.isUserLogged,
+  orderController.getUserOrderById,
+);
+
+router.get(
   "/user",
   clerkMiddlewares.isUserLogged,
   orderController.getOrdersByUser,

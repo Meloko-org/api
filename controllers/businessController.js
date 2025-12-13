@@ -48,6 +48,8 @@ const getOrderSummary = async (req, res) => {
         detail: {
           status: detail?.status,
           shopTotalTTC: detail?.shopTotalTTC,
+          shopTotalHT: detail?.shopTotalHT,
+          shopTotalVAT: detail?.shopTotalVAT,
         },
       };
     });

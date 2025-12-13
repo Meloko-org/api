@@ -208,8 +208,79 @@ const getMessage = (expr) => {
   return message;
 };
 
+const getUserOrderById = async (req, res) => {
+  console.log("GetUserOrderById ->");
+  try {
+    if (!req.params.id) {
+      throw new Error("Order id missing.");
+    }
+
+    // récupération du shopId
+    const user = await isUser(req.auth.userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ succes: false, message: "User not found." });
+    }
+
+    const order = await Order.findOne({
+      _id: req.params.id,
+    })
+      .populate("user", "firstname lastname email")
+      .populate({
+        path: "details",
+        populate: [
+          {
+            path: "products.product",
+            model: "stocks",
+            select: "-createdAt -updatedAt",
+            populate: [
+              {
+                path: "product",
+                model: "products",
+                select: "name image weight family",
+                populate: {
+                  path: "family",
+                  model: "productFamily",
+                  select: "name productsTypes",
+                },
+              },
+              {
+                path: "tags",
+                model: "tags",
+                select: "name",
+              },
+            ],
+          },
+          {
+            path: "shop",
+            model: "shops",
+            // select: "name notes address",
+            populate: [
+              {
+                path: "notes",
+                model: "notes",
+              },
+              {
+                path: "markets.market",
+                model: "markets",
+                select: "name address",
+              },
+            ],
+          },
+        ],
+      });
+    console.log("order récupérée :", order);
+    res.status(200).json({ success: true, order });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ succes: false, message: error.message });
+  }
+};
+
 module.exports = {
   getOrderDetailsById,
   updateOrder,
   getOrdersByUser,
+  getUserOrderById,
 };

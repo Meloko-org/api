@@ -8,14 +8,27 @@ function centsToEuros(cents) {
 
 /* retourne le prix HT et le montant TVA en cents d'un produit  */
 function computeHTandVAT(priceTTC_cents, vatRate) {
-  const priceTTC = priceTTC_cents / 100;
-  const priceHT = priceTTC / (1 + vatRate / 100);
-  const vat = priceTTC - priceHT;
+  if (typeof priceTTC_cents !== "number" || isNaN(priceTTC_cents)) {
+    throw new Error("priceTTC_cents invalide");
+  }
+  const divisor = 1 + vatRate / 100.0;
+
+  const unitPriceHT_cents = Math.round(priceTTC_cents / divisor);
+  const unitVAT_cents = priceTTC_cents - unitPriceHT_cents;
 
   return {
-    productPriceHT: Math.round(priceHT * 100),
-    productVAT: Math.round(vat * 100),
+    unitPriceHT_cents,
+    unitVAT_cents,
   };
+
+  // const priceTTC = priceTTC_cents / 100;
+  // const priceHT = priceTTC / (1 + vatRate / 100);
+  // const vat = priceTTC - priceHT;
+
+  // return {
+  //   productPriceHT: Math.round(priceHT * 100),
+  //   productVAT: Math.round(vat * 100),
+  // };
 }
 
 module.exports = {

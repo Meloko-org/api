@@ -77,6 +77,9 @@ const orderDetailSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  invoicePdfUrl: {
+    type: String,
+  },
   status: {
     type: String,
     required: true,
@@ -153,6 +156,9 @@ const orderSchema = mongoose.Schema(
       type: Boolean,
       required: true,
     },
+    paidAt: {
+      type: Date,
+    },
     paymentMethod: {
       type: String,
       required: true,
@@ -160,7 +166,6 @@ const orderSchema = mongoose.Schema(
     stripePIId: {
       type: String,
       unique: true,
-      required: true,
     },
     totalHT: {
       type: Number,

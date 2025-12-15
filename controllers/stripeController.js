@@ -27,8 +27,7 @@ const webhookReceiver = async (req, res) => {
   switch (event.type) {
     case "payment_intent.succeeded":
       const paymentIntent = event.data.object;
-      console.log(`PaymentIntent for ${paymentIntent.amount} was successful!`);
-      handlePaymentIntentSuceeded(paymentIntent);
+      handlePaymentIntentSucceeded(paymentIntent);
       break;
     case "payment_intent.payment_failed":
       break;
@@ -37,17 +36,43 @@ const webhookReceiver = async (req, res) => {
       break;
   }
 
-  res.send();
+  res.sendStatus(200);
 };
 
-const handlePaymentIntentSuceeded = async (paymentIntent) => {
-  if (paymentIntent.status === "succeeded") {
-    const paymentIntentId = paymentIntent.id;
-    const order = await Order.findOne({ stripePIId: paymentIntentId });
+const handlePaymentIntentSucceeded = async (paymentIntent) => {
+  try {
+    if (paymentIntent.status !== "succeeded") return;
+
+    const orderId = paymentIntent.metadata?.orderId;
+
+    if (!orderId) {
+      console.error("No orderId in paymentIntent metadata");
+      return;
+    }
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      console.error(
+        "⚠️ Webhook received but no order found for orderId:",
+        orderId,
+      );
+      return;
+    }
+
+    // idempotence : si déjà payé, on ne refait rien
+    if (order.isPaid) {
+      console.log("ℹ️ Order already marked as paid:", order._id);
+      return;
+    }
 
     order.isPaid = true;
+    order.paidAt = new Date(); // recommandé
     await order.save();
-    console.log("commande isPaid true");
+
+    console.log("✅ Order marked as paid:", order._id);
+  } catch (error) {
+    console.error("❌ Error in payment_intent.succeeded webhook:", error);
   }
 };
 
@@ -124,9 +149,21 @@ const paymentSheet = async (req, res) => {
       throw new Error(message);
     }
 
-    const { amount, billingAddress, shippingAddress, cart } = req.body;
+    const { billingAddress, shippingAddress, cart } = req.body;
 
     const customer = await getStripeCustomer(user);
+
+    /* création de l'order */
+    const order = await createNewOrder(
+      user,
+      cart,
+      billingAddress,
+      shippingAddress,
+    );
+
+    if (!order) {
+      throw new Error("Order creation failed !");
+    }
 
     const ephemeralKey = await stripe.ephemeralKeys.create(
       { customer: customer.id },
@@ -134,28 +171,26 @@ const paymentSheet = async (req, res) => {
     );
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount,
+      amount: order.totalTTC,
       currency: "eur",
+      metadata: {
+        orderId: order._id.toString(),
+      },
       customer: customer.id,
       automatic_payment_methods: {
         enabled: true,
       },
     });
 
-    const order = await createNewOrder(
-      user,
-      cart,
-      paymentIntent.id,
-      billingAddress,
-      shippingAddress,
-    );
+    order.stripePIId = paymentIntent.id;
+    await order.save();
 
     res.json({
       paymentIntent: paymentIntent.client_secret,
       ephemeralKey: ephemeralKey.secret,
       customer: customer.id,
       publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
-      order,
+      orderId: order._id,
     });
   } catch (error) {
     console.error(error);
@@ -226,35 +261,9 @@ const createPaymentIntent = async (req, res) => {
 
     if (!customer) {
       customer = await createStripeCustomer(user);
-      // customer = await stripe.customers.create({
-      //   name: `${req.body.customer.firstname} ${req.body.customer.lastname}`,
-      //   email: user.email,
-      // });
-
-      // user.stripeUUID = customer.id;
-      // await user.save();
     }
 
-    const ephemeralKey = await stripe.ephemeralKeys.create(
-      { customer: customer.id },
-      { apiVersion: "2024-06-20" },
-    );
-
-    console.log("api version :", stripe.getApiField("version"));
-    console.log("ephemeralkey version :", ephemeralKey);
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      // amount: Math.floor(amount * 100),
-      amount: eurosToCents(amount),
-      currency: "eur",
-      customer: customer.id,
-      // In the latest version of the API, specifying the `automatic_payment_methods` parameter
-      // is optional because Stripe enables its functionality by default.
-      automatic_payment_methods: {
-        enabled: true,
-      },
-    });
-
+    /* création de l'order */
     const order = await createNewOrder(
       user,
       cart,
@@ -263,7 +272,30 @@ const createPaymentIntent = async (req, res) => {
       shippingAddress,
     );
 
-    // console.log("order créé :", JSON.stringify(order, null, 2))
+    if (!order) {
+      throw new Error("Order creation failed !");
+    }
+
+    /* si l'order est bien créé, on poursuit le processus stripe */
+    const ephemeralKey = await stripe.ephemeralKeys.create(
+      { customer: customer.id },
+      { apiVersion: "2024-06-20" },
+    );
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      // amount: Math.floor(amount * 100),
+      amount: eurosToCents(order.totalTTC),
+      currency: "eur",
+      metadata: {
+        orderId: order._id.tostring(),
+      },
+      customer: customer.id,
+      // In the latest version of the API, specifying the `automatic_payment_methods` parameter
+      // is optional because Stripe enables its functionality by default.
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
 
     console.log("JSON renvoyé : ", {
       paymentIntent: paymentIntent.client_secret,
@@ -287,13 +319,7 @@ const createPaymentIntent = async (req, res) => {
   }
 };
 
-const createNewOrder = async (
-  user,
-  cart,
-  paymentIntentId,
-  billingAddress,
-  shippingAddress,
-) => {
+const createNewOrder = async (user, cart, billingAddress, shippingAddress) => {
   try {
     if (!validationModule.isAddressComplete(billingAddress)) {
       throw new Error("L'adresse de facturation est incomplète.");
@@ -413,7 +439,6 @@ const createNewOrder = async (
       isWithdrawn: false,
       isPaid: false,
       paymentMethod: "stripe",
-      stripePIId: paymentIntentId,
       totalHT,
       totalVAT,
       totalTTC,
@@ -449,7 +474,7 @@ const generateShopInvoiceNumber = async (shopId) => {
     { upsert: true, new: true },
   );
 
-  const prefix = shopId.slice(-5);
+  const prefix = shopId.toString().slice(-5);
 
   const paddedSequence = counter.sequence.toString().padStart(6, "0");
 

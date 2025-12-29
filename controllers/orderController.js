@@ -1,15 +1,16 @@
 const { Order, Invoice } = require("../models");
 const { isShop, isUser } = require("../modules/verification");
 const { isProducerUser, hasShop } = require("../helpers/authHelpers");
+const { createInvoiceForSubOrder } = require("../services/invoiceService");
+const { consumeStockForSubOrder } = require("../services/StockService");
+const {
+  createCreditNoteFromSubOrder,
+} = require("../services/creditNoteService");
 const {
   computeGlobalOrderStatus,
   computeShopAmounts,
   recomputeOrderTotals,
 } = require("../helpers/orderHelpers");
-const { createInvoiceForSubOrder } = require("../services/invoiceService");
-const {
-  createCreditNoteFromSubOrder,
-} = require("../services/creditNoteService");
 
 const getOrdersByUser = async (req, res) => {
   try {
@@ -235,7 +236,7 @@ const updateSubOrder = async (req, res) => {
       });
     }
 
-    if (status === "validated") {
+    if (status === "prepared" || status === "partially_prepared") {
       // if (canceledProducts.length > 0) {
       //   subOrder.products.forEach((p) => {
       //     p.isConfirmed = !canceledProducts.includes(p._id.toString());
@@ -268,6 +269,8 @@ const updateSubOrder = async (req, res) => {
         subOrder.shopTotalHT = shopTotalHT;
         subOrder.shopTotalVAT = shopTotalVAT;
         subOrder.shopTotalTTC = shopTotalTTC;
+
+        await consumeStockForSubOrder(subOrder);
       }
 
       recomputeOrderTotals(order);

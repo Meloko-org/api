@@ -2,11 +2,12 @@ const { computeHTandVAT } = require("../helpers/priceHelpers");
 const { Order, InvoiceCounter, ShopInvoiceCounter } = require("../models");
 const { validationModule } = require("../modules");
 const { isUser } = require("../modules/verification");
+const { generateOrderNumber } = require("../services/orderService");
+const { reserveStockFromOrder } = require("../services/StockService");
 const {
   getStripeCustomer,
   canCreatePaymentIntent,
 } = require("../helpers/stripeHelpers");
-const { generateOrderNumber } = require("../services/orderService");
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -73,6 +74,8 @@ const handlePaymentIntentSucceeded = async (paymentIntent) => {
     order.isPaid = true;
     order.paidAt = new Date(); // recommandé
     await order.save();
+
+    await reserveStockFromOrder(order._id);
 
     console.log("✅ Order marked as paid:", order._id.toString());
   } catch (error) {

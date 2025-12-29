@@ -35,9 +35,10 @@ const productDetailSchema = mongoose.Schema({
     type: Number,
     required: true,
   },
-  isConfirmed: {
-    type: Boolean,
-    default: null,
+  productStatus: {
+    type: String,
+    enum: ["pending", "confirmed", "cancelled"],
+    default: "pending",
   },
 });
 
@@ -75,6 +76,14 @@ const orderDetailSchema = mongoose.Schema({
   },
   status: {
     type: String,
+    enum: [
+      "pending",
+      "prepared",
+      "partially_prepared",
+      "cancelled",
+      "picked_up",
+      "partially_picked_up",
+    ],
     required: true,
   },
   invoice: {

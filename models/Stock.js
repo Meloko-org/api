@@ -18,9 +18,22 @@ const stockSchema = mongoose.Schema(
       type: String,
       required: false,
     },
-    stock: {
+    stockTotal: {
       type: Number,
       required: true,
+    },
+
+    stockReserved: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    stockAvailable: {
+      type: Number,
+      required: true,
+      default: function () {
+        return this.stockTotal - this.stockReserved;
+      },
     },
     price: {
       type: Number,

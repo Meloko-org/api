@@ -26,7 +26,7 @@ const createMockOrder = async (mockUserId) => {
     totalHT: 800,
     totalVAT: 160,
     totalTTC: 960,
-    invoiceNumber: "20251105-000045",
+    orderNumber: "20251105-000045",
   });
   await mockOrder.save();
 

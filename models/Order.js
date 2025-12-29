@@ -73,17 +73,22 @@ const orderDetailSchema = mongoose.Schema({
     type: Number,
     required: true,
   },
-  shopInvoiceNumber: {
-    type: String,
-    required: true,
-  },
-  invoicePdfUrl: {
-    type: String,
-  },
   status: {
     type: String,
     required: true,
   },
+  invoice: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "invoices",
+    default: null,
+  },
+  creditNotes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "creditnotes",
+      default: null,
+    },
+  ],
 });
 
 const orderSchema = mongoose.Schema(
@@ -179,9 +184,10 @@ const orderSchema = mongoose.Schema(
       type: Number,
       required: true,
     },
-    invoiceNumber: {
+    orderNumber: {
       type: String,
       required: true,
+      unique: true,
     },
   },
   { timestamps: true },

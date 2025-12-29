@@ -15,7 +15,11 @@ router.get(
   orderController.getOrdersByUser,
 );
 
-router.put("/:id", clerkMiddlewares.isUserLogged, orderController.updateOrder);
+router.post(
+  "/:id/update-sub-order",
+  clerkMiddlewares.isUserLogged,
+  orderController.updateSubOrder,
+);
 
 router.get(
   "/:id",

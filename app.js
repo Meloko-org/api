@@ -30,6 +30,8 @@ const {
   circuitRouter,
   onboardingRouter,
   withdrawsRouter,
+  invoiceRouter,
+  creditNoteRouter,
 } = require("./routes");
 
 var app = express();
@@ -76,5 +78,7 @@ app.use("/shopFeatures", shopFeaturesRouter);
 app.use("/circuits", circuitRouter);
 app.use("/onboarding", onboardingRouter);
 app.use("/withdraws", withdrawsRouter);
+app.use("/invoices", invoiceRouter);
+app.use("/creditNotes", creditNoteRouter);
 
 module.exports = app;

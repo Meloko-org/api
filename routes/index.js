@@ -19,6 +19,8 @@ const shopFeaturesRouter = require("./shopFeatures");
 const circuitRouter = require("./circuit");
 const onboardingRouter = require("./onboarding");
 const withdrawsRouter = require("./withdraws");
+const invoiceRouter = require("./invoices");
+const creditNoteRouter = require("./creditNotes");
 
 module.exports = {
   authRouter,
@@ -42,4 +44,6 @@ module.exports = {
   circuitRouter,
   onboardingRouter,
   withdrawsRouter,
+  invoiceRouter,
+  creditNoteRouter,
 };

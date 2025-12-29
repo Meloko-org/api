@@ -20,15 +20,6 @@ function computeHTandVAT(priceTTC_cents, vatRate) {
     unitPriceHT_cents,
     unitVAT_cents,
   };
-
-  // const priceTTC = priceTTC_cents / 100;
-  // const priceHT = priceTTC / (1 + vatRate / 100);
-  // const vat = priceTTC - priceHT;
-
-  // return {
-  //   productPriceHT: Math.round(priceHT * 100),
-  //   productVAT: Math.round(vat * 100),
-  // };
 }
 
 module.exports = {

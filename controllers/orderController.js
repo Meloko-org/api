@@ -1,9 +1,15 @@
-const mongoose = require("mongoose");
-const { Order } = require("../models");
-const { validationModule } = require("../modules");
+const { Order, Invoice } = require("../models");
 const { isShop, isUser } = require("../modules/verification");
 const { isProducerUser, hasShop } = require("../helpers/authHelpers");
-const { computeGlobalOrderStatus } = require("../helpers/orderHelpers");
+const {
+  computeGlobalOrderStatus,
+  computeShopAmounts,
+  recomputeOrderTotals,
+} = require("../helpers/orderHelpers");
+const { createInvoiceForSubOrder } = require("../services/invoiceService");
+const {
+  createCreditNoteFromSubOrder,
+} = require("../services/creditNoteService");
 
 const getOrdersByUser = async (req, res) => {
   try {
@@ -143,7 +149,7 @@ const getOrderDetailsById = async (req, res) => {
           },
         ],
       });
-    console.log(order);
+    console.log(order.details);
     res.status(200).json({ success: true, order });
   } catch (error) {
     console.log(error.message);
@@ -151,38 +157,130 @@ const getOrderDetailsById = async (req, res) => {
   }
 };
 
-const updateOrder = async (req, res) => {
+const updateSubOrder = async (req, res) => {
   try {
     if (!req.params.id) {
       throw new Error("Order id missing.");
     }
 
-    // vérification du shop
     const shop = await isShop(req.auth.userId);
     if (!shop) {
-      throw new Error("Shop not found.");
+      return res.status(404).json({
+        success: false,
+        message: `Impossible de\nmettre à jour la commande.`,
+        error: "[Erreur: Shop not found.]",
+      });
     }
 
     const orderId = req.params.id;
-    const { order, status } = req.body;
+    const { subOrderId, status, canceledProducts = [] } = req.body;
 
-    console.log("orderId :", orderId);
-    console.log("order: ", order);
+    console.log("canceledProducts :", canceledProducts);
 
-    const updatedOrder = await Order.findByIdAndUpdate(orderId, order, {
-      new: true,
-    });
+    const order = await Order.findById(orderId)
+      .populate("user", "firstname lastname email address")
+      .populate({
+        path: "details.shop",
+        select: "name siret address",
+        populate: {
+          path: "address",
+          select: "address1 address2 postalCode city country",
+        },
+      })
+      .populate({
+        path: "details.products.product",
+        select: "productCustomName",
+        populate: {
+          path: "product",
+          select: "name vatRate family weight",
+          populate: [
+            {
+              path: "family",
+              select: "name",
+            },
+            {
+              path: "weight",
+              select: "unit",
+            },
+          ],
+        },
+      });
 
-    if (!updatedOrder) {
-      throw new Error("Impossible de mettre à jour la commande.");
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: `Impossible de\nmettre à jour la commande.`,
+        error: "[Erreur: Order not found.]",
+      });
     }
+
+    console.log("order :", JSON.stringify(order, null, 2));
+
+    const subOrder = order.details.find(
+      (detail) => detail._id.toString() === subOrderId,
+    );
+    if (!subOrder) {
+      return res.status(404).json({
+        success: false,
+        message: `Impossible de\nmettre à jour la commande.`,
+        error: "[Erreur: Sub-order not found.]",
+      });
+    }
+
+    if (subOrder.shop._id.toString() !== shop._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: `Impossible de\nmettre à jour la commande.`,
+        error: "[Erreur: Forbidden.]",
+      });
+    }
+
+    if (status === "validated") {
+      if (canceledProducts.length > 0) {
+        subOrder.products.forEach((p) => {
+          p.isConfirmed = !canceledProducts.includes(p._id.toString());
+        });
+
+        const confirmed = subOrder.products.filter((p) => p.isConfirmed);
+
+        const { shopTotalHT, shopTotalVAT, shopTotalTTC } =
+          computeShopAmounts(confirmed);
+
+        subOrder.shopTotalHT = shopTotalHT;
+        subOrder.shopTotalVAT = shopTotalVAT;
+        subOrder.shopTotalTTC = shopTotalTTC;
+      }
+
+      recomputeOrderTotals(order);
+
+      const invoice = await createInvoiceForSubOrder({ order, subOrder });
+
+      subOrder.invoice = invoice._id;
+
+      if (canceledProducts.length > 0) {
+        const creditNote = await createCreditNoteFromSubOrder({
+          subOrder,
+          invoice,
+          reason: "Annulation partielle de commande",
+        });
+
+        subOrder.creditNotes.push(creditNote._id);
+      }
+
+      subOrder.status = status;
+    }
+
+    await order.save();
 
     const message = getMessage(status);
 
-    res.status(200).json({ result: true, message });
+    res.status(200).json({ success: true, message });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ result: false, message: error.message });
+    res.status(500).json({
+      result: false,
+      message: error.message || "Erreur Interne serveur",
+    });
   }
 };
 
@@ -209,7 +307,7 @@ const getMessage = (expr) => {
 };
 
 const getUserOrderById = async (req, res) => {
-  console.log("GetUserOrderById ->");
+  // console.log("GetUserOrderById ->");
   try {
     if (!req.params.id) {
       throw new Error("Order id missing.");
@@ -270,7 +368,7 @@ const getUserOrderById = async (req, res) => {
           },
         ],
       });
-    console.log("order récupérée :", order);
+    // console.log("order récupérée :", order);
     res.status(200).json({ success: true, order });
   } catch (error) {
     console.log(error.message);
@@ -280,7 +378,7 @@ const getUserOrderById = async (req, res) => {
 
 module.exports = {
   getOrderDetailsById,
-  updateOrder,
+  updateSubOrder,
   getOrdersByUser,
   getUserOrderById,
 };

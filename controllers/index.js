@@ -18,6 +18,8 @@ const shopFeaturesController = require("./shopFeaturesController");
 const circuitController = require("./circuitController");
 const onboardingController = require("./onboardingController");
 const withdrawController = require("./withdrawController");
+const invoiceController = require("./invoiceController");
+const creditNoteController = require("./creditNoteController");
 
 module.exports = {
   clerkController,
@@ -40,4 +42,6 @@ module.exports = {
   circuitController,
   onboardingController,
   withdrawController,
+  invoiceController,
+  creditNoteController,
 };

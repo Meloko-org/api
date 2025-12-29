@@ -16,8 +16,11 @@ const GeneratedPost = require("./GeneratedPost");
 const ValidatedPost = require("./ValidatedPost");
 const Activity = require("./Activity");
 const ShopFeatures = require("./ShopFeatures");
-const InvoiceCounter = require("./InvoiceCounter");
+const OrderCounter = require("./OrderCounter");
 const ShopInvoiceCounter = require("./ShopInvoiceCounter");
+const Invoice = require("./Invoice");
+const CreditNote = require("./CreditNote");
+const CreditNoteCounter = require("./CreditNoteCounter");
 
 module.exports = {
   Market,
@@ -39,6 +42,9 @@ module.exports = {
   ValidatedPost,
   Activity,
   ShopFeatures,
-  InvoiceCounter,
+  OrderCounter,
   ShopInvoiceCounter,
+  Invoice,
+  CreditNote,
+  CreditNoteCounter,
 };

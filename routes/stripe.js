@@ -15,17 +15,4 @@ router.post(
   stripeController.paymentSheet,
 );
 
-// ancien code
-router.post(
-  "/paymentIntent",
-  clerkMiddlewares.isUserLogged,
-  stripeController.createPaymentIntent,
-);
-
-// router.post(
-//   "/webhook",
-//   express.raw({ type: "application/json"}),
-//   stripeController.webhookReceiver
-// );
-
 module.exports = router;

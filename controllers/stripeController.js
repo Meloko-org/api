@@ -1,14 +1,18 @@
-const { computeHTandVAT, eurosToCents } = require("../helpers/priceHelpers");
+const { computeHTandVAT } = require("../helpers/priceHelpers");
 const { Order, InvoiceCounter, ShopInvoiceCounter } = require("../models");
 const { validationModule } = require("../modules");
 const { isUser } = require("../modules/verification");
+const {
+  getStripeCustomer,
+  canCreatePaymentIntent,
+} = require("../helpers/stripeHelpers");
+const { generateOrderNumber } = require("../services/orderService");
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 const webhookReceiver = async (req, res) => {
   let event = req.body;
-
   if (endpointSecret) {
     const signature = req.headers["stripe-signature"];
     try {
@@ -62,7 +66,7 @@ const handlePaymentIntentSucceeded = async (paymentIntent) => {
 
     // idempotence : si déjà payé, on ne refait rien
     if (order.isPaid) {
-      console.log("ℹ️ Order already marked as paid:", order._id);
+      console.log("ℹ️ Order already marked as paid:", order._id.toString());
       return;
     }
 
@@ -70,43 +74,10 @@ const handlePaymentIntentSucceeded = async (paymentIntent) => {
     order.paidAt = new Date(); // recommandé
     await order.save();
 
-    console.log("✅ Order marked as paid:", order._id);
+    console.log("✅ Order marked as paid:", order._id.toString());
   } catch (error) {
     console.error("❌ Error in payment_intent.succeeded webhook:", error);
   }
-};
-
-/*  créer un client Stripe quand il n'existe pas */
-const createStripeCustomer = async (user) => {
-  const customer = await stripe.customers.create({
-    name: `${user.firstname} ${user.lastname}`,
-    email: user.email,
-  });
-
-  user.stripeUUID = customer.id;
-  await user.save();
-
-  return customer;
-};
-
-/* récupère le customer stripe */
-const getStripeCustomer = async (user) => {
-  let customer;
-  if (user.stripeUUID) {
-    try {
-      customer = await stripe.customers.retrieve(user.stripeUUID);
-    } catch (err) {
-      if (err.code === "resource_missing") {
-        customer = await createStripeCustomer(user);
-      } else {
-        throw err;
-      }
-    }
-  }
-  if (!customer) {
-    customer = await createStripeCustomer(user);
-  }
-  return customer;
 };
 
 const createCustomerSession = async (req, res) => {
@@ -165,6 +136,8 @@ const paymentSheet = async (req, res) => {
       throw new Error("Order creation failed !");
     }
 
+    console.log("id order created :", order._id);
+
     const ephemeralKey = await stripe.ephemeralKeys.create(
       { customer: customer.id },
       { apiVersion: "2024-06-20" },
@@ -191,126 +164,6 @@ const paymentSheet = async (req, res) => {
       customer: customer.id,
       publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
       orderId: order._id,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message });
-    return;
-  }
-};
-
-const canCreatePaymentIntent = async (userId, data) => {
-  const user = await isUser(userId);
-
-  if (!user) return { success: false, message: "User not found." };
-
-  if (!validationModule.isAddressComplete(data.billingAddress)) {
-    return {
-      success: false,
-      message: "L'adresse de facturation est incomplète.",
-    };
-  }
-
-  if (
-    data.shippingAddress &&
-    !validationModule.isAddressComplete(data.shippingAddress)
-  ) {
-    return {
-      success: false,
-      message: "L'adresse de livraison est incomplète.",
-    };
-  }
-
-  return { success: true, user };
-};
-
-// cette fonction n'est plus utilisée
-const createPaymentIntent = async (req, res) => {
-  try {
-    console.log("body :", req.body);
-    const { amount, billingAddress, shippingAddress, cart } = req.body;
-
-    console.log("billingAddress :", billingAddress);
-    console.log("shippingAddress :", shippingAddress);
-
-    if (!validationModule.isAddressComplete(billingAddress)) {
-      throw new Error("L'adresse de facturation est incomplète.");
-    }
-
-    if (
-      shippingAddress &&
-      !validationModule.isAddressComplete(shippingAddress)
-    ) {
-      throw new Error("L'adresse de livraison est incomplète.");
-    }
-
-    const user = await isUser(req.auth.userId);
-
-    let customer;
-    if (user.stripeUUID) {
-      try {
-        customer = await stripe.customers.retrieve(user.stripeUUID);
-      } catch (err) {
-        if (err.code === "resource_missing") {
-          customer = await createStripeCustomer(user);
-        } else {
-          throw err;
-        }
-      }
-    }
-
-    if (!customer) {
-      customer = await createStripeCustomer(user);
-    }
-
-    /* création de l'order */
-    const order = await createNewOrder(
-      user,
-      cart,
-      paymentIntent.id,
-      billingAddress,
-      shippingAddress,
-    );
-
-    if (!order) {
-      throw new Error("Order creation failed !");
-    }
-
-    /* si l'order est bien créé, on poursuit le processus stripe */
-    const ephemeralKey = await stripe.ephemeralKeys.create(
-      { customer: customer.id },
-      { apiVersion: "2024-06-20" },
-    );
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      // amount: Math.floor(amount * 100),
-      amount: eurosToCents(order.totalTTC),
-      currency: "eur",
-      metadata: {
-        orderId: order._id.tostring(),
-      },
-      customer: customer.id,
-      // In the latest version of the API, specifying the `automatic_payment_methods` parameter
-      // is optional because Stripe enables its functionality by default.
-      automatic_payment_methods: {
-        enabled: true,
-      },
-    });
-
-    console.log("JSON renvoyé : ", {
-      paymentIntent: paymentIntent.client_secret,
-      ephemeralKey: ephemeralKey.secret,
-      customer: customer.id,
-      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
-      order,
-    });
-
-    res.json({
-      paymentIntent: paymentIntent.client_secret,
-      ephemeralKey: ephemeralKey.secret,
-      customer: customer.id,
-      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
-      order,
     });
   } catch (error) {
     console.error(error);
@@ -386,6 +239,7 @@ const createNewOrder = async (user, cart, billingAddress, shippingAddress) => {
           vatRate,
           vatAmount: unitVAT_cents,
           totalPriceTTC: amountProductTTC,
+          isConfirmed: true,
         };
       });
 
@@ -407,7 +261,6 @@ const createNewOrder = async (user, cart, billingAddress, shippingAddress) => {
         shopTotalHT,
         shopTotalVAT,
         shopTotalTTC,
-        shopInvoiceNumber: await generateShopInvoiceNumber(shopCart.shop._id),
         status: "pending",
       });
     }
@@ -442,7 +295,7 @@ const createNewOrder = async (user, cart, billingAddress, shippingAddress) => {
       totalHT,
       totalVAT,
       totalTTC,
-      invoiceNumber: await generateInvoiceNumber(),
+      orderNumber: await generateOrderNumber(),
     });
 
     await newOrder.save();
@@ -452,58 +305,8 @@ const createNewOrder = async (user, cart, billingAddress, shippingAddress) => {
   }
 };
 
-const generateInvoiceNumber = async () => {
-  const year = new Date().getFullYear();
-  const counter = await InvoiceCounter.findOneAndUpdate(
-    { year },
-    { $inc: { sequence: 1 } },
-    { upsert: true, new: true },
-  );
-
-  const paddedSequence = counter.sequence.toString().padStart(6, "0");
-
-  return `${year}-${paddedSequence}`;
-};
-
-const generateShopInvoiceNumber = async (shopId) => {
-  const year = new Date().getFullYear();
-
-  const counter = await ShopInvoiceCounter.findOneAndUpdate(
-    { shop: shopId, year },
-    { $inc: { sequence: 1 } },
-    { upsert: true, new: true },
-  );
-
-  const prefix = shopId.toString().slice(-5);
-
-  const paddedSequence = counter.sequence.toString().padStart(6, "0");
-
-  return `${prefix}-${year}-${paddedSequence}`;
-};
-
-const calculateOrderPrice = (details) => {
-  let totalPrice = 0;
-
-  details.forEach((detail) => {
-    let shopTotalPrice = 0;
-
-    detail.products.forEach((product) => {
-      const price = parseFloat(product.price);
-      const quantity =
-        product.unit === "gr" ? product.quantity / 1000 : product.quantity;
-      shopTotalPrice += price * quantity;
-    });
-
-    detail.shopTotalPrice = shopTotalPrice.toFixed(2);
-    totalPrice += shopTotalPrice;
-  });
-
-  return totalPrice.toFixed(2);
-};
-
 module.exports = {
   createCustomerSession,
-  createPaymentIntent,
   webhookReceiver,
   createNewOrder,
   paymentSheet,

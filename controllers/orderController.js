@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const { Order, Invoice } = require("../models");
 const { isShop, isUser } = require("../modules/verification");
 const { isProducerUser, hasShop } = require("../helpers/authHelpers");
@@ -159,105 +160,95 @@ const getOrderDetailsById = async (req, res) => {
 };
 
 const updateSubOrder = async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
-    if (!req.params.id) {
-      throw new Error("Order id missing.");
-    }
+    await session.withTransaction(async () => {
+      if (!req.params.id) {
+        throw new Error("Order id missing.");
+      }
 
-    const shop = await isShop(req.auth.userId);
-    if (!shop) {
-      return res.status(404).json({
-        success: false,
-        message: `Impossible de\nmettre à jour la commande.`,
-        error: "[Erreur: Shop not found.]",
-      });
-    }
-
-    const orderId = req.params.id;
-    const { subOrderId, status, canceledProducts = [] } = req.body;
-
-    console.log("canceledProducts :", canceledProducts);
-
-    const order = await Order.findById(orderId)
-      .populate("user", "firstname lastname email address")
-      .populate({
-        path: "details.shop",
-        select: "name siret address",
-        populate: {
-          path: "address",
-          select: "address1 address2 postalCode city country",
-        },
-      })
-      .populate({
-        path: "details.products.product",
-        select: "productCustomName",
-        populate: {
-          path: "product",
-          select: "name vatRate family weight",
-          populate: [
-            {
-              path: "family",
-              select: "name",
-            },
-            {
-              path: "weight",
-              select: "unit",
-            },
-          ],
-        },
-      });
-
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: `Impossible de\nmettre à jour la commande.`,
-        error: "[Erreur: Order not found.]",
-      });
-    }
-
-    // console.log("order :", JSON.stringify(order, null, 2));
-
-    const subOrder = order.details.find(
-      (detail) => detail._id.toString() === subOrderId,
-    );
-    if (!subOrder) {
-      return res.status(404).json({
-        success: false,
-        message: `Impossible de\nmettre à jour la commande.`,
-        error: "[Erreur: Sub-order not found.]",
-      });
-    }
-
-    if (subOrder.shop._id.toString() !== shop._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: `Impossible de\nmettre à jour la commande.`,
-        error: "[Erreur: Forbidden.]",
-      });
-    }
-
-    if (status === "prepared" || status === "partially_prepared") {
-      // if (canceledProducts.length > 0) {
-      //   subOrder.products.forEach((p) => {
-      //     p.isConfirmed = !canceledProducts.includes(p._id.toString());
-      //   });
-
-      //   const confirmed = subOrder.products.filter((p) => p.isConfirmed);
-
-      //   const { shopTotalHT, shopTotalVAT, shopTotalTTC } =
-      //     computeShopAmounts(confirmed);
-
-      //   subOrder.shopTotalHT = shopTotalHT;
-      //   subOrder.shopTotalVAT = shopTotalVAT;
-      //   subOrder.shopTotalTTC = shopTotalTTC;
-      // }
-
-      if (canceledProducts.length > 0) {
-        subOrder.products.forEach((p) => {
-          p.productStatus = canceledProducts.includes(p._id.toString())
-            ? "cancelled"
-            : "confirmed";
+      const shop = await isShop(req.auth.userId);
+      if (!shop) {
+        return res.status(404).json({
+          success: false,
+          message: `Impossible de\nmettre à jour la commande.`,
+          error: "[Erreur: Shop not found.]",
         });
+      }
+
+      const orderId = req.params.id;
+      const { subOrderId, status, canceledProducts = [] } = req.body;
+
+      const order = await Order.findById(orderId)
+        .populate("user", "firstname lastname email address")
+        .populate({
+          path: "details.shop",
+          select: "name siret address",
+          populate: {
+            path: "address",
+            select: "address1 address2 postalCode city country",
+          },
+        })
+        .populate({
+          path: "details.products.product",
+          select: "productCustomName",
+          populate: {
+            path: "product",
+            select: "name vatRate family weight",
+            populate: [
+              {
+                path: "family",
+                select: "name",
+              },
+              {
+                path: "weight",
+                select: "unit",
+              },
+            ],
+          },
+        })
+        .session(session);
+
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: `Impossible de\nmettre à jour la commande.`,
+          error: "[Erreur: Order not found.]",
+        });
+      }
+
+      const subOrder = order.details.find(
+        (detail) => detail._id.toString() === subOrderId,
+      );
+      if (!subOrder) {
+        return res.status(404).json({
+          success: false,
+          message: `Impossible de\nmettre à jour la commande.`,
+          error: "[Erreur: Sub-order not found.]",
+        });
+      }
+
+      if (subOrder.shop._id.toString() !== shop._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: `Impossible de\nmettre à jour la commande.`,
+          error: "[Erreur: Forbidden.]",
+        });
+      }
+
+      if (status === "prepared" || status === "partially_prepared") {
+        if (canceledProducts.length > 0) {
+          subOrder.products.forEach((p) => {
+            p.productStatus = canceledProducts.includes(p._id.toString())
+              ? "cancelled"
+              : "confirmed";
+          });
+        } else {
+          subOrder.products.forEach((p) => {
+            p.productStatus === "confirmed";
+          });
+        }
 
         const confirmed = subOrder.products.filter(
           (p) => p.productStatus === "confirmed",
@@ -271,33 +262,44 @@ const updateSubOrder = async (req, res) => {
         subOrder.shopTotalTTC = shopTotalTTC;
 
         await consumeStockForSubOrder(subOrder);
+
+        recomputeOrderTotals(order);
+
+        const invoice = await createInvoiceForSubOrder(
+          { order, subOrder },
+          session,
+        );
+
+        subOrder.invoice = invoice._id;
+
+        if (canceledProducts.length > 0) {
+          const creditNote = await createCreditNoteFromSubOrder(
+            {
+              subOrder,
+              invoice,
+              reason: "Annulation partielle de commande",
+            },
+            session,
+          );
+
+          subOrder.creditNotes.push(creditNote._id);
+        }
+
+        subOrder.status = status;
       }
 
-      recomputeOrderTotals(order);
+      await order.save({ session });
+    });
 
-      const invoice = await createInvoiceForSubOrder({ order, subOrder });
+    session.endSession();
 
-      subOrder.invoice = invoice._id;
-
-      if (canceledProducts.length > 0) {
-        const creditNote = await createCreditNoteFromSubOrder({
-          subOrder,
-          invoice,
-          reason: "Annulation partielle de commande",
-        });
-
-        subOrder.creditNotes.push(creditNote._id);
-      }
-
-      subOrder.status = status;
-    }
-
-    await order.save();
-
-    const message = getMessage(status);
-
-    res.status(200).json({ success: true, message });
+    res
+      .status(200)
+      .json({ success: true, message: getMessage(req.body.status) });
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
     console.log(error);
     res.status(500).json({
       result: false,

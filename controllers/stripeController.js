@@ -3,7 +3,7 @@ const { Order, InvoiceCounter, ShopInvoiceCounter } = require("../models");
 const { validationModule } = require("../modules");
 const { isUser } = require("../modules/verification");
 const { generateOrderNumber } = require("../services/orderService");
-const { reserveStockFromOrder } = require("../services/StockService");
+const { reserveStockForOrder } = require("../services/stockService");
 const {
   getStripeCustomer,
   canCreatePaymentIntent,
@@ -75,7 +75,7 @@ const handlePaymentIntentSucceeded = async (paymentIntent) => {
     order.paidAt = new Date(); // recommandé
     await order.save();
 
-    await reserveStockFromOrder(order._id);
+    await reserveStockForOrder(order._id);
 
     console.log("✅ Order marked as paid:", order._id.toString());
   } catch (error) {

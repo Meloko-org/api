@@ -3,7 +3,12 @@ const {
   buildCreditNoteFromSubOrder,
 } = require("../builders/creditNoteBuilder");
 
-async function createCreditNoteFromSubOrder({ subOrder, invoice, reason }) {
+async function createCreditNoteFromSubOrder({
+  order,
+  subOrder,
+  invoice,
+  reason,
+}) {
   const existing = await CreditNote.findOne({
     invoice: invoice._id,
     shop: subOrder.shop,
@@ -14,6 +19,7 @@ async function createCreditNoteFromSubOrder({ subOrder, invoice, reason }) {
   const creditNoteNumber = await generateCreditNoteNumber(subOrder.shop._id);
 
   const creditNoteData = buildCreditNoteFromSubOrder({
+    order,
     subOrder,
     invoice,
     creditNoteNumber,

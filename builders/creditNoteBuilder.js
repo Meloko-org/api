@@ -1,6 +1,7 @@
 const { computeTotalsFromHT } = require("../helpers/orderHelpers");
 
 function buildCreditNoteFromSubOrder({
+  order,
   subOrder,
   invoice,
   creditNoteNumber,
@@ -18,6 +19,8 @@ function buildCreditNoteFromSubOrder({
 
   return {
     creditNoteNumber: creditNoteNumber,
+    order: order._id,
+    subOrderId: subOrder._id,
     invoice: invoice._id,
     shop: subOrder.shop._id,
     issuedAt: new Date(),

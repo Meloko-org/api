@@ -3,7 +3,10 @@ const { Order, Invoice } = require("../models");
 const { isShop, isUser } = require("../modules/verification");
 const { isProducerUser, hasShop } = require("../helpers/authHelpers");
 const { createInvoiceForSubOrder } = require("../services/invoiceService");
-const { consumeStockForSubOrder } = require("../services/StockService");
+const {
+  consumeStockForSubOrder,
+  restoreStockFromCreditNote,
+} = require("../services/stockService");
 const {
   createCreditNoteFromSubOrder,
 } = require("../services/creditNoteService");
@@ -170,11 +173,7 @@ const updateSubOrder = async (req, res) => {
 
       const shop = await isShop(req.auth.userId);
       if (!shop) {
-        return res.status(404).json({
-          success: false,
-          message: `Impossible de\nmettre à jour la commande.`,
-          error: "[Erreur: Shop not found.]",
-        });
+        throw new Error("Shop not found.");
       }
 
       const orderId = req.params.id;
@@ -211,30 +210,18 @@ const updateSubOrder = async (req, res) => {
         .session(session);
 
       if (!order) {
-        return res.status(404).json({
-          success: false,
-          message: `Impossible de\nmettre à jour la commande.`,
-          error: "[Erreur: Order not found.]",
-        });
+        throw new Error("Order not found.");
       }
 
       const subOrder = order.details.find(
         (detail) => detail._id.toString() === subOrderId,
       );
       if (!subOrder) {
-        return res.status(404).json({
-          success: false,
-          message: `Impossible de\nmettre à jour la commande.`,
-          error: "[Erreur: Sub-order not found.]",
-        });
+        throw new Error("sub-Order not found.");
       }
 
       if (subOrder.shop._id.toString() !== shop._id.toString()) {
-        return res.status(403).json({
-          success: false,
-          message: `Impossible de\nmettre à jour la commande.`,
-          error: "[Erreur: Forbidden.]",
-        });
+        throw new Error("Forbidden.");
       }
 
       if (status === "prepared" || status === "partially_prepared") {
@@ -275,6 +262,7 @@ const updateSubOrder = async (req, res) => {
         if (canceledProducts.length > 0) {
           const creditNote = await createCreditNoteFromSubOrder(
             {
+              order,
               subOrder,
               invoice,
               reason: "Annulation partielle de commande",
@@ -283,6 +271,9 @@ const updateSubOrder = async (req, res) => {
           );
 
           subOrder.creditNotes.push(creditNote._id);
+
+          await refundFromCreditNote(creditNote._id);
+          await restoreStockFromCreditNote(creditNote);
         }
 
         subOrder.status = status;

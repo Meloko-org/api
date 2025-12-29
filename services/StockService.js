@@ -107,7 +107,14 @@ export const restoreStockFromCreditNote = async (creditNote) => {
           shop: creditNote.shop,
         }).session(session);
 
-        stock.stockTotal += line.quantity;
+        if (!stock) {
+          throw new Error(
+            `Stock not found for product ${line.product.toString()}`,
+          );
+        }
+
+        stock.stockReserved = Math.max(0, stock.stockReserved - line.quantity);
+
         await stock.save({ session });
       }
     });

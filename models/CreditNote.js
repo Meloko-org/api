@@ -51,6 +51,15 @@ const creditNoteSchema = mongoose.Schema(
       ref: "invoices",
       required: true,
     },
+    subOrderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+    order: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "orders",
+      required: true,
+    },
     shop: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "shops",
@@ -58,6 +67,17 @@ const creditNoteSchema = mongoose.Schema(
     },
     issuedAt: {
       type: Date,
+      required: true,
+    },
+    stripeRefundId: {
+      type: String,
+    },
+    refundedAt: {
+      type: Date,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "refunded", "failed"],
       required: true,
     },
     reason: {

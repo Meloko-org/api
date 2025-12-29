@@ -239,7 +239,7 @@ const createNewOrder = async (user, cart, billingAddress, shippingAddress) => {
           vatRate,
           vatAmount: unitVAT_cents,
           totalPriceTTC: amountProductTTC,
-          isConfirmed: true,
+          productStatus: "pending",
         };
       });
 

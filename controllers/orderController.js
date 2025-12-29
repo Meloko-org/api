@@ -214,7 +214,7 @@ const updateSubOrder = async (req, res) => {
       });
     }
 
-    console.log("order :", JSON.stringify(order, null, 2));
+    // console.log("order :", JSON.stringify(order, null, 2));
 
     const subOrder = order.details.find(
       (detail) => detail._id.toString() === subOrderId,
@@ -236,12 +236,31 @@ const updateSubOrder = async (req, res) => {
     }
 
     if (status === "validated") {
+      // if (canceledProducts.length > 0) {
+      //   subOrder.products.forEach((p) => {
+      //     p.isConfirmed = !canceledProducts.includes(p._id.toString());
+      //   });
+
+      //   const confirmed = subOrder.products.filter((p) => p.isConfirmed);
+
+      //   const { shopTotalHT, shopTotalVAT, shopTotalTTC } =
+      //     computeShopAmounts(confirmed);
+
+      //   subOrder.shopTotalHT = shopTotalHT;
+      //   subOrder.shopTotalVAT = shopTotalVAT;
+      //   subOrder.shopTotalTTC = shopTotalTTC;
+      // }
+
       if (canceledProducts.length > 0) {
         subOrder.products.forEach((p) => {
-          p.isConfirmed = !canceledProducts.includes(p._id.toString());
+          p.productStatus = canceledProducts.includes(p._id.toString())
+            ? "cancelled"
+            : "confirmed";
         });
 
-        const confirmed = subOrder.products.filter((p) => p.isConfirmed);
+        const confirmed = subOrder.products.filter(
+          (p) => p.productStatus === "confirmed",
+        );
 
         const { shopTotalHT, shopTotalVAT, shopTotalTTC } =
           computeShopAmounts(confirmed);

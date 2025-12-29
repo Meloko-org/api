@@ -6,7 +6,9 @@ function buildCreditNoteFromSubOrder({
   creditNoteNumber,
   reason,
 }) {
-  const canceledProducts = subOrder.products.filter((p) => !p.isConfirmed);
+  const canceledProducts = subOrder.products.filter(
+    (p) => p.productStatus === "cancelled",
+  );
 
   const lines = canceledProducts.map(buildCreditNoteLine);
 
@@ -27,14 +29,15 @@ function buildCreditNoteFromSubOrder({
   };
 }
 
-const buildCreditNoteLine = (canceledProduct) => {
-  const { quantity, unitPriceHT, totalPriceTTC } = canceledProduct;
-  const vatRate = canceledProduct.product.product.vatRate;
+const buildCreditNoteLine = (cancelledProduct) => {
+  const { quantity, unitPriceHT, totalPriceTTC } = cancelledProduct;
+  const vatRate = cancelledProduct.product.product.vatRate;
 
-  const { totalHT, totalVAT } = computeTotalsFromHT(canceledProduct);
+  const { totalHT, totalVAT } = computeTotalsFromHT(cancelledProduct);
 
   return {
-    label: getCreditNoteProductName(canceledProduct.product),
+    product: cancelledProduct.product,
+    label: getCreditNoteProductName(cancelledProduct.product),
     quantity,
     unitPriceHT,
     vatRate,

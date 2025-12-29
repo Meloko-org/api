@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 
 const creditNoteLineSchema = new mongoose.Schema(
   {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "stocks",
+      required: true,
+    },
     label: {
       type: String,
       required: true,

@@ -42,28 +42,20 @@ export const reserveStockForOrder = async (orderId) => {
  * Décrémente le stock total.
  * Décrémente le stock réservé.
  */
-export const consumeStockForSubOrder = async (subOrder) => {
-  const session = await mongoose.startSession();
+export const consumeStockForSubOrder = async (subOrder, session) => {
+  for (const product of subOrder.products) {
+    if (product.productStatus !== "confirmed") continue;
 
-  try {
-    await session.withTransaction(async () => {
-      for (const product of subOrder.products) {
-        if (product.productStatus !== "confirmed") continue;
+    const stock = await Stock.findById(product.product).session(session);
 
-        const stock = await Stock.findById(product.product).session(session);
+    stock.stockTotal -= product.quantity;
+    stock.stockReserved -= product.quantity;
 
-        stock.stockTotal -= product.quantity;
-        stock.stockReserved -= product.quantity;
+    if (stock.stockTotal < 0 || stock.stockReserved < 0) {
+      throw new Error("Invalid stock state");
+    }
 
-        if (stock.stockTotal < 0 || stock.stockReserved < 0) {
-          throw new Error("Invalid stock state");
-        }
-
-        await stock.save({ session });
-      }
-    });
-  } finally {
-    session.endSession();
+    await stock.save({ session });
   }
 };
 
@@ -72,23 +64,22 @@ export const consumeStockForSubOrder = async (subOrder) => {
  * Quand un produit est annulé.
  * Libère la réservation.
  */
-export const releaseReservedStock = async (product) => {
-  const session = await mongoose.startSession();
+export const releaseReservedStockForSubOrder = async (subOrder, session) => {
+  for (const product of subOrder.products) {
+    if (product.productStatus !== "cancelled") continue;
 
-  try {
-    await session.withTransaction(async () => {
-      const stock = await Stock.findById(product.product).session(session);
+    const stock = await Stock.findById(product.product).session(session);
+    if (!stock) {
+      throw new Error("Stock not found");
+    }
 
-      stock.stockReserved -= product.quantity;
+    stock.stockReserved -= product.quantity;
 
-      if (stock.stockReserved < 0) {
-        throw new Error("Invalid stockReserved");
-      }
+    if (stock.stockReserved < 0) {
+      throw new Error("Invalid stockReserved");
+    }
 
-      await stock.save({ session });
-    });
-  } finally {
-    session.endSession();
+    await stock.save({ session });
   }
 };
 

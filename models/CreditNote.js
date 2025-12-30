@@ -49,7 +49,7 @@ const creditNoteSchema = mongoose.Schema(
     invoice: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "invoices",
-      required: true,
+      default: null,
     },
     subOrderId: {
       type: mongoose.Schema.Types.ObjectId,

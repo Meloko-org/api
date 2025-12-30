@@ -4,14 +4,15 @@ function buildCreditNoteFromSubOrder({
   order,
   subOrder,
   invoice,
+  cancelledProducts,
   creditNoteNumber,
   reason,
 }) {
-  const canceledProducts = subOrder.products.filter(
-    (p) => p.productStatus === "cancelled",
-  );
+  if (!cancelledProducts?.length) {
+    throw new Error("Cannot build CreditNote with no cancelled products");
+  }
 
-  const lines = canceledProducts.map(buildCreditNoteLine);
+  const lines = cancelledProducts.map(buildCreditNoteLine);
 
   const totalHT = lines.reduce((sum, l) => sum + l.totalHT, 0);
   const totalVAT = lines.reduce((sum, l) => sum + l.totalVAT, 0);
@@ -21,7 +22,7 @@ function buildCreditNoteFromSubOrder({
     creditNoteNumber: creditNoteNumber,
     order: order._id,
     subOrderId: subOrder._id,
-    invoice: invoice._id,
+    invoice: invoice ? invoice._id : null,
     shop: subOrder.shop._id,
     issuedAt: new Date(),
     reason: reason,

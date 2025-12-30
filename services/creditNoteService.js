@@ -6,39 +6,45 @@ const {
 async function createCreditNoteFromSubOrder({
   order,
   subOrder,
-  invoice,
+  invoice = null,
+  cancelledProducts,
   reason,
+  session,
 }) {
   const existing = await CreditNote.findOne({
     invoice: invoice._id,
     shop: subOrder.shop,
-  });
+  }).session(session);
 
   if (existing) return existing;
 
-  const creditNoteNumber = await generateCreditNoteNumber(subOrder.shop._id);
+  const creditNoteNumber = await generateCreditNoteNumber(
+    subOrder.shop._id,
+    session,
+  );
 
   const creditNoteData = buildCreditNoteFromSubOrder({
     order,
     subOrder,
     invoice,
+    cancelledProducts,
     creditNoteNumber,
     reason,
   });
 
-  const creditNote = await CreditNote.create(creditNoteData);
+  const [creditNote] = await CreditNote.create([creditNoteData], { session });
 
   return creditNote;
 }
 
-const generateCreditNoteNumber = async (shopId) => {
+const generateCreditNoteNumber = async (shopId, session) => {
   const year = new Date().getFullYear();
 
   const counter = await CreditNoteCounter.findOneAndUpdate(
     { shop: shopId, year },
     { $inc: { sequence: 1 } },
     { upsert: true, new: true },
-  );
+  ).session(session);
 
   const prefix = shopId.toString().slice(-5);
 

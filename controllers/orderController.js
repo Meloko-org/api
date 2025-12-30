@@ -2,19 +2,19 @@ const mongoose = require("mongoose");
 const { Order, Invoice } = require("../models");
 const { isShop, isUser } = require("../modules/verification");
 const { isProducerUser, hasShop } = require("../helpers/authHelpers");
-const { createInvoiceForSubOrder } = require("../services/invoiceService");
 const {
-  consumeStockForSubOrder,
-  restoreStockFromCreditNote,
-} = require("../services/stockService");
+  handleCancellation,
+} = require("../services/orderStatusHandlers/handleCancellation");
 const {
-  createCreditNoteFromSubOrder,
-} = require("../services/creditNoteService");
+  handlePreparation,
+} = require("../services/orderStatusHandlers/handlePreparation");
 const {
-  computeGlobalOrderStatus,
-  computeShopAmounts,
-  recomputeOrderTotals,
-} = require("../helpers/orderHelpers");
+  handlePickup,
+} = require("../services/orderStatusHandlers/handlePickup");
+const {
+  handlePartialPickup,
+} = require("../services/orderStatusHandlers/handlePartialPickup");
+const { computeGlobalOrderStatus } = require("../helpers/orderHelpers");
 
 const getOrdersByUser = async (req, res) => {
   try {
@@ -224,59 +224,35 @@ const updateSubOrder = async (req, res) => {
         throw new Error("Forbidden.");
       }
 
-      if (status === "prepared" || status === "partially_prepared") {
-        if (canceledProducts.length > 0) {
-          subOrder.products.forEach((p) => {
-            p.productStatus = canceledProducts.includes(p._id.toString())
-              ? "cancelled"
-              : "confirmed";
-          });
-        } else {
-          subOrder.products.forEach((p) => {
-            p.productStatus === "confirmed";
-          });
-        }
-
-        const confirmed = subOrder.products.filter(
-          (p) => p.productStatus === "confirmed",
-        );
-
-        const { shopTotalHT, shopTotalVAT, shopTotalTTC } =
-          computeShopAmounts(confirmed);
-
-        subOrder.shopTotalHT = shopTotalHT;
-        subOrder.shopTotalVAT = shopTotalVAT;
-        subOrder.shopTotalTTC = shopTotalTTC;
-
-        await consumeStockForSubOrder(subOrder);
-
-        recomputeOrderTotals(order);
-
-        const invoice = await createInvoiceForSubOrder(
-          { order, subOrder },
-          session,
-        );
-
-        subOrder.invoice = invoice._id;
-
-        if (canceledProducts.length > 0) {
-          const creditNote = await createCreditNoteFromSubOrder(
-            {
-              order,
-              subOrder,
-              invoice,
-              reason: "Annulation partielle de commande",
-            },
+      switch (status) {
+        case "prepared":
+        case "partially_prepared":
+          await handlePreparation({
+            order,
+            subOrder,
+            canceledProducts,
             session,
-          );
+          });
+          break;
 
-          subOrder.creditNotes.push(creditNote._id);
+        case "cancelled":
+          await handleCancellation({
+            order,
+            subOrder,
+            session,
+          });
+          break;
 
-          await refundFromCreditNote(creditNote._id);
-          await restoreStockFromCreditNote(creditNote);
-        }
+        case "picked_up":
+          await handlePickup({ subOrder });
+          break;
 
-        subOrder.status = status;
+        case "partially_picked_up":
+          await handlePartialPickup({ subOrder, missingProducts });
+          break;
+
+        default:
+          throw new Error("Invalid status transition");
       }
 
       await order.save({ session });

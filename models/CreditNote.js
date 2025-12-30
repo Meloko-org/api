@@ -75,10 +75,13 @@ const creditNoteSchema = mongoose.Schema(
     refundedAt: {
       type: Date,
     },
+    stripeRefundId: {
+      type: String,
+    },
     status: {
       type: String,
-      enum: ["pending", "refunded", "failed"],
-      required: true,
+      enum: ["pending", "issued", "refunded", "failed"],
+      default: "pending",
     },
     reason: {
       type: String,

@@ -1,5 +1,10 @@
 const { computeHTandVAT } = require("../helpers/priceHelpers");
-const { Order, InvoiceCounter, ShopInvoiceCounter } = require("../models");
+const {
+  Order,
+  CreditNote,
+  InvoiceCounter,
+  ShopInvoiceCounter,
+} = require("../models");
 const { validationModule } = require("../modules");
 const { isUser } = require("../modules/verification");
 const { generateOrderNumber } = require("../services/orderService");
@@ -35,6 +40,13 @@ const webhookReceiver = async (req, res) => {
       handlePaymentIntentSucceeded(paymentIntent);
       break;
     case "payment_intent.payment_failed":
+      break;
+    case "charge.refunded":
+      await handleChargeRefunded(event.data.object);
+      break;
+
+    case "refund.updated":
+      await handleRefundUpdated(event.data.object);
       break;
     default:
       console.log(`Unhandled event type ${event.type}.`);
@@ -80,6 +92,45 @@ const handlePaymentIntentSucceeded = async (paymentIntent) => {
     console.log("✅ Order marked as paid:", order._id.toString());
   } catch (error) {
     console.error("❌ Error in payment_intent.succeeded webhook:", error);
+  }
+};
+
+const handleChargeRefunded = async (charge) => {
+  try {
+    const refunds = charge.refunds?.data || [];
+
+    for (const refund of refunds) {
+      const { creditNoteId, orderId, subOrderId } = refund.metadata || {};
+
+      if (!creditNoteId || !orderId) {
+        console.warn("⚠️ Refund sans metadata exploitable", refund.id);
+        continue;
+      }
+
+      const creditNote = await CreditNote.findById(creditNoteId);
+      if (!creditNote) {
+        console.warn("⚠️ CreditNote introuvable:", creditNoteId);
+        continue;
+      }
+
+      // 🔁 idempotence
+      if (creditNote.status === "refunded") {
+        continue;
+      }
+
+      // 🔁 stock (si pas déjà restauré)
+      await restoreStockFromCreditNote(creditNote);
+
+      creditNote.status = "refunded";
+      creditNote.refundedAt = new Date();
+      creditNote.stripeRefundId = refund.id;
+
+      await creditNote.save();
+
+      console.log("✅ CreditNote remboursée:", creditNote._id.toString());
+    }
+  } catch (error) {
+    console.error("❌ Error in handleChargeRefunded:", error);
   }
 };
 
@@ -311,6 +362,7 @@ const createNewOrder = async (user, cart, billingAddress, shippingAddress) => {
 module.exports = {
   createCustomerSession,
   webhookReceiver,
+  handleChargeRefunded,
   createNewOrder,
   paymentSheet,
 };

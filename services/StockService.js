@@ -6,8 +6,10 @@ const { Order, Stock } = require("../models");
  * Vérifie que le stock est suffisant.
  * Incrémente stockReserved.
  */
-export const reserveStockForOrder = async (orderId) => {
+const reserveStockForOrder = async (orderId) => {
   const session = await mongoose.startSession();
+
+  const stockIssues = [];
 
   try {
     await session.withTransaction(async () => {
@@ -24,12 +26,25 @@ export const reserveStockForOrder = async (orderId) => {
           const available = stock.stockTotal - stock.stockReserved;
 
           if (available < product.quantity) {
-            throw new Error("Insufficient stock");
+            stockIssues.push({
+              subOrderId: subOrder._id.toString(),
+              productId: product.product.toString(),
+            });
+            continue;
           }
 
           stock.stockReserved += product.quantity;
           await stock.save({ session });
         }
+      }
+
+      if (stockIssues.length > 0) {
+        throw new Error(
+          JSON.stringify({
+            code: "INSUFFICIENT_STOCK",
+            stockIssues,
+          }),
+        );
       }
     });
   } finally {
@@ -42,7 +57,7 @@ export const reserveStockForOrder = async (orderId) => {
  * Décrémente le stock total.
  * Décrémente le stock réservé.
  */
-export const consumeStockForSubOrder = async (subOrder, session) => {
+const consumeStockForSubOrder = async (subOrder, session) => {
   for (const product of subOrder.products) {
     if (product.productStatus !== "confirmed") continue;
 
@@ -59,12 +74,12 @@ export const consumeStockForSubOrder = async (subOrder, session) => {
   }
 };
 
-/** ANNULER UN PRODUIT AVANT VALIDATION
+// n'est plus utilisée
+/** ANNULER TOUS LES PRODUITS D'UNE COMMANDE AVANT VALIDATION
  * Quand le subOrder est "pending".
- * Quand un produit est annulé.
  * Libère la réservation.
  */
-export const releaseReservedStockForSubOrder = async (subOrder, session) => {
+const releaseReservedStockForSubOrder = async (subOrder, session) => {
   for (const product of subOrder.products) {
     if (product.productStatus !== "cancelled") continue;
 
@@ -83,33 +98,32 @@ export const releaseReservedStockForSubOrder = async (subOrder, session) => {
   }
 };
 
-/** ANNULER UN PRODUIT APRES VALIDATION
- * A la création d'une creditNote.
+/** ANNULATION D'UN PRODUIT, DE PLUSIEURS PRODUITS OU DE TOUS LES PRODUITS
+ * Après la création d'une creditNote.
  * Réinjecte le stock.
  */
-export const restoreStockFromCreditNote = async (creditNote) => {
-  const session = await mongoose.startSession();
+const restoreStockFromCreditNote = async ({ creditNote, session }) => {
+  for (const line of creditNote.lines) {
+    console.log("STOCKSERVICE restore product:", line.product._id);
+    console.log("STOCKSERVICE restore shop:", creditNote.shop);
+    const stock = await Stock.findOne({
+      product: line.product.product,
+      shop: creditNote.shop,
+    }).session(session);
 
-  try {
-    await session.withTransaction(async () => {
-      for (const line of creditNote.lines) {
-        const stock = await Stock.findOne({
-          product: line.product,
-          shop: creditNote.shop,
-        }).session(session);
+    if (!stock) {
+      throw new Error(`Stock not found for product ${line.product.toString()}`);
+    }
 
-        if (!stock) {
-          throw new Error(
-            `Stock not found for product ${line.product.toString()}`,
-          );
-        }
+    stock.stockReserved = Math.max(0, stock.stockReserved - line.quantity);
 
-        stock.stockReserved = Math.max(0, stock.stockReserved - line.quantity);
-
-        await stock.save({ session });
-      }
-    });
-  } finally {
-    session.endSession();
+    await stock.save({ session });
   }
+};
+
+module.exports = {
+  reserveStockForOrder,
+  consumeStockForSubOrder,
+  releaseReservedStockForSubOrder,
+  restoreStockFromCreditNote,
 };

@@ -326,7 +326,7 @@ const searchShopsOrMarkets = async (req, res) => {
                   $expr: {
                     $and: [
                       { $eq: ["$shop", "$$shopId"] },
-                      { $gt: ["$stock", 0] },
+                      { $gt: ["$stockTotal", 0] },
                       { $eq: ["$isDeleted", false] },
                     ],
                   },
@@ -515,7 +515,7 @@ const searchShopsOrMarkets = async (req, res) => {
                   $expr: {
                     $and: [
                       { $eq: ["$shop", "$$shopId"] },
-                      { $gt: ["$stock", 0] },
+                      { $gt: ["$stockTotal", 0] },
                       { $eq: ["$isDeleted", false] },
                     ],
                   },
@@ -785,7 +785,7 @@ const searchShops = async (req, res) => {
             pipeline: [
               {
                 $match: {
-                  stock: { $gt: 0 },
+                  stockTotal: { $gt: 0 },
                 },
               },
               {

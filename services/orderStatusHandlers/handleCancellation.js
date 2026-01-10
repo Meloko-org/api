@@ -1,11 +1,17 @@
-import { createCreditNoteFromSubOrder } from "../creditNoteService";
-import { refundFromCreditNote } from "../stripeService";
+const { createCreditNoteFromSubOrder } = require("../creditNoteService");
+const { refundFromCreditNote } = require("../stripeService");
 
 const { Order } = require("../../models");
-const { releaseReservedStockForSubOrder } = require("../stockService");
+const { restoreStockFromCreditNote } = require("../stockService");
 const { recomputeOrderTotals } = require("../../helpers/orderHelpers");
 
-export const handleCancellation = async ({ order, subOrder, session }) => {
+const handleCancellation = async ({
+  order,
+  subOrder,
+  session,
+  postCommitActions,
+}) => {
+  console.log("executing handleCancellation");
   // Sécurité : état autorisé
   if (subOrder.status !== "pending") {
     throw new Error("Only pending subOrders can be cancelled");
@@ -24,9 +30,6 @@ export const handleCancellation = async ({ order, subOrder, session }) => {
   // Statut
   subOrder.status = "cancelled";
 
-  // Stock : libération des réservations
-  await releaseReservedStockForSubOrder(subOrder, session);
-
   const creditNote = await createCreditNoteFromSubOrder({
     order,
     subOrder,
@@ -37,8 +40,18 @@ export const handleCancellation = async ({ order, subOrder, session }) => {
 
   subOrder.creditNotes.push(creditNote._id);
 
-  await refundFromCreditNote(creditNote._id);
+  // Stock : libération des réservations
+  await restoreStockFromCreditNote({ creditNote, session });
+
+  // mémoriser l'action stripe à effectuer après la session
+  postCommitActions.refunds.push({
+    creditNoteId: creditNote._id.toString(),
+  });
 
   // Totaux commande
   recomputeOrderTotals(order);
+};
+
+module.exports = {
+  handleCancellation,
 };

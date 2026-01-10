@@ -37,16 +37,15 @@ const webhookReceiver = async (req, res) => {
   switch (event.type) {
     case "payment_intent.succeeded":
       const paymentIntent = event.data.object;
-      handlePaymentIntentSucceeded(paymentIntent);
+      await handlePaymentIntentSucceeded(paymentIntent);
       break;
     case "payment_intent.payment_failed":
       break;
-    case "charge.refunded":
-      await handleChargeRefunded(event.data.object);
+    case "refund.created":
+      await handleRefundCreated(event.data.object);
       break;
-
-    case "refund.updated":
-      await handleRefundUpdated(event.data.object);
+    case "refund.failed":
+      await handleRefundFailed(event.data.object);
       break;
     default:
       console.log(`Unhandled event type ${event.type}.`);
@@ -85,9 +84,55 @@ const handlePaymentIntentSucceeded = async (paymentIntent) => {
 
     order.isPaid = true;
     order.paidAt = new Date(); // recommandé
+    // order.paymentIntentId = paymentIntent.id;
     await order.save();
 
-    await reserveStockForOrder(order._id);
+    try {
+      await reserveStockForOrder(order._id);
+    } catch (error) {
+      let payload;
+
+      try {
+        payload = JSON.parse(error.message);
+      } catch {
+        throw error; // vraie erreur technique
+      }
+
+      if (payload.code === "INSUFFICIENT_STOCK") {
+        payload.stockIssues.forEach((issue) => {
+          const impactedSubOrder = order.details.find(
+            (d) => d._id.toString() === issue.subOrderId,
+          );
+
+          if (impactedSubOrder) {
+            impactedSubOrder.stockIssue = true;
+            impactedSubOrder.stockIssueProduct = issue.productId;
+          }
+        });
+
+        await order.save();
+
+        return;
+      }
+
+      if (payload.code === "INSUFFICIENT_STOCK") {
+        const impactedSubOrder = order.details.find(
+          (d) => d._id.toString() === payload.subOrderId,
+        );
+
+        if (impactedSubOrder) {
+          impactedSubOrder.stockIssue = true;
+          impactedSubOrder.stockIssueProduct = payload.productId;
+        }
+
+        // order.hasStockIssue = true;
+        await order.save();
+
+        return;
+      }
+
+      throw error;
+    }
 
     console.log("✅ Order marked as paid:", order._id.toString());
   } catch (error) {
@@ -95,43 +140,53 @@ const handlePaymentIntentSucceeded = async (paymentIntent) => {
   }
 };
 
-const handleChargeRefunded = async (charge) => {
+const handleRefundCreated = async (refund) => {
+  console.log("WEBHOOK : handleRefundCreated →", refund.id);
+
   try {
-    const refunds = charge.refunds?.data || [];
+    const { creditNoteId, reason } = refund.metadata || {};
 
-    for (const refund of refunds) {
-      const { creditNoteId, orderId, subOrderId } = refund.metadata || {};
+    if (!creditNoteId) {
+      console.warn("Refund sans creditNoteId, ignoré");
+      return;
+    }
 
-      if (!creditNoteId || !orderId) {
-        console.warn("⚠️ Refund sans metadata exploitable", refund.id);
-        continue;
-      }
+    const res = await CreditNote.updateOne(
+      {
+        _id: creditNoteId,
+        stripeRefundId: refund.id,
+        status: { $ne: "refunded" },
+      },
+      {
+        $set: {
+          status: "refunded",
+          refundedAt: new Date(),
+        },
+      },
+    );
 
-      const creditNote = await CreditNote.findById(creditNoteId);
-      if (!creditNote) {
-        console.warn("⚠️ CreditNote introuvable:", creditNoteId);
-        continue;
-      }
-
-      // 🔁 idempotence
-      if (creditNote.status === "refunded") {
-        continue;
-      }
-
-      // 🔁 stock (si pas déjà restauré)
-      await restoreStockFromCreditNote(creditNote);
-
-      creditNote.status = "refunded";
-      creditNote.refundedAt = new Date();
-      creditNote.stripeRefundId = refund.id;
-
-      await creditNote.save();
-
-      console.log("✅ CreditNote remboursée:", creditNote._id.toString());
+    if (res.modifiedCount === 1) {
+      console.log("✅ CreditNote remboursée :", creditNoteId, reason);
     }
   } catch (error) {
-    console.error("❌ Error in handleChargeRefunded:", error);
+    console.error("❌ Error in handleRefundCreated:", error);
   }
+};
+
+const handleRefundFailed = async (refund) => {
+  const { creditNoteId } = refund.metadata || {};
+
+  if (!creditNoteId) return;
+
+  await CreditNote.updateOne(
+    { _id: creditNoteId },
+    {
+      $set: {
+        status: "failed",
+        failureReason: refund.failure_reason || "unknown",
+      },
+    },
+  );
 };
 
 const createCustomerSession = async (req, res) => {
@@ -209,7 +264,8 @@ const paymentSheet = async (req, res) => {
       },
     });
 
-    order.stripePIId = paymentIntent.id;
+    // order.stripePIId = paymentIntent.id;
+    order.paymentIntentId = paymentIntent.id;
     await order.save();
 
     res.json({
@@ -362,7 +418,7 @@ const createNewOrder = async (user, cart, billingAddress, shippingAddress) => {
 module.exports = {
   createCustomerSession,
   webhookReceiver,
-  handleChargeRefunded,
+  handleRefundCreated,
   createNewOrder,
   paymentSheet,
 };

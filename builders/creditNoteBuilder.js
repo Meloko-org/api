@@ -12,6 +12,8 @@ function buildCreditNoteFromSubOrder({
     throw new Error("Cannot build CreditNote with no cancelled products");
   }
 
+  console.log("BUILDER: cancelledProducts :", cancelledProducts);
+
   const lines = cancelledProducts.map(buildCreditNoteLine);
 
   const totalHT = lines.reduce((sum, l) => sum + l.totalHT, 0);
@@ -19,13 +21,23 @@ function buildCreditNoteFromSubOrder({
   const totalTTC = lines.reduce((sum, l) => sum + l.totalTTC, 0);
 
   return {
-    creditNoteNumber: creditNoteNumber,
-    order: order._id,
-    subOrderId: subOrder._id,
-    invoice: invoice ? invoice._id : null,
     shop: subOrder.shop._id,
+    order: order._id,
+    subOrder: subOrder._id,
+    creditNoteNumber: creditNoteNumber,
     issuedAt: new Date(),
+    invoice: invoice ? invoice._id : null,
     reason: reason,
+    customer: {
+      name: `${order.user.firstname} ${order.user.lastname}`,
+      email: order.user.email,
+      address: order.billingAddress,
+    },
+    seller: {
+      name: subOrder.shop.name,
+      address: subOrder.shop.address,
+      vatNumber: subOrder.shop.siret,
+    },
     lines,
     totalHT,
     totalVAT,
@@ -36,13 +48,17 @@ function buildCreditNoteFromSubOrder({
 const buildCreditNoteLine = (cancelledProduct) => {
   const { quantity, unitPriceHT, totalPriceTTC } = cancelledProduct;
   const vatRate = cancelledProduct.product.product.vatRate;
+  const unit = cancelledProduct.product.product.weight.unit;
 
   const { totalHT, totalVAT } = computeTotalsFromHT(cancelledProduct);
+
+  console.log("BUILDER LINE product :", cancelledProduct);
 
   return {
     product: cancelledProduct.product,
     label: getCreditNoteProductName(cancelledProduct.product),
     quantity,
+    unit,
     unitPriceHT,
     vatRate,
     totalHT,
@@ -63,50 +79,60 @@ function getCreditNoteProductName(stock) {
 }
 
 const buildCreditNotePdfData = (creditNote) => {
+  const customer = creditNote.customer;
+  const seller = creditNote.seller;
+
   return {
-    shop: creditNote.shop,
     creditNoteNumber: creditNote.creditNoteNumber,
     issuedAt: creditNote.issuedAt,
-    invoiceNumber: creditNote.invoice.invoiceNumber,
-    invoiceIssuedAt: creditNote.invoice.issuedAt,
+
+    invoiceNumber: creditNote.invoice?.invoiceNumber ?? null,
+    invoiceIssuedAt: creditNote.invoice?.issuedAt ?? null,
+
     seller: {
-      name: creditNote.invoice.seller.name,
+      name: seller.name,
+      vatNumber: seller.siret,
       address: {
-        address1: creditNote.invoice.seller.address.address1,
-        address2: creditNote.invoice.seller.address.address2,
-        postalCode: creditNote.invoice.seller.address.postalCode,
-        city: creditNote.invoice.seller.address.city,
-        country: creditNote.invoice.seller.address.country,
+        address1: seller.address.address1,
+        address2: seller.address.address2,
+        postalCode: seller.address.postalCode,
+        city: seller.address.city,
+        country: seller.address.country,
       },
-      vatNumber: creditNote.invoice.seller.vatNumber,
     },
+
     customer: {
-      name: `${creditNote.invoice.customer.name}`,
-      email: creditNote.invoice.customer.email,
+      name: customer.name,
+      email: customer.email,
       address: {
-        address1: creditNote.invoice.customer.address.address1,
-        address2: creditNote.invoice.customer.address.address2,
-        postalCode: creditNote.invoice.customer.address.postalCode,
-        city: creditNote.invoice.customer.address.city,
-        country: creditNote.invoice.customer.address.country,
+        address1: customer.address.address1,
+        address2: customer.address.address2,
+        postalCode: customer.address.postalCode,
+        city: customer.address.city,
+        country: customer.address.country,
       },
     },
-    lines: creditNote.lines.map((p) => ({
-      label: p.label,
-      quantity: p.quantity,
-      unit: p.unit,
-      unitPriceHT: p.unitPriceHT,
-      vatRate: p.vatRate,
-      totalHT: p.totalHT,
-      totalVAT: p.totalVAT,
-      totalTTC: p.totalTTC,
+
+    lines: creditNote.lines.map((line) => ({
+      label: line.label,
+      quantity: line.quantity,
+      unit: line.unit,
+      unitPriceHT: line.unitPriceHT,
+      vatRate: line.vatRate,
+      totalHT: line.totalHT,
+      totalVAT: line.totalVAT,
+      totalTTC: line.totalTTC,
     })),
+
     totals: {
       totalHT: creditNote.totalHT,
       totalVAT: creditNote.totalVAT,
       totalTTC: creditNote.totalTTC,
     },
+
     reason: creditNote.reason,
+    status: creditNote.status,
+    stripeRefundId: creditNote.stripeRefundId ?? null,
   };
 };
 

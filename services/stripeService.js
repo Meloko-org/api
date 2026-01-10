@@ -5,7 +5,8 @@ const {
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-export const refundFromCreditNote = async (creditNoteId) => {
+const refundFromCreditNote = async (creditNoteId) => {
+  console.log("executing refundFromCreditNote");
   const creditNote = await CreditNote.findById(creditNoteId);
   if (!creditNote) throw new Error("CreditNote not found");
 
@@ -15,7 +16,12 @@ export const refundFromCreditNote = async (creditNoteId) => {
   }
 
   const order = await Order.findById(creditNote.order);
-  if (!order?.paymentIntentId) {
+  // sécurités
+  if (!order.isPaid) {
+    throw new Error("Order is not paid");
+  }
+
+  if (!order.paymentIntentId) {
     throw new Error("No paymentIntent on order");
   }
 
@@ -28,11 +34,11 @@ export const refundFromCreditNote = async (creditNoteId) => {
   const refund = await stripe.refunds.create({
     payment_intent: order.paymentIntentId,
     amount,
-    reason: "requested_by_customer",
     metadata: {
       creditNoteId: creditNote._id.toString(),
       orderId: creditNote.order.toString(),
-      subOrderId: creditNote.subOrderId.toString(),
+      subOrderId: creditNote.subOrder.toString(),
+      reason: "requested_by_customer",
     },
   });
 
@@ -40,5 +46,11 @@ export const refundFromCreditNote = async (creditNoteId) => {
   creditNote.refundedAt = new Date();
   await creditNote.save();
 
+  console.log("refundFromCreditNote done!!");
+
   return creditNote;
+};
+
+module.exports = {
+  refundFromCreditNote,
 };

@@ -1,8 +1,11 @@
 const { computeTotalsFromHT } = require("../helpers/orderHelpers");
 
-function buildInvoiceFromOrder({ order, subOrder, invoiceNumber }) {
-  const confirmedProducts = subOrder.products.filter((p) => p.isConfirmed);
-
+function buildInvoiceFromOrder({
+  order,
+  subOrder,
+  invoiceNumber,
+  confirmedProducts,
+}) {
   const lines = confirmedProducts.map(buildInvoiceLine);
 
   const totalHT = lines.reduce((sum, l) => sum + l.totalHT, 0);
@@ -12,7 +15,7 @@ function buildInvoiceFromOrder({ order, subOrder, invoiceNumber }) {
   return {
     shop: subOrder.shop._id,
     order: order._id,
-    subOrderId: subOrder._id,
+    subOrder: subOrder._id,
     invoiceNumber,
     issuedAt: new Date(),
     currency: "EUR",
@@ -69,42 +72,45 @@ function getInvoiceProductName(stock) {
 }
 
 const buildInvoicePdfData = (invoice) => {
+  const customer = invoice.customer;
+  const seller = invoice.seller;
+
   return {
     shop: invoice.shop,
     order: invoice.order,
     invoiceNumber: invoice.invoiceNumber,
     issuedAt: new Date(),
     customer: {
-      name: `${invoice.customer.name}`,
-      email: invoice.customer.email,
+      name: `${customer.name}`,
+      email: customer.email,
       address: {
-        address1: invoice.customer.address.address1,
-        address2: invoice.customer.address.address2,
-        postalCode: invoice.customer.address.postalCode,
-        city: invoice.customer.address.city,
-        country: invoice.customer.address.country,
+        address1: customer.address.address1,
+        address2: customer.address.address2,
+        postalCode: customer.address.postalCode,
+        city: customer.address.city,
+        country: customer.address.country,
       },
     },
     seller: {
-      name: invoice.seller.name,
+      name: seller.name,
       address: {
-        address1: invoice.seller.address.address1,
-        address2: invoice.seller.address.address2,
-        postalCode: invoice.seller.address.postalCode,
-        city: invoice.seller.address.city,
-        country: invoice.seller.address.country,
+        address1: seller.address.address1,
+        address2: seller.address.address2,
+        postalCode: seller.address.postalCode,
+        city: seller.address.city,
+        country: seller.address.country,
       },
       vatNumber: invoice.seller.vatNumber,
     },
-    lines: invoice.lines.map((p) => ({
-      label: p.label,
-      quantity: p.quantity,
-      unit: p.unit,
-      unitPriceHT: p.unitPriceHT,
-      vatRate: p.vatRate,
-      totalHT: p.totalHT,
-      totalVAT: p.totalVAT,
-      totalTTC: p.totalTTC,
+    lines: invoice.lines.map((line) => ({
+      label: line.label,
+      quantity: line.quantity,
+      unit: line.unit,
+      unitPriceHT: line.unitPriceHT,
+      vatRate: line.vatRate,
+      totalHT: line.totalHT,
+      totalVAT: line.totalVAT,
+      totalTTC: line.totalTTC,
     })),
     totals: {
       totalHT: invoice.totalHT,

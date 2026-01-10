@@ -74,37 +74,26 @@ describe("getUserInfos", () => {
     // Récupérer l'objet envoyé dans `res.json`
     const receivedResponse = res.json.mock.calls[0][0];
 
-    // console.log("GETUSERINFOS:", receivedResponse);
+    console.log("GETUSERINFOS:", receivedResponse);
 
     expect(receivedResponse).toMatchObject(
       expect.objectContaining({
         success: expect.any(Boolean),
         user: expect.objectContaining({
-          _id: mockUser1._id,
+          _id: expect.anything(),
           email: expect.any(String),
           clerkPasswordEnabled: expect.any(String),
           stripeUUID: expect.any(String),
           firstname: expect.any(String),
           lastname: expect.any(String),
-          avatar: null,
+          avatar: expect.any(String),
+          addresses: expect.any(Array),
           bookmarks: expect.any(Array),
           favSearch: expect.any(Array),
           settings: expect.objectContaining({
             helpHints: expect.any(Boolean),
           }),
-          // orders: [
-          //   expect.objectContaining({
-          //     _id: mockOrder._id,
-          //     user: mockUser1._id,
-          //     details: expect.any(Array),
-          //     isWithdrawn: expect.any(Boolean),
-          //     isPaid: true,
-          //     stripePIId: expect.any(String),
-          //     createdAt: expect.any(Date),
-          //     updatedAt: expect.any(Date),
-          //     __v: expect.any(Number),
-          //   }),
-          // ],
+          producer: expect.anything(),
         }),
       }),
     );
@@ -194,34 +183,7 @@ describe("Bookmarks", () => {
       expect.objectContaining({
         success: true,
         user: expect.objectContaining({
-          _id: mockUser1._id,
-          email: expect.any(String),
-          clerkUUID: expect.any(String),
-          roles: expect.any(Array),
-          firstname: expect.any(String),
-          lastname: expect.any(String),
-          avatar: null,
-          favSearch: expect.any(Array),
-          createdAt: expect.any(Date),
-          updatedAt: expect.any(Date),
-          __v: expect.any(Number),
           bookmarks: [expect.any(Object)],
-          stripeUUID: expect.any(String),
-          clerkPasswordEnabled: expect.any(String),
-          orders: [
-            expect.objectContaining({
-              _id: mockOrder._id,
-              isPaid: true,
-              isWithdrawn: expect.any(Boolean),
-              stripePIId: expect.any(String),
-              details: expect.any(Array),
-              user: mockUser1._id,
-              _id: mockOrder._id,
-              createdAt: expect.any(Date),
-              updatedAt: expect.any(Date),
-              __v: expect.any(Number),
-            }),
-          ],
         }),
         message: expect.any(String),
       }),

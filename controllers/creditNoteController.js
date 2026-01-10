@@ -17,34 +17,8 @@ const getCreditNotePdf = async (req, res) => {
 
     const creditNote = await CreditNote.findById(creditNoteId).populate({
       path: "invoice",
-      populate: {
-        path: "order",
-        populate: [
-          {
-            path: "user",
-            select: "firstname lastname email",
-          },
-          {
-            path: "details.products",
-            select: "products",
-            populate: {
-              path: "product",
-              select: "productCustomName product",
-              populate: {
-                path: "product",
-                select: "name family",
-                populate: {
-                  path: "family",
-                  select: "name",
-                },
-              },
-            },
-          },
-        ],
-      },
+      select: "invoiceNumber issuedAt", // strict minimum
     });
-
-    // console.log("creditNote :", creditNote)
 
     if (!creditNote) {
       return res

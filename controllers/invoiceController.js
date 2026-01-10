@@ -14,31 +14,8 @@ const getInvoicePdf = async (req, res) => {
 
     const invoiceId = req.params.id;
 
-    const invoice = await Invoice.findById(invoiceId).populate({
-      path: "order",
-      populate: [
-        {
-          path: "user",
-          select: "firstname lastname email",
-        },
-        {
-          path: "details.products",
-          select: "products",
-          populate: {
-            path: "product",
-            select: "productCustomName product",
-            populate: {
-              path: "product",
-              select: "name family",
-              populate: {
-                path: "family",
-                select: "name",
-              },
-            },
-          },
-        },
-      ],
-    });
+    const invoice = await Invoice.findById(invoiceId);
+
     if (!invoice) {
       return res
         .status(404)

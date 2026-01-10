@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 const { Order, Invoice } = require("../models");
 const { isShop, isUser } = require("../modules/verification");
 const { isProducerUser, hasShop } = require("../helpers/authHelpers");
+const { refundFromCreditNote } = require("../services/stripeService");
+const {
+  assertIntentAllowed,
+  assertStatusTransitionAllowed,
+} = require("../helpers/SubOrderStateMachine");
 const {
   handleCancellation,
 } = require("../services/orderStatusHandlers/handleCancellation");
@@ -165,8 +170,17 @@ const getOrderDetailsById = async (req, res) => {
 const updateSubOrder = async (req, res) => {
   const session = await mongoose.startSession();
 
+  let order;
+  let subOrder;
+
+  // nécessaire pour déclencher des actions stripe après la clôture d'une transaction
+  const postCommitActions = {
+    refunds: [],
+  };
+
   try {
     await session.withTransaction(async () => {
+      /* 1 - récupération et validation des données */
       if (!req.params.id) {
         throw new Error("Order id missing.");
       }
@@ -177,43 +191,97 @@ const updateSubOrder = async (req, res) => {
       }
 
       const orderId = req.params.id;
-      const { subOrderId, status, canceledProducts = [] } = req.body;
+      const {
+        subOrderId,
+        intent,
+        cancelledProductIds = [],
+        notPickedUpProductIds = [],
+      } = req.body;
 
-      const order = await Order.findById(orderId)
+      console.log(
+        "---------------- données passées à updtaeSubOrder ------------------------",
+      );
+      console.log("subOrderId :", subOrderId);
+      console.log("intent :", intent);
+      console.log("cancelledProductIds :", cancelledProductIds);
+      console.log("notPickedUpProductIds :", notPickedUpProductIds);
+
+      order = await Order.findById(orderId)
         .populate("user", "firstname lastname email address")
         .populate({
-          path: "details.shop",
-          select: "name siret address",
-          populate: {
-            path: "address",
-            select: "address1 address2 postalCode city country",
-          },
-        })
-        .populate({
-          path: "details.products.product",
-          select: "productCustomName",
-          populate: {
-            path: "product",
-            select: "name vatRate family weight",
-            populate: [
-              {
-                path: "family",
-                select: "name",
+          path: "details",
+          populate: [
+            {
+              path: "products.product",
+              model: "stocks",
+              select: "-createdAt -updatedAt",
+              populate: [
+                {
+                  path: "product",
+                  model: "products",
+                  select: "name vatRate image weight family",
+                  populate: [
+                    {
+                      path: "family",
+                      model: "productFamily",
+                      select: "name",
+                    },
+                    {
+                      path: "weight",
+                      select: "unit",
+                    },
+                  ],
+                },
+                {
+                  path: "tags",
+                  model: "tags",
+                  select: "name",
+                },
+              ],
+            },
+            {
+              path: "shop",
+              select: "name siret address",
+              populate: {
+                path: "address",
+                select: "address1 address2 postalCode city country",
               },
-              {
-                path: "weight",
-                select: "unit",
-              },
-            ],
-          },
+            },
+          ],
         })
+        // .populate({
+        //   path: "details.shop",
+        //   select: "name siret address",
+        //   populate: {
+        //     path: "address",
+        //     select: "address1 address2 postalCode city country",
+        //   },
+        // })
+        // .populate({
+        //   path: "details.products.product",
+        //   select: "productCustomName",
+        //   populate: {
+        //     path: "product",
+        //     select: "name vatRate family weight",
+        //     populate: [
+        //       {
+        //         path: "family",
+        //         select: "name",
+        //       },
+        //       {
+        //         path: "weight",
+        //         select: "unit",
+        //       },
+        //     ],
+        //   },
+        // })
         .session(session);
 
       if (!order) {
         throw new Error("Order not found.");
       }
 
-      const subOrder = order.details.find(
+      subOrder = order.details.find(
         (detail) => detail._id.toString() === subOrderId,
       );
       if (!subOrder) {
@@ -224,70 +292,185 @@ const updateSubOrder = async (req, res) => {
         throw new Error("Forbidden.");
       }
 
-      switch (status) {
-        case "prepared":
-        case "partially_prepared":
-          await handlePreparation({
-            order,
-            subOrder,
-            canceledProducts,
-            session,
-          });
-          break;
+      /* 2 - Validation de l'intent et choix de l'action à mener */
 
-        case "cancelled":
+      assertIntentAllowed(subOrder.status, intent);
+
+      const previousStatus = subOrder.status;
+
+      switch (intent) {
+        case "cancel":
+          console.log("case cancel");
           await handleCancellation({
             order,
             subOrder,
             session,
+            postCommitActions,
           });
           break;
 
-        case "picked_up":
-          await handlePickup({ subOrder });
+        case "prepare":
+          if (subOrder.stockIssue) {
+            console.log("case stockConflictResolution");
+            await handleStockConflictResolution({
+              order,
+              subOrder,
+              cancelledProductIds,
+              session,
+              postCommitActions,
+            });
+          } else {
+            console.log("case prepare");
+            await handlePreparation({
+              order,
+              subOrder,
+              cancelledProductIds,
+              session,
+              postCommitActions,
+            });
+          }
+
           break;
 
-        case "partially_picked_up":
-          await handlePartialPickup({ subOrder, missingProducts });
+        case "pick_up":
+          if (notPickedUpProductIds.length > 0) {
+            console.log("case partially_pick_up");
+            await handlePartialPickup({
+              order,
+              subOrder,
+              notPickedUpProductIds,
+              session,
+              postCommitActions,
+            });
+          } else {
+            console.log("case pick_up");
+            await handlePickup({
+              order,
+              subOrder,
+              notPickedUpProductIds,
+              session,
+              postCommitActions,
+            });
+          }
           break;
 
         default:
-          throw new Error("Invalid status transition");
+          throw new Error("Unknown intent");
       }
+
+      assertStatusTransitionAllowed(previousStatus, subOrder.status);
 
       await order.save({ session });
     });
 
-    session.endSession();
+    const populatedOrder = await Order.findById(order._id)
+      .populate("user", "firstname lastname email address")
+      .populate({
+        path: "details",
+        populate: [
+          {
+            path: "products.product",
+            model: "stocks",
+            select: "-createdAt -updatedAt",
+            populate: [
+              {
+                path: "product",
+                model: "products",
+                select: "name vatRate image weight family",
+                populate: [
+                  {
+                    path: "family",
+                    model: "productFamily",
+                    select: "name",
+                  },
+                  {
+                    path: "weight",
+                    select: "unit",
+                  },
+                ],
+              },
+              {
+                path: "tags",
+                model: "tags",
+                select: "name",
+              },
+            ],
+          },
+          {
+            path: "shop",
+            select: "name siret address",
+            populate: {
+              path: "address",
+              select: "address1 address2 postalCode city country",
+            },
+          },
+        ],
+      });
+    // .populate({
+    //   path: "details.shop",
+    //   select: "name siret address",
+    //   populate: {
+    //     path: "address",
+    //     select: "address1 address2 postalCode city country",
+    //   },
+    // })
+    // .populate({
+    //   path: "details.products.product",
+    //   select: "productCustomName",
+    //   populate: {
+    //     path: "product",
+    //     select: "name vatRate family weight",
+    //     populate: [
+    //       { path: "family", select: "name" },
+    //       { path: "weight", select: "unit" },
+    //     ],
+    //   },
+    // });
 
-    res
-      .status(200)
-      .json({ success: true, message: getMessage(req.body.status) });
+    res.status(200).json({
+      success: true,
+      order: populatedOrder,
+      refundsPending: postCommitActions.refunds.map((r) => r.creditNoteId),
+      message: getMessage(req.body.intent),
+    });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-
     console.log(error);
     res.status(500).json({
-      result: false,
+      success: false,
       message: error.message || "Erreur Interne serveur",
     });
+  } finally {
+    session.endSession();
+  }
+
+  for (const refund of postCommitActions.refunds) {
+    try {
+      await refundFromCreditNote(refund.creditNoteId);
+    } catch (stripeError) {
+      console.error(
+        "Stripe refund failed for creditNote",
+        refund.creditNoteId,
+        stripeError,
+      );
+
+      // Option recommandé :
+      // - log
+      // - alerte
+      // - retry async
+    }
   }
 };
 
-const getMessage = (expr) => {
+const getMessage = (intent) => {
   let message = "";
-  switch (expr) {
-    case "validated":
-      message = "Commande Validée";
+  switch (intent) {
+    case "prepare":
+      message = "Commande en préparation";
       break;
-    case "canceled":
+    case "cancel":
       message = "Commande Annulée";
       break;
-    case "pending":
-      message = "Commande en attente";
-      break;
-    case "withdrawn":
+    case "pick_up":
       message = "Commande retirée";
       break;
 

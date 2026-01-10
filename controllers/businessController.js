@@ -1,6 +1,7 @@
 const { User, Producer, Shop, Order } = require("../models");
 const { isProducerUser, hasShop } = require("../helpers/authHelpers");
 const { isShop } = require("../modules/verification");
+const { SUB_ORDER_STATUS_GROUPS } = require("../helpers/SubOrderStateMachine");
 
 /**
  * cette fonction retourne uniquement les données utiles pour chaque commande
@@ -54,7 +55,7 @@ const getOrderSummary = async (req, res) => {
       };
     });
 
-    console.log("orders :", JSON.stringify(filteredOrders, null, 2));
+    // console.log("orders :", JSON.stringify(filteredOrders, null, 2));
 
     res.status(200).json({ success: true, orders: filteredOrders });
   } catch (error) {
@@ -77,11 +78,21 @@ const getOrders = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    const statuses = SUB_ORDER_STATUS_GROUPS[type];
+    if (!statuses) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Unknown order status group." });
+    }
+
+    console.log("-------------- BUSINESS CONTROLLER ---------------");
+    console.log("les status :", statuses);
+
     const orders = await Order.find({
       details: {
         $elemMatch: {
           shop: shop._id,
-          status: type,
+          status: { $in: statuses },
         },
       },
     })
@@ -90,25 +101,29 @@ const getOrders = async (req, res) => {
       .limit(limit)
       .populate("user", "firstname lastname");
 
+    console.log("nombre d'orders avant filtrage :", orders.length);
+
     const filteredOrders = orders.map((order) => ({
       ...order.toObject(),
       details: order.details.filter(
         (detail) =>
           detail.shop?.toString() === shop._id.toString() &&
-          detail.status === type,
+          statuses.includes(detail.status),
       ),
     }));
+
+    console.log("nombre d'orders après filtrage :", filteredOrders.length);
 
     const totalOrders = await Order.countDocuments({
       details: {
         $elemMatch: {
           shop: shop._id,
-          status: type,
+          status: { $in: statuses },
         },
       },
     });
 
-    console.log(filteredOrders);
+    console.log("filtered :", filteredOrders);
 
     res.status(200).json({
       success: true,

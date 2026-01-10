@@ -40,6 +40,10 @@ const productDetailSchema = mongoose.Schema({
     enum: ["pending", "confirmed", "cancelled"],
     default: "pending",
   },
+  pickedUp: {
+    type: Boolean,
+    defaul: null,
+  },
 });
 
 const orderDetailSchema = mongoose.Schema({
@@ -98,6 +102,14 @@ const orderDetailSchema = mongoose.Schema({
       default: null,
     },
   ],
+  stockIssue: {
+    type: Boolean,
+    default: false,
+  },
+  stockIssueProduct: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "stocks",
+  },
 });
 
 const orderSchema = mongoose.Schema(
@@ -177,10 +189,15 @@ const orderSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    stripePIId: {
+    paymentIntentId: {
       type: String,
-      unique: true,
+      index: true,
+      default: null,
     },
+    // stripePIId: {
+    //   type: String,
+    //   unique: true,
+    // },
     totalHT: {
       type: Number,
       required: true,

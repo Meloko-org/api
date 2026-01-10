@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const addressSchema = require("./Address");
 
 const creditNoteLineSchema = new mongoose.Schema(
   {
@@ -13,6 +14,10 @@ const creditNoteLineSchema = new mongoose.Schema(
     },
     quantity: {
       type: Number,
+      required: true,
+    },
+    unit: {
+      type: String,
       required: true,
     },
     unitPriceHT: {
@@ -41,18 +46,9 @@ const creditNoteLineSchema = new mongoose.Schema(
 
 const creditNoteSchema = mongoose.Schema(
   {
-    creditNoteNumber: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    invoice: {
+    shop: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "invoices",
-      default: null,
-    },
-    subOrderId: {
-      type: mongoose.Schema.Types.ObjectId,
+      ref: "shops",
       required: true,
     },
     order: {
@@ -60,14 +56,51 @@ const creditNoteSchema = mongoose.Schema(
       ref: "orders",
       required: true,
     },
-    shop: {
+    subOrder: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "shops",
       required: true,
+    },
+    creditNoteNumber: {
+      type: String,
+      required: true,
+      unique: true,
     },
     issuedAt: {
       type: Date,
       required: true,
+    },
+    invoice: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "invoices",
+      default: null,
+    },
+    customer: {
+      name: {
+        type: String,
+        required: true,
+      },
+      email: {
+        type: String,
+        required: true,
+      },
+      address: {
+        type: addressSchema,
+        required: true,
+      },
+    },
+    seller: {
+      name: {
+        type: String,
+        required: true,
+      },
+      address: {
+        type: addressSchema,
+        required: true,
+      },
+      vatNumber: {
+        type: String,
+        required: true,
+      },
     },
     stripeRefundId: {
       type: String,
@@ -82,6 +115,9 @@ const creditNoteSchema = mongoose.Schema(
       type: String,
       enum: ["pending", "issued", "refunded", "failed"],
       default: "pending",
+    },
+    failureReason: {
+      type: String,
     },
     reason: {
       type: String,

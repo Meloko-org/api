@@ -1,21 +1,26 @@
 const {
   consumeStockForSubOrder,
-  releaseReservedStockForSubOrder,
+  restoreStockFromCreditNote,
 } = require("../stockService");
 const { createInvoiceForSubOrder } = require("../invoiceService");
 const { createCreditNoteFromSubOrder } = require("../creditNoteService");
-const { recomputeOrderTotals } = require("../../helpers/orderHelpers");
+const {
+  computeShopAmounts,
+  recomputeOrderTotals,
+} = require("../../helpers/orderHelpers");
 const { refundFromCreditNote } = require("../stripeService");
 
-export const handlePreparation = async ({
+const handlePreparation = async ({
   order,
   subOrder,
-  canceledProducts = [],
+  cancelledProductIds = [],
   session,
+  postCommitActions,
 }) => {
+  console.log("executing handlePreparation");
   /* Mise à jour des statuts produits */
   subOrder.products.forEach((product) => {
-    if (canceledProducts.includes(product._id.toString())) {
+    if (cancelledProductIds.includes(product._id.toString())) {
       product.productStatus = "cancelled";
     } else {
       product.productStatus = "confirmed";
@@ -44,14 +49,11 @@ export const handlePreparation = async ({
   /* Stock */
   await consumeStockForSubOrder(subOrder, session);
 
-  if (cancelledProducts.length > 0) {
-    await releaseReservedStockForSubOrder(subOrder, session);
-  }
-
   /* Facture du subOrder */
   const invoice = await createInvoiceForSubOrder({
     order,
     subOrder,
+    confirmedProducts,
     session,
   });
 
@@ -70,9 +72,19 @@ export const handlePreparation = async ({
 
     subOrder.creditNotes.push(creditNote._id);
 
-    await refundFromCreditNote(creditNote._id);
+    // Restauration du stock
+    await restoreStockFromCreditNote({ creditNote, session });
+
+    // mémoriser l'action stripe à effectuer après la session
+    postCommitActions.refunds.push({
+      creditNoteId: creditNote._id.toString(),
+    });
   }
 
   /* Totaux */
   recomputeOrderTotals(order);
+};
+
+module.exports = {
+  handlePreparation,
 };

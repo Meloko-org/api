@@ -11,30 +11,54 @@ async function createCreditNoteFromSubOrder({
   reason,
   session,
 }) {
-  const existing = await CreditNote.findOne({
-    invoice: invoice._id,
-    shop: subOrder.shop,
-  }).session(session);
+  try {
+    let existing;
 
-  if (existing) return existing;
+    if (invoice) {
+      existing = await CreditNote.findOne({
+        invoice: invoice._id,
+        subOrder: subOrder._id,
+        shop: subOrder.shop,
+      }).session(session);
+    } else {
+      existing = await CreditNote.findOne({
+        subOrder: subOrder._id,
+        shop: subOrder.shop,
+      }).session(session);
+    }
 
-  const creditNoteNumber = await generateCreditNoteNumber(
-    subOrder.shop._id,
-    session,
-  );
+    if (existing) return existing;
 
-  const creditNoteData = buildCreditNoteFromSubOrder({
-    order,
-    subOrder,
-    invoice,
-    cancelledProducts,
-    creditNoteNumber,
-    reason,
-  });
+    const creditNoteNumber = await generateCreditNoteNumber(
+      subOrder.shop._id,
+      session,
+    );
 
-  const [creditNote] = await CreditNote.create([creditNoteData], { session });
+    const creditNoteData = buildCreditNoteFromSubOrder({
+      order,
+      subOrder,
+      invoice,
+      cancelledProducts,
+      creditNoteNumber,
+      reason,
+    });
 
-  return creditNote;
+    const [creditNote] = await CreditNote.create([creditNoteData], { session });
+
+    if (!creditNote) {
+      throw new Error("CreditNote creation returned empty result");
+    }
+
+    return creditNote;
+  } catch (error) {
+    console.error("CreditNote creation failed", {
+      orderId: order._id,
+      subOrderId: subOrder._id,
+      originalError: error,
+    });
+
+    throw new Error("Impossible de créer l'avoir.");
+  }
 }
 
 const generateCreditNoteNumber = async (shopId, session) => {

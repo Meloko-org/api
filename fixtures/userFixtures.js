@@ -6,12 +6,16 @@ const createMockUser = async (email, mockClerkUUID, stripeUUID) => {
     email: email,
     clerkUUID: mockClerkUUID,
     clerkPasswordEnabled: "true",
-    roles: [],
+    stripeUUID: stripeUUID,
     firstname: "john",
     lastname: "Doe",
+    avatar: "url_de_l_image",
     bookmarks: [],
+    addresses: [],
     favSearch: [],
-    stripeUUID: stripeUUID,
+    settings: {
+      helpHints: true,
+    },
   });
   await mockUser.save();
 

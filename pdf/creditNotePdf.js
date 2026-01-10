@@ -18,16 +18,23 @@ const generateCreditNotePdf = async (creditNote, res) => {
       doc.moveDown();
 
       doc.fontSize(12);
-      doc.text(`Facture n° : ${creditNote.creditNoteNumber}`);
-      doc.text(`Date : ${creditNote.issuedAt.toLocaleDateString("fr-FR")}`);
+      doc.text(`Avoir n° : ${creditNote.creditNoteNumber}`);
+      doc.text(
+        `Date d'émission: ${creditNote.issuedAt.toLocaleDateString("fr-FR")}`,
+      );
 
       doc.moveDown();
 
       // ---- RÉFÉRENCE FACTURE
-      doc.text(`Facture d'origine : ${creditNote.invoiceNumber}`);
-      doc.text(
-        `Date facture : ${creditNote.invoiceIssuedAt.toLocaleDateString("fr-FR")}`,
-      );
+      if (creditNote.invoiceNumber) {
+        doc.text(`Facture d’origine : ${creditNote.invoiceNumber}`);
+      }
+
+      if (creditNote.invoiceIssuedAt) {
+        doc.text(
+          `Date facture : ${creditNote.invoiceIssuedAt.toLocaleDateString("fr-FR")}`,
+        );
+      }
 
       doc.moveDown();
 
@@ -59,15 +66,13 @@ const generateCreditNotePdf = async (creditNote, res) => {
         doc.text(creditNote.customer.address.address2);
       }
       doc.text(
-        creditNote.customer.address.postalCode +
-          " " +
-          creditNote.customer.address.city,
+        `${creditNote.customer.address.postalCode} ${creditNote.customer.address.city}`,
       );
 
       doc.moveDown();
 
       // ---- LIGNES
-      doc.text("DÉTAIL DE L'ANNULATION", { underline: true });
+      doc.text("DÉTAIL DE L'AVOIR", { underline: true });
       doc.moveDown(0.5);
 
       creditNote.lines.forEach((l) => {
@@ -102,6 +107,17 @@ const generateCreditNotePdf = async (creditNote, res) => {
       if (creditNote.reason) {
         doc.text("Motif :", { underline: true });
         doc.text(creditNote.reason);
+      }
+
+      doc.moveDown();
+
+      if (creditNote.status === "refunded") {
+        doc.text(
+          `remboursement effectué le : ${creditNote.issuedAt.toLocaleDateString("fr-FR")}`,
+        );
+        doc.text(`référence stripe : ${creditNote.stripeRefundId}`);
+      } else {
+        doc.text("Remboursement en attente.");
       }
 
       doc.end();

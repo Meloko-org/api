@@ -44,6 +44,20 @@ const productDetailSchema = mongoose.Schema({
     type: Boolean,
     defaul: null,
   },
+  refunded: {
+    type: Boolean,
+    default: false,
+  },
+  refundReason: {
+    type: String,
+  },
+  refundedAt: {
+    type: Date,
+  },
+  refundCreditNote: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "creditNotes",
+  },
 });
 
 const orderDetailSchema = mongoose.Schema({

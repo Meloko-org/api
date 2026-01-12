@@ -20,6 +20,7 @@ const onboardingController = require("./onboardingController");
 const withdrawController = require("./withdrawController");
 const invoiceController = require("./invoiceController");
 const creditNoteController = require("./creditNoteController");
+const savController = require("./savController");
 
 module.exports = {
   clerkController,
@@ -44,4 +45,5 @@ module.exports = {
   withdrawController,
   invoiceController,
   creditNoteController,
+  savController,
 };

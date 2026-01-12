@@ -32,6 +32,7 @@ const {
   withdrawsRouter,
   invoiceRouter,
   creditNoteRouter,
+  savRouter,
 } = require("./routes");
 
 var app = express();
@@ -80,5 +81,6 @@ app.use("/onboarding", onboardingRouter);
 app.use("/withdraws", withdrawsRouter);
 app.use("/invoices", invoiceRouter);
 app.use("/creditNotes", creditNoteRouter);
+app.use("/sav", savRouter);
 
 module.exports = app;

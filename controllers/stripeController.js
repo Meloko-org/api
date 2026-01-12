@@ -9,6 +9,7 @@ const { validationModule } = require("../modules");
 const { isUser } = require("../modules/verification");
 const { generateOrderNumber } = require("../services/orderService");
 const { reserveStockForOrder } = require("../services/stockService");
+const { updateRefundedProduct } = require("../services/orderService");
 const {
   getStripeCustomer,
   canCreatePaymentIntent,
@@ -151,7 +152,7 @@ const handleRefundCreated = async (refund) => {
       return;
     }
 
-    const res = await CreditNote.updateOne(
+    const creditNote = await CreditNote.findOneAndUpdate(
       {
         _id: creditNoteId,
         stripeRefundId: refund.id,
@@ -163,11 +164,19 @@ const handleRefundCreated = async (refund) => {
           refundedAt: new Date(),
         },
       },
+      { new: true },
     );
 
-    if (res.modifiedCount === 1) {
-      console.log("✅ CreditNote remboursée :", creditNoteId, reason);
+    if (!creditNote) {
+      console.warn(
+        "Refund received but creditNote not found or already refunded",
+        creditNoteId,
+      );
+      return;
     }
+
+    // modification productDetail
+    await updateRefundedProduct(creditNote);
   } catch (error) {
     console.error("❌ Error in handleRefundCreated:", error);
   }

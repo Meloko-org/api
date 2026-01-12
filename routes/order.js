@@ -21,6 +21,12 @@ router.post(
   orderController.updateSubOrder,
 );
 
+router.post(
+  "/:id/update-picked-up",
+  clerkMiddlewares.isUserLogged,
+  orderController.updateOrderProductPickedUp,
+);
+
 router.get(
   "/:id",
   clerkMiddlewares.isUserLogged,

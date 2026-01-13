@@ -18,9 +18,20 @@ const handlePreparation = async ({
   postCommitActions,
 }) => {
   console.log("executing handlePreparation");
+
+  if (subOrder.status !== "pending") {
+    throw new Error("Only pending subOrders can be prepared");
+  }
+
+  const cancellableProducts = subOrder.products.filter(
+    (p) => cancelledProductIds.includes(p._id.toString()) && !p.refunded,
+  );
+
   /* Mise à jour des statuts produits */
   subOrder.products.forEach((product) => {
-    if (cancelledProductIds.includes(product._id.toString())) {
+    if (product.refunded) return; // on ne réécrit pas le status d'un produit déjà refunded
+
+    if (cancellableProducts.includes(product)) {
       product.productStatus = "cancelled";
     } else {
       product.productStatus = "confirmed";

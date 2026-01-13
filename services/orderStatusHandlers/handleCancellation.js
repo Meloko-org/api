@@ -17,9 +17,19 @@ const handleCancellation = async ({
     throw new Error("Only pending subOrders can be cancelled");
   }
 
+  const cancellableProducts = subOrder.products.filter(
+    (p) => p.productStatus === "confirmed" && !p.refunded,
+  );
+
+  if (cancellableProducts.length === 0) {
+    throw new Error("No products to cancel.");
+  }
+
   // Tous les produits annulés
   subOrder.products.forEach((product) => {
-    product.productStatus = "cancelled";
+    if (product.productStatus === "confirmed" && !product.refunded) {
+      product.productStatus = "cancelled";
+    }
   });
 
   // Totaux shop à zéro
@@ -33,7 +43,7 @@ const handleCancellation = async ({
   const creditNote = await createCreditNoteFromSubOrder({
     order,
     subOrder,
-    cancelledProducts: subOrder.products,
+    cancelledProducts: cancellableProducts,
     reason: "Annulation totale de commande",
     session,
   });

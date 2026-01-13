@@ -12,6 +12,7 @@ function buildCreditNoteFromSubOrder({
     throw new Error("Cannot build CreditNote with no cancelled products");
   }
 
+  console.log("CREDITNOTE BUILDER order :", order);
   console.log("BUILDER: cancelledProducts :", cancelledProducts);
 
   const lines = cancelledProducts.map(buildCreditNoteLine);

@@ -12,23 +12,6 @@ async function createCreditNoteFromSubOrder({
   session,
 }) {
   try {
-    let existing;
-
-    if (invoice) {
-      existing = await CreditNote.findOne({
-        invoice: invoice._id,
-        subOrder: subOrder._id,
-        shop: subOrder.shop,
-      }).session(session);
-    } else {
-      existing = await CreditNote.findOne({
-        subOrder: subOrder._id,
-        shop: subOrder.shop,
-      }).session(session);
-    }
-
-    if (existing) return existing;
-
     const creditNoteNumber = await generateCreditNoteNumber(
       subOrder.shop._id,
       session,

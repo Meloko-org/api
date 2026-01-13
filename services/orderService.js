@@ -23,7 +23,7 @@ const updateRefundedProduct = async (creditNote) => {
     }
 
     const subOrder = order.details.find(
-      (so) => so._id.toString() === creditNote.subOrder,
+      (so) => so._id.toString() === creditNote.subOrder.toString(),
     );
     if (!subOrder) {
       throw new Error(`SubOrder not found for creditNote ${creditNote._id}`);

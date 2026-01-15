@@ -24,14 +24,14 @@ const createStocks = async (req, res) => {
     const price_cents = eurosToCents(price);
     const stock_value =
       product.weight.unit === "gr"
-        ? Math.round(NUmber(stock) * 1000)
+        ? Math.round(Number(stock) * 1000)
         : Number(stock);
 
     const newStock = new Stock({
       product: product._id,
       shop: shop._id,
       price: price_cents,
-      stock: stock_value,
+      stockTotal: stock_value,
       description,
       tags: tags.map((t) => t._id),
       ...rest,
@@ -71,9 +71,10 @@ const updateStocks = async (req, res) => {
         .json({ succes: false, message: "Shop not found." });
     }
 
-    const { _id, product, stock, price, description, tags, ...rest } = req.body;
+    const { _id, product, stockTotal, price, description, tags, ...rest } =
+      req.body;
 
-    if (!price || !stock) {
+    if (!price || !stockTotal) {
       return res.status(404).json({
         success: false,
         message: "Des informations sont manquantes. (prix, quantité)",
@@ -83,8 +84,8 @@ const updateStocks = async (req, res) => {
     const price_cents = eurosToCents(price);
     const stock_value =
       product.weight.unit === "gr"
-        ? Math.round(NUmber(stock) * 1000)
-        : Number(stock);
+        ? Math.round(Number(stockTotal) * 1000)
+        : Number(stockTotal);
 
     await Stock.findOneAndUpdate(
       { _id },
@@ -92,7 +93,7 @@ const updateStocks = async (req, res) => {
         product: product._id,
         shop: shop._id,
         price: price_cents,
-        stock: stock_value,
+        stockTotal: stock_value,
         description,
         tags: tags.map((t) => t._id),
         ...rest,

@@ -23,6 +23,10 @@ const handlePreparation = async ({
     throw new Error("Only pending subOrders can be prepared");
   }
 
+  if (subOrder.stockIssue && cancelledProductIds.length === 0) {
+    throw new Error("Stock conflict detected.");
+  }
+
   const cancellableProducts = subOrder.products.filter(
     (p) => cancelledProductIds.includes(p._id.toString()) && !p.refunded,
   );

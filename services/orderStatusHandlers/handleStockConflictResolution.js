@@ -14,6 +14,10 @@ const handleStockConflictResolution = async ({
   postCommitActions,
 }) => {
   console.log("handleStockConflictResolution running ---------------->");
+  // Sécurité : état autorisé
+  if (subOrder.status !== "pending") {
+    throw new Error("Only pending subOrders can be cancelled");
+  }
   if (!subOrder.stockIssue) {
     throw new Error("No stock issue to resolve");
   }

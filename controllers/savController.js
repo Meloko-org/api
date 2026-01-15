@@ -259,6 +259,16 @@ const refund = async (req, res) => {
               select: "address1 address2 postalCode city country",
             },
           },
+          {
+            path: "invoice",
+            model: "invoices",
+            select: "createdAt",
+          },
+          {
+            path: "creditNotes",
+            model: "creditnotes",
+            select: "createdAt",
+          },
         ],
       });
 

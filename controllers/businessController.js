@@ -101,7 +101,7 @@ const getOrders = async (req, res) => {
       .limit(limit)
       .populate("user", "firstname lastname");
 
-    console.log("nombre d'orders avant filtrage :", orders.length);
+    // console.log("nombre d'orders avant filtrage :", orders.length);
 
     const filteredOrders = orders.map((order) => ({
       ...order.toObject(),
@@ -112,7 +112,7 @@ const getOrders = async (req, res) => {
       ),
     }));
 
-    console.log("nombre d'orders après filtrage :", filteredOrders.length);
+    // console.log("nombre d'orders après filtrage :", filteredOrders.length);
 
     const totalOrders = await Order.countDocuments({
       details: {
@@ -123,7 +123,7 @@ const getOrders = async (req, res) => {
       },
     });
 
-    console.log("filtered :", filteredOrders);
+    // console.log("filtered :", filteredOrders);
 
     res.status(200).json({
       success: true,

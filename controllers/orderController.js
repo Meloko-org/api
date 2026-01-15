@@ -19,6 +19,9 @@ const {
 const {
   handlePartialPickup,
 } = require("../services/orderStatusHandlers/handlePartialPickup");
+const {
+  handleStockConflictResolution,
+} = require("../services/orderStatusHandlers/handleStockConflictResolution");
 const { computeGlobalOrderStatus } = require("../helpers/orderHelpers");
 
 const getOrdersByUser = async (req, res) => {
@@ -304,25 +307,25 @@ const updateSubOrder = async (req, res) => {
           break;
 
         case "prepare":
-          if (subOrder.stockIssue) {
-            console.log("case stockConflictResolution");
-            await handleStockConflictResolution({
-              order,
-              subOrder,
-              cancelledProductIds,
-              session,
-              postCommitActions,
-            });
-          } else {
-            console.log("case prepare");
-            await handlePreparation({
-              order,
-              subOrder,
-              cancelledProductIds,
-              session,
-              postCommitActions,
-            });
-          }
+          // if (subOrder.stockIssue) {
+          //   console.log("case stockConflictResolution");
+          //   await handleStockConflictResolution({
+          //     order,
+          //     subOrder,
+          //     cancelledProductIds,
+          //     session,
+          //     postCommitActions,
+          //   });
+          // } else {
+          console.log("case prepare");
+          await handlePreparation({
+            order,
+            subOrder,
+            cancelledProductIds,
+            session,
+            postCommitActions,
+          });
+          // }
 
           break;
 
@@ -397,6 +400,16 @@ const updateSubOrder = async (req, res) => {
               path: "address",
               select: "address1 address2 postalCode city country",
             },
+          },
+          {
+            path: "invoice",
+            model: "invoices",
+            select: "createdAt",
+          },
+          {
+            path: "creditNotes",
+            model: "creditnotes",
+            select: "createdAt",
           },
         ],
       });

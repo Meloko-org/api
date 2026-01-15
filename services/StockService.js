@@ -62,7 +62,6 @@ const consumeStockForSubOrder = async (subOrder, session) => {
     if (product.productStatus !== "confirmed") continue;
 
     const stock = await Stock.findById(product.product).session(session);
-
     stock.stockTotal -= product.quantity;
     stock.stockReserved -= product.quantity;
 

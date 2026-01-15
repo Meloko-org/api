@@ -18,7 +18,7 @@ const handleCancellation = async ({
   }
 
   const cancellableProducts = subOrder.products.filter(
-    (p) => p.productStatus === "confirmed" && !p.refunded,
+    (p) => p.productStatus !== "cancelled" && !p.refunded,
   );
 
   if (cancellableProducts.length === 0) {
@@ -27,7 +27,7 @@ const handleCancellation = async ({
 
   // Tous les produits annulés
   subOrder.products.forEach((product) => {
-    if (product.productStatus === "confirmed" && !product.refunded) {
+    if (product.productStatus !== "cancelled" && !product.refunded) {
       product.productStatus = "cancelled";
     }
   });

@@ -1,6 +1,6 @@
 const { Expo } = require("expo-server-sdk");
 const { UserPushToken } = require("../models");
-const { buildOrderNotification } = require("../builders/notificationbuilder");
+const { buildOrderNotification } = require("../builders/notifbuilder");
 
 const expo = new Expo();
 

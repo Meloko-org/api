@@ -33,6 +33,7 @@ const {
   invoiceRouter,
   creditNoteRouter,
   savRouter,
+  pushTokenRouter,
 } = require("./routes");
 
 var app = express();
@@ -82,5 +83,6 @@ app.use("/withdraws", withdrawsRouter);
 app.use("/invoices", invoiceRouter);
 app.use("/creditNotes", creditNoteRouter);
 app.use("/sav", savRouter);
+app.use("/notifications", pushTokenRouter);
 
 module.exports = app;

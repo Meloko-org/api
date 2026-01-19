@@ -21,6 +21,7 @@ const ShopInvoiceCounter = require("./ShopInvoiceCounter");
 const Invoice = require("./Invoice");
 const CreditNote = require("./CreditNote");
 const CreditNoteCounter = require("./CreditNoteCounter");
+const UserPushToken = require("./UserPushToken");
 
 module.exports = {
   Market,
@@ -47,4 +48,5 @@ module.exports = {
   Invoice,
   CreditNote,
   CreditNoteCounter,
+  UserPushToken,
 };

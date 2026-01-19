@@ -16,6 +16,43 @@ function computeGlobalOrderStatus(order) {
   );
 }
 
+function getOrderStatus(order) {
+  const subOrders = order.details;
+
+  if (!subOrders || subOrders.length === 0) {
+    return "pending";
+  }
+
+  const statuses = subOrders.map((d) => d.status);
+
+  const isCancelled = (s) => s === "cancelled";
+  const isPickedUp = (s) => s === "picked-up";
+  const isPrepared = (s) => s === "prepared" || s === "partially-prepared";
+
+  // 1️⃣ Tout annulé
+  if (statuses.every(isCancelled)) {
+    return "cancelled";
+  }
+
+  // 2️⃣ Tout récupéré OU annulé
+  if (statuses.every((s) => isPickedUp(s) || isCancelled(s))) {
+    return "completed";
+  }
+
+  // 3️⃣ Tout prêt OU annulé
+  if (statuses.every((s) => isPrepared(s) || isCancelled(s))) {
+    return "ready";
+  }
+
+  // 4️⃣ Au moins un prêt
+  if (statuses.some(isPrepared)) {
+    return "partially-ready";
+  }
+
+  // 5️⃣ Sinon
+  return "pending";
+}
+
 const UNIT_DIVISOR = {
   gr: 1000,
   kg: 1,
@@ -77,4 +114,5 @@ module.exports = {
   computeShopAmounts,
   computeTotalsFromHT,
   recomputeOrderTotals,
+  getOrderStatus,
 };

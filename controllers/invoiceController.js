@@ -2,28 +2,23 @@ const { Invoice, User, Shop } = require("../models");
 const { hasShop } = require("../helpers/authHelpers");
 const { buildInvoicePdfData } = require("../builders/invoiceBuilder");
 const { generateInvoicePdf } = require("../pdf/invoicePdf");
+const { canAccessInvoice } = require("../modules/PdfAccessRules");
 
 const getInvoicePdf = async (req, res) => {
   try {
-    const shop = await hasShop(req.auth.userId);
-    if (!shop) {
-      return res
-        .status(404)
-        .json({ succes: false, message: "Shop not found." });
-    }
-
+    const userId = req.auth.userId;
     const invoiceId = req.params.id;
 
     const invoice = await Invoice.findById(invoiceId);
-
     if (!invoice) {
       return res
         .status(404)
         .json({ succes: false, message: "Invoice not found." });
     }
 
-    if (!invoice.shop.equals(shop._id)) {
-      return res.status(404).json({ succes: false, message: "forbidden." });
+    const allowed = await canAccessInvoice({ userId, invoice });
+    if (!allowed) {
+      return res.status(403).json({ success: false, message: "Forbidden." });
     }
 
     const pdfData = buildInvoicePdfData(invoice);

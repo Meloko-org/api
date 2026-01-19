@@ -22,6 +22,7 @@ const withdrawsRouter = require("./withdraws");
 const invoiceRouter = require("./invoices");
 const creditNoteRouter = require("./creditNotes");
 const savRouter = require("./sav");
+const pushTokenRouter = require("./pushToken");
 
 module.exports = {
   authRouter,
@@ -48,4 +49,5 @@ module.exports = {
   invoiceRouter,
   creditNoteRouter,
   savRouter,
+  pushTokenRouter,
 };

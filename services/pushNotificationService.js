@@ -1,23 +1,14 @@
 const { Expo } = require("expo-server-sdk");
-const { UserPushToken } = require("../models");
+const { UserPushToken, Shop, Producer, User } = require("../models");
 const { buildOrderNotification } = require("../builders/notificationbuilder");
 
 const expo = new Expo();
 
 async function notifyClientOrderPrepared(order, subOrderId) {
-  console.log("push service");
-  const clientId = order.user; // ou order.client selon ton modèle
-  console.log("clientId :", clientId);
-  // 1️⃣ récupérer les tokens du client
-  const tokens = await UserPushToken.find({ user: clientId });
-  console.log("tokens :", tokens);
-  if (!tokens.length) return;
+  const clientId = order.user;
 
-  console.log("[PUSH] sending order prepared", {
-    orderId: order._id,
-    clientId: order.user,
-    tokens: tokens.map((t) => t.token),
-  });
+  const tokens = await UserPushToken.find({ user: clientId });
+  if (!tokens.length) return;
 
   const subOrder = order.details.find(
     (detail) => detail._id.toString() === subOrderId,
@@ -25,33 +16,66 @@ async function notifyClientOrderPrepared(order, subOrderId) {
 
   const { title, body, type } = buildOrderNotification(subOrder);
 
-  // 2️⃣ construire les messages
-  const messages = tokens
-    .map(({ token }) => {
-      if (!Expo.isExpoPushToken(token)) return null;
+  await sendExpoPush({
+    tokens,
+    title,
+    body,
+    data: {
+      type,
+      orderId: order._id.toString(),
+      debug: true,
+    },
+  });
+}
 
-      return {
-        to: token,
-        sound: "default",
-        title,
-        body,
+async function notifyProducerOrderDone(order) {
+  const shopIds = [...new Set(order.details.map((so) => so.shop.toString()))];
+
+  for (const shopId of shopIds) {
+    try {
+      const shop = await Shop.findById(shopId);
+      if (!shop) continue;
+
+      const producer = await Producer.findById(shop.producer);
+      if (!producer) continue;
+
+      const user = await User.findById(producer.owner);
+      if (!user) continue;
+
+      const tokens = await UserPushToken.find({ user: user._id });
+      if (!tokens.length) continue;
+
+      await sendExpoPush({
+        tokens,
+        title: "Nouvelle commande",
+        body: "Une nouvelle commande vient d'être passée.",
         data: {
-          type,
-          orderId: order._id.toString(),
-          debug: true,
+          type: "producer-order",
+          OrderId: order._id.toString(),
+          shopId,
         },
-      };
-    })
-    .filter(Boolean);
+      });
+    } catch (error) {
+      console.error(`Erreur notif producer pour shop ${shopId} :`, error);
+    }
+  }
+}
+
+async function sendExpoPush({ tokens, title, body, data = {} }) {
+  const messages = tokens
+    .filter((t) => Expo.isExpoPushToken(t))
+    .map((token) => ({
+      to: token,
+      sound: "default",
+      title,
+      body,
+      data,
+    }));
 
   if (!messages.length) return;
 
-  // 3️⃣ envoyer
   const response = await expo.sendPushNotificationsAsync(messages);
 
-  console.log("[PUSH RESPONSE]", JSON.stringify(response, null, 2));
-
-  // nettoyage des tokens invalides
   const invalidTokens = response
     .map((res, i) =>
       res.status === "error" && res.details?.error === "DeviceNotRegistered"
@@ -60,9 +84,15 @@ async function notifyClientOrderPrepared(order, subOrderId) {
     )
     .filter(Boolean);
 
-  await UserPushToken.deleteMany({ token: { $in: invalidTokens } });
+  if (invalidTokens.length) {
+    await UserPushToken.deleteMany({
+      token: { $in: invalidTokens },
+    });
+  }
+  return response;
 }
 
 module.exports = {
   notifyClientOrderPrepared,
+  notifyProducerOrderDone,
 };

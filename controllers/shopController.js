@@ -1311,7 +1311,7 @@ const addProductsToAShop = async (req, res) => {
         const newStock = new Stock({
           product: id,
           shop: shop._id,
-          stock: 0,
+          stockTotal: 0,
           price: 0,
           tags: [],
         });
@@ -1478,7 +1478,7 @@ const getFullShopById = async (req, res) => {
 
     const stocks = await Stock.find({
       shop: shop._id,
-      stock: { $gt: 0 },
+      stockTotal: { $gt: 0 },
       isDeleted: false,
     }).populate([
       {
@@ -1527,7 +1527,7 @@ const getFullShopById = async (req, res) => {
       });
     }
 
-    // console.log("fullShop :", JSON.stringify(fullShop, null, 2))
+    console.log("fullShop :", fullShop.categories);
 
     return res.status(200).json({ success: true, fullShop });
   } catch (error) {
@@ -1584,7 +1584,7 @@ const getById = async (req, res) => {
                 markets: shop.markets,
                 clickCollect: shop.clickCollect,
               },
-              stock: p.stock,
+              stockTotal: p.stock,
               price: p.price,
               tags: p.tags,
             });
@@ -1601,7 +1601,7 @@ const getById = async (req, res) => {
                     markets: shop.markets,
                     clickCollect: shop.clickCollect,
                   },
-                  stock: p.stock,
+                  stockTotal: p.stock,
                   price: p.price,
                   tags: p.tags,
                 },
@@ -1721,7 +1721,7 @@ const getStocksByShopAndCategory = async (req, res) => {
     const formattedStocks = stocks.map((stock) => ({
       _id: stock._id,
       price: stock.price,
-      stock: stock.stock,
+      stockTotal: stock.stock,
       shop: stock.shop,
       productCustomName: stock.productCustomName,
       pricePerKilo: stock.pricePerKilo,

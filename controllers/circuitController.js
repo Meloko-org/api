@@ -25,6 +25,8 @@ const getCircuit = async (req, res) => {
         radius.value[0],
       );
 
+      console.log("searchArea :", searchArea);
+
       /* Recherche des shops correspondant aux paramètres */
       const searchResults = await Shop.aggregate([
         {
@@ -75,10 +77,16 @@ const getCircuit = async (req, res) => {
         },
       ]);
 
+      console.log("searchResults :", searchResults.length);
+
       if (!searchResults.length) {
         return res
           .status(200)
-          .json({ success: true, results: { shops: [], route: null } });
+          .json({
+            success: false,
+            message: "Aucun résultat. Réduisez les paramètres.",
+          });
+        // .json({ success: true, results: { shops: [], route: null } });
       }
 
       // console.log("CIRCUITCONT :", searchResults);
@@ -96,10 +104,12 @@ const getCircuit = async (req, res) => {
       const response = await fetch(url);
       const data = await response.json();
 
+      console.log("data :", data);
+
       if (!data.routes?.length) {
         return res
           .status(200)
-          .json({ success: false, message: "No route found" });
+          .json({ success: false, message: "Problème Google Maps" });
       }
 
       const route = data.routes[0];
@@ -124,6 +134,8 @@ const getCircuit = async (req, res) => {
         totalDistance,
         totalDuration,
       };
+
+      console.log("results :", results);
 
       res.status(200).json({ success: true, results });
     } else {
